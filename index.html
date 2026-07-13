@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 3 -->
+<!-- APP_VERSION: 4 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -835,7 +835,11 @@ tbody tr:hover td{background:var(--bg2)}
 /* ═══ PADRÃO DE FUNDO AGRO-TECH ═══ */
 #bg-pattern{display:none}
 nav{z-index:100}
-main,.mob-header,.bottom-nav{position:relative;z-index:1}
+main{position:relative;z-index:1}
+/* .mob-header e .bottom-nav precisam permanecer position:fixed (definido acima).
+   Antes esta regra forçava position:relative nesses dois elementos também,
+   fazendo o cabeçalho/nav inferior "flutuarem" na posição errada em vez de
+   ficarem fixos no topo/rodapé — causa do bug de reposicionamento no iPhone. */
 
 /* ═══ BANNER DO DASHBOARD ═══ */
 .dash-banner{position:relative;background:linear-gradient(105deg,var(--grn-dim),var(--surf) 55%,var(--blu-dim));border:0.5px solid var(--bdr-em);border-radius:var(--r);padding:22px 26px;margin-bottom:18px;overflow:hidden}
