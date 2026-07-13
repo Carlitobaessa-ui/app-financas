@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 2 -->
+<!-- APP_VERSION: 3 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -76,13 +76,13 @@
   --shadow:   0 2px 16px rgba(80,60,40,.10);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
-body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:13.5px;line-height:1.6;min-height:100vh;-webkit-font-smoothing:antialiased}
+body{background:var(--bg);color:var(--txt);font-family:var(--body);font-size:13.5px;line-height:1.6;min-height:100vh;min-height:100dvh;-webkit-font-smoothing:antialiased}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:var(--bg)}
 ::-webkit-scrollbar-thumb{background:var(--bdr-em);border-radius:3px}
 
 /* ─── SHELL ──── */
-.shell{display:flex;min-height:100vh}
+.shell{display:flex;min-height:100vh;min-height:100dvh}
 
 /* ─── NAV ──── */
 nav{width:224px;background:var(--surf);border-right:0.5px solid var(--bdr-em);padding:0;position:fixed;top:0;left:0;bottom:0;display:flex;flex-direction:column;z-index:100;transition:width .22s cubic-bezier(.4,0,.2,1)}
@@ -461,7 +461,7 @@ tbody tr:hover td{background:var(--bg2)}
 /* ─── MODAL ──── */
 .ov{display:none;position:fixed;inset:0;background:rgba(26,35,24,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center}
 .ov.open{display:flex}
-.modal{background:var(--surf);border:0.5px solid var(--bdr-em);border-radius:10px;padding:30px;width:480px;max-width:95vw;max-height:90vh;overflow-y:auto;position:relative;box-sizing:border-box}
+.modal{background:var(--surf);border:0.5px solid var(--bdr-em);border-radius:10px;padding:30px;width:480px;max-width:95vw;max-height:90vh;max-height:90dvh;overflow-y:auto;position:relative;box-sizing:border-box}
 .m-eye{font-size:10px;font-weight:600;color:var(--grn);text-transform:uppercase;letter-spacing:1.5px;margin-bottom:7px}
 .m-title{font-family:var(--disp);font-size:19px;font-weight:700;margin-bottom:22px}
 .mc{position:absolute;top:16px;right:18px;background:none;border:none;cursor:pointer;font-size:17px;color:var(--txt3)}
@@ -550,7 +550,7 @@ tbody tr:hover td{background:var(--bg2)}
 .cbot-head{display:grid;grid-template-columns:2fr 1fr 1fr 1fr 1fr 1fr;border-bottom:0.5px solid var(--bdr-em)}
 
 /* ─── ASSISTENTE IA ──── */
-.chat-shell{display:grid;grid-template-columns:1fr 320px;gap:16px;height:calc(100vh - 180px);min-height:500px}
+.chat-shell{display:grid;grid-template-columns:1fr 320px;gap:16px;height:calc(100vh - 180px);height:calc(100dvh - 180px);min-height:500px}
 .chat-main{display:flex;flex-direction:column;background:var(--surf);border:0.5px solid var(--bdr);border-radius:var(--r);overflow:hidden}
 .chat-header{padding:16px 20px;border-bottom:0.5px solid var(--bdr);display:flex;align-items:center;gap:12px;flex-shrink:0}
 .chat-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--grn),#1A4A26);display:flex;align-items:center;justify-content:center;font-size:16px;color:#fff;flex-shrink:0}
@@ -669,7 +669,7 @@ tbody tr:hover td{background:var(--bg2)}
   .ph{flex-direction:column;align-items:flex-start;gap:12px;margin-bottom:20px}
   .ph-title{font-size:19px}
   .ha{flex-wrap:wrap;gap:7px}
-  .chat-shell{height:calc(100vh - 160px)}
+  .chat-shell{height:calc(100vh - 160px);height:calc(100dvh - 160px)}
   table{font-size:11.5px}
   th,td{padding:8px 10px}
   .fgrid{grid-template-columns:1fr}
@@ -698,7 +698,7 @@ tbody tr:hover td{background:var(--bg2)}
   .bem-grid{grid-template-columns:1fr}
   #obj-cards{grid-template-columns:1fr!important}
   .tg{grid-template-columns:1fr}
-  .chat-shell{height:calc(100vh - 140px)}
+  .chat-shell{height:calc(100vh - 140px);height:calc(100dvh - 140px)}
   .chat-messages{padding:14px}
   .msg{max-width:95%}
   .bottom-nav-item span{font-size:9px}
@@ -721,12 +721,12 @@ tbody tr:hover td{background:var(--bg2)}
   .btn-ghost{padding:6px 10px;font-size:11px}
   table th{font-size:9px;padding:0 8px 7px}
   table td{padding:8px;font-size:11.5px}
-  .modal{padding:18px 14px;width:100%;max-width:100%;max-height:88vh;overflow-y:auto;border-radius:16px 16px 0 0;position:fixed;bottom:0;left:0;right:0}
+  .modal{padding:18px 14px;width:100%;max-width:100%;max-height:88vh;max-height:88dvh;overflow-y:auto;border-radius:16px 16px 0 0;position:fixed;bottom:0;left:0;right:0}
   .ov{align-items:flex-end}
   .fgrid{grid-template-columns:1fr;gap:10px}
   .cc-vis{min-height:140px;padding:16px 18px 14px}
   .cc-num{font-size:11px;letter-spacing:2px}
-  .chat-shell{height:calc(100vh - 130px)}
+  .chat-shell{height:calc(100vh - 130px);height:calc(100dvh - 130px)}
   .chat-header{padding:12px 14px}
   .chat-messages{padding:12px}
   .chat-input-bar{padding:10px 12px}
@@ -10871,6 +10871,30 @@ function renderDisrupcao(dis,m){
   // Reajusta ao redimensionar a janela (Safari recalcula tarde)
   let _rzTimer=null;
   window.addEventListener('resize',()=>{clearTimeout(_rzTimer);_rzTimer=setTimeout(reajustarGraficos,150);});
+
+  // ── Fix de viewport dinâmico no iOS Safari ──
+  // iOS não dispara 'resize' de forma confiável quando a barra de endereço
+  // recolhe/expande ou quando o teclado abre — isso fazia o layout "não
+  // redimensionar corretamente" (conteúdo cortado, chat com altura errada).
+  // Usamos visualViewport (suportado no iOS Safari) como fonte de verdade
+  // e expomos --app-vh para qualquer CSS que precise de um vh real.
+  function _atualizarVH(){
+    const vv=window.visualViewport;
+    const h=vv?vv.height:window.innerHeight;
+    document.documentElement.style.setProperty('--app-vh',(h*0.01)+'px');
+  }
+  _atualizarVH();
+  if(window.visualViewport){
+    let _vvTimer=null;
+    window.visualViewport.addEventListener('resize',()=>{
+      _atualizarVH();
+      clearTimeout(_vvTimer);
+      _vvTimer=setTimeout(reajustarGraficos,150);
+    });
+  }
+  window.addEventListener('orientationchange',()=>{
+    setTimeout(()=>{_atualizarVH();try{reajustarGraficos();}catch(_){}},300);
+  });
 
   // Esconde splash após carregamento
   setTimeout(()=>{
