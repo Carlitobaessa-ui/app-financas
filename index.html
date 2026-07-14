@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 11 -->
+<!-- APP_VERSION: 12 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -6668,8 +6668,14 @@ async function atualizarCotacoes(){
   document.getElementById('ri').innerHTML='<span class="spin"></span>';
   document.getElementById('mkt-st').textContent='Buscando cotações…';
   _tickersAoVivo=new Set();
-  const tickersBr=[...new Set(S.ativos.filter(a=>(a.tipo==='BR'||a.tipo==='FII')&&a.ticker).map(a=>a.ticker))];
-  const tickersUs=[...new Set(S.ativos.filter(a=>a.tipo==='US'&&a.ticker).map(a=>a.ticker))];
+  // Tickers vêm de duas fontes independentes: a carteira (S.ativos) e a
+  // lista de acompanhamento da página "Cotações ao Vivo" (S.cotWatch.br/us),
+  // que o usuário monta à parte via "+ Incluir" — precisam ser buscados juntos.
+  const cw=S.cotWatch||{};
+  const cwBr=(cw.br||[]).map(it=>it&&it.tk).filter(Boolean);
+  const cwUs=(cw.us||[]).map(it=>it&&it.tk).filter(Boolean);
+  const tickersBr=[...new Set([...S.ativos.filter(a=>(a.tipo==='BR'||a.tipo==='FII')&&a.ticker).map(a=>a.ticker),...cwBr])];
+  const tickersUs=[...new Set([...S.ativos.filter(a=>a.tipo==='US'&&a.ticker).map(a=>a.ticker),...cwUs])];
   await Promise.allSettled([
     _brapiFetch(tickersBr),
     _fxFetch(),
