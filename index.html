@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 4 -->
+<!-- APP_VERSION: 5 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -855,6 +855,53 @@ main{position:relative;z-index:1}
 @media(max-width:640px){.ph-scene{display:none}}
 .nav-brand-scene{width:62px;height:46px;color:var(--grn);opacity:.5;margin-bottom:10px;display:block}
 nav.collapsed .nav-brand-scene{display:none}
+
+/* ══════════════════════════════════════════════════════════
+   LEGIBILIDADE MOBILE — fontes maiores em iPhone (Air, Pro, etc.)
+   Fica de propósito no final do <style>: sobrescreve os tamanhos
+   compactos definidos acima (pensados para telas de desktop) quando
+   o app é aberto no celular, sem alterar o layout desktop.
+   Também força inputs/selects/textarea para 16px, que evita o
+   zoom automático do Safari iOS ao tocar em campos de formulário
+   (Safari amplia a tela sozinho quando o campo tem fonte < 16px —
+   isso também contribuía para a sensação de "redimensionamento
+   errado" ao interagir com o app no iPhone).
+   ══════════════════════════════════════════════════════════ */
+@media(max-width:768px){
+  body{font-size:15.5px;line-height:1.65}
+  .ph-title{font-size:20px}
+  .ph-sub{font-size:13px}
+  .dash-banner-greet{font-size:19px}
+  .dash-banner-sub{font-size:13px}
+  .kpi-val{font-size:18px}
+  .kpi-eye{font-size:11px}
+  .kpi-d{font-size:12px}
+  .nav-item{font-size:14.5px}
+  .nav-brand-name{font-size:16px}
+  table{font-size:13.5px}
+  th{font-size:11px}
+  td{font-size:13.5px;padding:10px 12px}
+  .btn{font-size:13.5px;padding:9px 16px}
+  .btn-ghost,.btn-tab{font-size:12.5px}
+  .mono{font-size:13.5px}
+  .pt{font-size:13.5px}
+  .ps{font-size:12px}
+  .obj-nome{font-size:14px}
+  .m-eye{font-size:11px}
+  .alerta-tx{font-size:13px}
+  .msg-bubble{font-size:14.5px}
+  .rec-toggle-label,.rec-scope-opt,.orc-nm,.casc-nm{font-size:13.5px}
+  .fc-tab{font-size:12.5px}
+  #auth-email,#auth-pass,#cfg-api-key,input,select,textarea{font-size:16px!important}
+}
+@media(max-width:480px){
+  :root{font-size:15.5px}
+  .ph-title{font-size:18.5px}
+  .kpi-val{font-size:16.5px}
+  table th{font-size:10.5px}
+  table td{font-size:13px}
+  .msg-bubble{font-size:14px}
+}
 </style>
 </head>
 <body>
