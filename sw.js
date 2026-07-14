@@ -12,7 +12,7 @@
 // Para forçar todo mundo a baixar uma atualização, basta mudar CACHE_VERSION
 // (feito a cada nova versão publicada do app).
 
-const CACHE_VERSION = 'financas-v2';
+const CACHE_VERSION = 'financas-v3';
 const APP_SHELL = [
   './',
   './index.html',
@@ -50,9 +50,14 @@ self.addEventListener('fetch', (event) => {
   const isDocumento = req.mode === 'navigate' || req.destination === 'document';
 
   if (isDocumento) {
-    // NETWORK-FIRST: tenta rede, cai para cache se offline
+    // NETWORK-FIRST: tenta rede, cai para cache se offline.
+    // IMPORTANTE: usamos { cache: 'no-store' } para ignorar completamente o
+    // cache HTTP do navegador (isso é diferente do cache do Service Worker).
+    // Sem isso, o Safari em especial pode devolver uma cópia HTTP antiga do
+    // index.html sem sequer consultar a rede de verdade, fazendo o app
+    // parecer "travado" numa versão anterior mesmo com internet disponível.
     event.respondWith(
-      fetch(req)
+      fetch(req.url, { cache: 'no-store' })
         .then((resp) => {
           const copia = resp.clone();
           caches.open(CACHE_VERSION).then((cache) => cache.put(req, copia));
