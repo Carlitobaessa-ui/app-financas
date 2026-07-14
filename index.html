@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 13 -->
+<!-- APP_VERSION: 14 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -2683,9 +2683,9 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
 </div></div>
 
 <div class="ov" id="m-config-brapi"><div class="modal" style="width:520px"><button class="mc" onclick="closeM('m-config-brapi')">✕</button>
-<div class="m-eye">Configurações</div><div class="m-title">Cotações Ao Vivo — B3</div>
+<div class="m-eye">Configurações</div><div class="m-title">Cotações Ao Vivo — B3 e EUA</div>
 <div style="font-size:12px;color:var(--txt3);line-height:1.55;margin-bottom:14px">
-  Ações e FIIs da B3 usam a API gratuita da <strong style="color:var(--txt2)">brapi.dev</strong>. Sem token, só funcionam ao vivo os tickers <span class="mono">PETR4, VALE3, MGLU3, ITUB4</span>. Para cobrir <strong style="color:var(--txt2)">qualquer ação/FII da sua carteira</strong>, cole aqui um token gratuito (cadastro rápido em <span class="mono">brapi.dev</span>). Câmbio (USD/EUR) e cripto (BTC/ETH) já funcionam ao vivo sem token.
+  Ações/FIIs da B3 <strong style="color:var(--txt2)">e</strong> ações dos EUA usam a API gratuita da <strong style="color:var(--txt2)">brapi.dev</strong>. Sem token, só funcionam ao vivo os tickers <span class="mono">PETR4, VALE3, MGLU3, ITUB4</span> (nenhum ticker dos EUA fica disponível sem token). Para cobrir <strong style="color:var(--txt2)">qualquer ação/FII da B3 e qualquer ação dos EUA</strong> da sua carteira, cole aqui um token gratuito (cadastro rápido em <span class="mono">brapi.dev</span>). Câmbio (USD/EUR) e cripto (BTC/ETH) já funcionam ao vivo sem token.
 </div>
 <div class="fg" style="margin-bottom:6px"><label>Token brapi.dev (opcional)</label>
   <input id="cfg-brapi-token" type="password" placeholder="cole seu token gratuito aqui" autocomplete="off" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:11.5px">
@@ -10055,25 +10055,16 @@ async function _criptoFetch(){
 }
 
 // ── Ações dos EUA via Stooq — gratuito, sem chave (melhor esforço) ──
+// Ações dos EUA — testado em produção: Stooq bloqueia CORS no navegador
+// (fetch falha sempre com "Failed to fetch"), então nunca funcionava.
+// brapi.dev também cobre tickers dos EUA (AAPL, V, JNJ, etc. confirmados),
+// mas exige o mesmo token gratuito usado para a B3 — sem token, nenhum
+// ticker americano é liberado (nem os 4 "grátis", que são só BR).
 async function _usFetch(lista){
   if(!lista||!lista.length)return;
-  await Promise.allSettled(lista.map(async tk=>{
-    try{
-      const resp=await fetch(`https://stooq.com/q/l/?s=${encodeURIComponent(tk.toLowerCase())}.us&f=sd2t2ohlcv&h&e=csv`);
-      if(!resp.ok)return;
-      const txt=await resp.text();
-      const linhas=txt.trim().split('\n');
-      if(linhas.length<2)return;
-      const cols=linhas[1].split(',');
-      const fechamento=Number(cols[6]);
-      if(!isFinite(fechamento)||fechamento<=0)return;
-      const anterior=MQ[tk]?.p||fechamento;
-      const varAbs=fechamento-anterior;
-      const varPct=anterior?(varAbs/anterior*100):0;
-      MQ[tk]={p:fechamento,d:varAbs,dp:varPct};
-      _tickersAoVivo.add(tk);
-    }catch(_){ /* Stooq indisponível/CORS — mantém último valor conhecido */ }
-  }));
+  const token=getBrapiToken();
+  if(!token)return; // sem token, brapi.dev não libera nenhum ticker dos EUA
+  await Promise.allSettled(lista.map(tk=>_brapiFetchUm(tk,token)));
 }
 
 function buildFinancialContext(){
