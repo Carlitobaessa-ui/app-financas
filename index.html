@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 7 -->
+<!-- APP_VERSION: 8 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -3415,6 +3415,9 @@ function _garantirGraficosPagina(p){
 }
 function reajustarGraficos(){
   for(const id in CH){try{CH[id]&&CH[id].resize();}catch(_){}}
+  // Redesenha o diagrama de circulação (SVG com largura dinâmica) quando a
+  // tela muda de tamanho/orientação, para ele sempre bater com a largura real.
+  try{ if(document.getElementById('fluxo-baldes-wrap')) renderFluxoBaldes(); }catch(_){}
 }
 
 // ─── MOBILE NAV DRAWER
@@ -3593,9 +3596,14 @@ function renderFluxoBaldes(){
   // Totais por nó (soma do que passa)
   const tot={};fluxos.forEach(fx=>{tot[fx.de]=(tot[fx.de]||0)+fx.v;tot[fx.para]=(tot[fx.para]||0)+fx.v;});
   const maxTot=Math.max(...Object.values(tot),1);
-  // Layout
-  const W=680,H=300,padX=90,padY=28;
-  const colX={0:padX,1:W/2-70,2:W/2+90,3:W-padX};
+  // Layout — largura acompanha o espaço real disponível (evita ter que
+  // dar zoom/scroll no mobile: o viewBox passa a bater com o tamanho
+  // real exibido, então o texto nunca é escalado para baixo).
+  const larguraDisp=Math.round(wrap.getBoundingClientRect().width||wrap.clientWidth||680);
+  const W=Math.max(300,Math.min(680,larguraDisp)), H=300;
+  const padX=Math.max(26,Math.round(W*0.10)), padY=28;
+  const colGap1=Math.max(50,Math.round(W*0.10)), colGap2=Math.max(60,Math.round(W*0.13));
+  const colX={0:padX,1:W/2-colGap1,2:W/2+colGap2,3:W-padX};
   // Reposiciona: Receita col0, Conta+Investimentos col1 (empilhados), Cartão col2, Saídas col3
   const colOf={Receita:colX[0],Conta:colX[1],Investimentos:colX[1],'Cartão':colX[2],'Saídas':colX[3]};
   const yOf={Receita:H/2,Conta:H*0.34,Investimentos:H*0.72,'Cartão':H*0.30,'Saídas':H*0.64};
@@ -3625,7 +3633,7 @@ function renderFluxoBaldes(){
     nodesSvg+=`<text x="${x}" y="${y+h/2+14}" text-anchor="middle" font-size="9.5" fill="var(--txt3)" font-family="var(--mono)">${brl(tot[n])}</text>`;
   });
   wrap.innerHTML=`
-    <div style="overflow-x:auto"><svg viewBox="0 0 ${W} ${H}" style="width:100%;min-width:560px;height:auto;display:block">${paths}${nodesSvg}</svg></div>
+    <div style="overflow-x:auto;max-width:100%"><svg viewBox="0 0 ${W} ${H}" style="width:100%;max-width:${W}px;height:auto;display:block">${paths}${nodesSvg}</svg></div>
     <div class="fluxo-baldes-leg">
       <span class="fbl-item"><span class="fbl-dot" style="background:${C.grn}"></span>Receita → Conta</span>
       <span class="fbl-item"><span class="fbl-dot" style="background:${C.blu}"></span>Conta → Aporte</span>
