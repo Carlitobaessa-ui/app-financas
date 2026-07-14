@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 10 -->
+<!-- APP_VERSION: 11 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -9968,26 +9968,47 @@ function limparBrapiToken(){
 let _tickersAoVivo=new Set();
 
 // ── B3 (ações e FIIs) via brapi.dev ──
-async function _brapiFetch(lista){
-  if(!lista||!lista.length)return;
-  const token=getBrapiToken();
-  const tickersStr=lista.join(',');
+// IMPORTANTE: sem token, a API só libera os tickers de demonstração (PETR4,
+// VALE3, MGLU3, ITUB4) e rejeita a requisição INTEIRA (401) se QUALQUER outro
+// ticker for incluído na mesma chamada — mesmo junto de tickers válidos.
+// Por isso: com token, manda tudo numa chamada só (mais eficiente); sem
+// token, manda uma chamada por ticker (em paralelo), assim os tickers de
+// demonstração funcionam mesmo que o resto da carteira não seja coberto.
+function _aplicarResultadoBrapi(data){
+  (data?.results||[]).forEach(r=>{
+    if(r?.symbol==null||r?.regularMarketPrice==null)return;
+    const preco=Number(r.regularMarketPrice);
+    const varAbs=Number(r.regularMarketChange||0);
+    const varPct=Number(r.regularMarketChangePercent||0);
+    if(!isFinite(preco))return;
+    MQ[r.symbol]={p:preco,d:varAbs,dp:varPct};
+    _tickersAoVivo.add(r.symbol);
+  });
+}
+async function _brapiFetchUm(tk,token){
   try{
-    let url=`https://brapi.dev/api/quote/${encodeURIComponent(tickersStr)}`;
+    let url=`https://brapi.dev/api/quote/${encodeURIComponent(tk)}`;
     if(token) url+=`?token=${encodeURIComponent(token)}`;
     const resp=await fetch(url);
     if(!resp.ok)return;
-    const data=await resp.json();
-    (data?.results||[]).forEach(r=>{
-      if(r?.symbol==null||r?.regularMarketPrice==null)return;
-      const preco=Number(r.regularMarketPrice);
-      const varAbs=Number(r.regularMarketChange||0);
-      const varPct=Number(r.regularMarketChangePercent||0);
-      if(!isFinite(preco))return;
-      MQ[r.symbol]={p:preco,d:varAbs,dp:varPct};
-      _tickersAoVivo.add(r.symbol);
-    });
-  }catch(_){ /* sem rede/CORS/limite — mantém últimos valores conhecidos */ }
+    _aplicarResultadoBrapi(await resp.json());
+  }catch(_){ /* sem rede/CORS/limite/ticker não coberto — mantém último valor conhecido */ }
+}
+async function _brapiFetch(lista){
+  if(!lista||!lista.length)return;
+  const token=getBrapiToken();
+  if(token){
+    // Com token: cobre qualquer ticker, então uma única chamada em lote basta.
+    try{
+      const url=`https://brapi.dev/api/quote/${encodeURIComponent(lista.join(','))}?token=${encodeURIComponent(token)}`;
+      const resp=await fetch(url);
+      if(resp.ok){ _aplicarResultadoBrapi(await resp.json()); return; }
+      // Se mesmo com token a chamada em lote falhar (ex.: token inválido),
+      // cai para tentativa individual — mantém ao menos os tickers gratuitos.
+    }catch(_){ /* cai para tentativa individual abaixo */ }
+  }
+  // Sem token (ou lote falhou): uma chamada por ticker, em paralelo.
+  await Promise.allSettled(lista.map(tk=>_brapiFetchUm(tk,token)));
 }
 
 // ── Câmbio (USD/BRL, EUR/BRL) via AwesomeAPI — gratuito, sem chave ──
