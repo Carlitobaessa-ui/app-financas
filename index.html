@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 15 -->
+<!-- APP_VERSION: 16 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4630,7 +4630,10 @@ function rcartoes(){
   const filCartPg=document.getElementById('fil-cart')?.value||'';
   const pags=[...(S.pagamentosFatura||[])].filter(p=>!filCartPg||p.cartaoId===filCartPg).sort((a,b)=>b.data.localeCompare(a.data));
   const painelPg=document.getElementById('painel-pagfat');
-  if(painelPg)painelPg.style.display=pags.length?'':'none';
+  // Pagamento de fatura é sempre efetivado (nunca previsto) — some da tela
+  // enquanto a aba "Previstos" estiver selecionada, pra não parecer que o
+  // pagamento real está "dentro" da lista de previstos.
+  if(painelPg)painelPg.style.display=(!_prevC&&pags.length)?'':'none';
   const tbPg=document.getElementById('tb-pagfat');
   if(tbPg){
     tbPg.innerHTML=pags.map(p=>{
