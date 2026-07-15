@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 17 -->
+<!-- APP_VERSION: 18 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4410,7 +4410,12 @@ function rcontas(){
   }).join('')+`<div class="add-bc" onclick="openM('m-conta')"><div class="ai">＋</div><div class="at">Adicionar<br>nova conta</div></div>`;
   // Fluxo dos últimos 6 meses a partir do mês de referência
   const NOMES_M=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
-  const anc6=ancoraRef();
+  // Âncora pelo mês mais recente com LANÇAMENTOS reais (não-forecast) — não pelo
+  // mês de referência global (gastos+compras+dividendos+lançamentos combinados).
+  // Antes, se outro módulo (ex.: compras no cartão) tivesse dado mais recente que
+  // os lançamentos bancários, a janela de 6 meses deslizava para frente e deixava
+  // de cobrir os meses onde os lançamentos de fato existem — gráfico zerado.
+  const anc6=ancoraDe(mesRefDe(S.lancamentos.filter(l=>!l.forecast)));
   const ml=[],ymsFlx=[];
   for(let k=5;k>=0;k--){const dt=new Date(anc6.getFullYear(),anc6.getMonth()-k,1);ml.push(NOMES_M[dt.getMonth()]);ymsFlx.push(dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'));}
   const fe=ymsFlx.map(ym=>S.lancamentos.filter(l=>l.data.startsWith(ym)&&l.tipo==='credito'&&!l.forecast).reduce((s,l)=>s+l.valor,0));
