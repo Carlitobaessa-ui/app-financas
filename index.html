@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 18 -->
+<!-- APP_VERSION: 19 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4469,7 +4469,12 @@ function rcontas(){
     });
   }
   const _sMap=fb?_saldoApos:_saldoAposG; // conta específica → saldo da conta; "Todos os bancos" → consolidado
-  document.getElementById('tb-ext').innerHTML=ext.length?_extPag.map(l=>{const m=BG(l.banco),t=ti[l.tipo]||{cl:'',lb:l.tipo,sy:''};const _ant=(l.data||'')<_hojeISO();const _pv=l.forecast&&_ant;const _cls=_pv?'prev-venc':(_ant?'lanc-ant':'');return`<tr${_cls?` class="${_cls}"`:''}${l.forecast&&!_ant?' style="opacity:.92"':''}>${_selModeContas?`<td class="sel-col"><input type="checkbox" class="sel-chk" ${_selLanc.has(l.id)?'checked':''} onclick="selToggle('contas',${l.id},this.checked)"></td>`:''}<td class="cm mono" style="font-size:11px">${fdt(l.data)}</td><td><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:12px">${m.nome}</span></div></td><td style="font-size:12px">${l.desc}${l.forecast?' <span class="fc-badge">previsto</span>':''}</td><td><span class="badge b-n" style="font-size:9px">${t.lb}</span></td><td class="tr mono ${t.cl}">${t.sy}${brl(l.valor)}</td><td class="tr mono cm" style="font-size:11px">${l.forecast?'—':brl(_sMap[l.id]!=null?_sMap[l.id]:0)}</td><td><button class="btn btn-ed" onclick="editLanc(${l.id})">✎</button> <button class="btn btn-d" onclick="rmLanc(${l.id})">✕</button></td></tr>`}).join('').concat(_tblMaisHTML('contas',ext.length,_extPag.length,_selModeContas?8:7)):`<tr><td colspan="${_selModeContas?8:7}" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prev?'Nenhum lançamento previsto':'Nenhum lançamento'}</td></tr>`;
+  document.getElementById('tb-ext').innerHTML=ext.length?_extPag.map(l=>{
+    // l.banco guarda o ID da CONTA (não um código de banco) — resolve a conta
+    // primeiro para então buscar seu banco/nome. Chamar BG(l.banco) direto
+    // (como antes) nunca reconhecia o valor e sempre caía em "Outro Banco".
+    const _ctB=S.contas.find(c=>c.id===l.banco);
+    const m=BG(_ctB?_ctB.banco:l.banco),t=ti[l.tipo]||{cl:'',lb:l.tipo,sy:''};const _ant=(l.data||'')<_hojeISO();const _pv=l.forecast&&_ant;const _cls=_pv?'prev-venc':(_ant?'lanc-ant':'');return`<tr${_cls?` class="${_cls}"`:''}${l.forecast&&!_ant?' style="opacity:.92"':''}>${_selModeContas?`<td class="sel-col"><input type="checkbox" class="sel-chk" ${_selLanc.has(l.id)?'checked':''} onclick="selToggle('contas',${l.id},this.checked)"></td>`:''}<td class="cm mono" style="font-size:11px">${fdt(l.data)}</td><td><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:12px">${_ctB?.nome||m.nome}</span></div></td><td style="font-size:12px">${l.desc}${l.forecast?' <span class="fc-badge">previsto</span>':''}</td><td><span class="badge b-n" style="font-size:9px">${t.lb}</span></td><td class="tr mono ${t.cl}">${t.sy}${brl(l.valor)}</td><td class="tr mono cm" style="font-size:11px">${l.forecast?'—':brl(_sMap[l.id]!=null?_sMap[l.id]:0)}</td><td><button class="btn btn-ed" onclick="editLanc(${l.id})">✎</button> <button class="btn btn-d" onclick="rmLanc(${l.id})">✕</button></td></tr>`}).join('').concat(_tblMaisHTML('contas',ext.length,_extPag.length,_selModeContas?8:7)):`<tr><td colspan="${_selModeContas?8:7}" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prev?'Nenhum lançamento previsto':'Nenhum lançamento'}</td></tr>`;
   // Aviso de previstos vencidos (apenas na aba Previstos)
   {
     const tabela=document.getElementById('tb-ext').closest('table');
