@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 29 -->
+<!-- APP_VERSION: 30 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -3517,6 +3517,12 @@ function comprometidoFuturoCartao(cartaoId){
 function limiteComprometido(cartao){
   return +((cartao.fatura||0)+comprometidoFuturoCartao(cartao.id)).toFixed(2);
 }
+// Soma das compras PREVISTAS (forecast) de um cartão — usado só pelo gráfico
+// "Utilização de Limite", que precisa enxergar TODO o comprometimento em aberto
+// (realizado + previsto), não só o que já virou fatura/parcela real.
+function comprometidoPrevistoCartao(cartaoId){
+  return +(S.compras.filter(cp=>cp.cartao===cartaoId&&cp.forecast).reduce((s,cp)=>s+cp.valor,0)).toFixed(2);
+}
 // Limite disponível real = limite total − comprometido.
 function limiteDisponivel(cartao){
   return +((cartao.limite||0)-limiteComprometido(cartao)).toFixed(2);
@@ -4459,7 +4465,12 @@ function rcontas(){
   {const p=document.getElementById('tb-ext')?.closest('.panel');
    if(p){p.querySelectorAll('th.sel-col').forEach(th=>th.style.display=_selModeContas?'':'none');}
    setTimeout(()=>_refletirSelBar('contas'),0);}
-  const mes=mesRef(),tots=S.contas.filter(c=>c.ativa).reduce((s,c)=>s+c.saldo,0);
+  // Mês de referência PRÓPRIO da tela (só lançamentos bancários REAIS) — não usa o
+  // mesRef() global (gastos+compras+dividendos+lançamentos). Se outro módulo (ex.:
+  // uma compra prevista no cartão) tivesse data mais recente, mesRef() saltava pra
+  // um mês futuro onde não existe lançamento bancário real, e Entradas/Saídas do
+  // mês ficavam zeradas — mesmo com o saldo consolidado correto.
+  const mes=mesRefDe(S.lancamentos.filter(l=>!l.forecast)),tots=S.contas.filter(c=>c.ativa).reduce((s,c)=>s+c.saldo,0);
   // Imagens dos bancos
   const bankImgs={};
   // Pré-agrega em UMA passada: entradas/saídas do mês (por conta e totais) e presença de lançamentos por conta
@@ -4713,7 +4724,12 @@ function rcartoes(){
   document.getElementById('tb-comp').innerHTML=comp.length?_compPag.map(cp=>{const ct=S.cartoes.find(c=>c.id===cp.cartao),m=ct?BG(ct.banco):BG('outro');const _ant=(cp.data||'')<_hojeISO();return`<tr${_ant?' class="lanc-ant"':''}${cp.forecast&&!_ant?' style="opacity:.92"':''}>${_selModeCartoes?`<td class="sel-col"><input type="checkbox" class="sel-chk" ${_selComp.has(cp.id)?'checked':''} onclick="selToggle('cartoes',${cp.id},this.checked)"></td>`:''}<td class="cm mono" style="font-size:11px">${fdt(cp.data)}</td><td><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:11px">${ct?.nome||'—'}</span></div></td><td>${cp.desc}${cp.forecast?' <span class="fc-badge">previsto</span>':''}</td><td><span class="badge b-n" style="font-size:9px">${cp.cat}</span></td><td class="tr mono cr">${brl(cp.valor)}</td><td class="tr" style="font-size:11px;color:var(--txt3)">${cp.parcelas>1?cp.parcelas+'x de '+brl(cp.valor/cp.parcelas):'À vista'}</td><td><button class="btn btn-ed" onclick="editCompra(${cp.id})">✎</button> <button class="btn btn-d" onclick="rmCompra(${cp.id})">✕</button></td></tr>`}).join('').concat(_tblMaisHTML('cartoes',comp.length,_compPag.length,_selModeCartoes?8:7)):`<tr><td colspan="${_selModeCartoes?8:7}" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prevC?'Nenhuma compra prevista':'Nenhuma compra'}</td></tr>`;
   // Respeita o filtro de cartão selecionado (fc) — antes somava todos os cartões
   // juntos mesmo com um cartão específico escolhido no filtro acima.
-  const bc={};S.compras.filter(cp=>(!fc||cp.cartao===fc)&&cp.data.startsWith(mesRefDe(S.compras))&&!cp.forecast).forEach(cp=>{bc[cp.cat]=(bc[cp.cat]||0)+cp.valor});
+  // Mês de referência só das compras REAIS (não-forecast) pro gráfico "Gastos por
+  // Categoria · Fatura aberta" — mesRefDe(S.compras) sem filtro podia apontar pra
+  // um mês futuro de compra prevista, e o filtro !cp.forecast abaixo não encontrava
+  // nada nesse mês, deixando o gráfico vazio.
+  const _mesCcCat=mesRefDe(S.compras.filter(cp=>!cp.forecast));
+  const bc={};S.compras.filter(cp=>(!fc||cp.cartao===fc)&&cp.data.startsWith(_mesCcCat)&&!cp.forecast).forEach(cp=>{bc[cp.cat]=(bc[cp.cat]||0)+cp.valor});
   // Histórico de pagamentos de fatura (respeitando o filtro de cartão)
   const filCartPg=document.getElementById('fil-cart')?.value||'';
   const pags=[...(S.pagamentosFatura||[])].filter(p=>!filCartPg||p.cartaoId===filCartPg).sort((a,b)=>b.data.localeCompare(a.data));
@@ -4733,7 +4749,11 @@ function rcartoes(){
   }
   const cs=Object.entries(bc).sort((a,b)=>b[1]-a[1]);
   mkCh('ch-cc-cat',{type:'doughnut',data:{labels:cs.map(([k])=>k),datasets:[{data:cs.map(([,v])=>v),backgroundColor:cs.map(([k])=>corCat(k)),borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{color:C.txt,padding:10,font:{size:11}}}}}});
-  mkCh('ch-cc-uso',{type:'bar',data:{labels:S.cartoes.map(c=>c.nome.split(' ').slice(0,2).join(' ')),datasets:[{label:'Comprometido',data:S.cartoes.map(c=>limiteComprometido(c)),backgroundColor:'rgba(163,58,46,.28)',borderColor:C.red,borderWidth:1,borderRadius:3},{label:'Limite',data:S.cartoes.map(c=>c.limite),backgroundColor:'rgba(74,122,86,.14)',borderColor:C.grn,borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:C.txt,padding:12,font:{size:11}}}},scales:gridOpts(v=>'R$'+(v/1000).toFixed(0)+'k')}});
+  // "Comprometido" aqui = realizado (fatura + parcelas futuras reais) + previsto
+  // (compras forecast do cartão) — o gráfico quer refletir TODO lançamento em
+  // aberto, não só o que já é real. Os cards individuais de cada cartão acima
+  // (Comprometido/Disponível) continuam só com o realizado, sem mudança.
+  mkCh('ch-cc-uso',{type:'bar',data:{labels:S.cartoes.map(c=>c.nome.split(' ').slice(0,2).join(' ')),datasets:[{label:'Comprometido',data:S.cartoes.map(c=>limiteComprometido(c)+comprometidoPrevistoCartao(c.id)),backgroundColor:'rgba(163,58,46,.28)',borderColor:C.red,borderWidth:1,borderRadius:3},{label:'Limite',data:S.cartoes.map(c=>c.limite),backgroundColor:'rgba(74,122,86,.14)',borderColor:C.grn,borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:C.txt,padding:12,font:{size:11}}}},scales:gridOpts(v=>'R$'+(v/1000).toFixed(0)+'k')}});
 }
 function verFatCart(id){document.getElementById('fil-cart').value=id;document.getElementById('tb-comp').closest('.panel').scrollIntoView({behavior:'smooth',block:'start'});rcartoes()}
 let _pagFatIdx=null;
