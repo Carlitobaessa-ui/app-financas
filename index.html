@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 24 -->
+<!-- APP_VERSION: 25 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -3966,7 +3966,9 @@ function rdash(){
     });
     const totCat={};
     mesesCat.forEach(ym=>{ Object.entries(porMesCat[ym]).forEach(([cat,v])=>{ totCat[cat]=(totCat[cat]||0)+v; }); });
-    const catsOrd=Object.entries(totCat).sort((a,b)=>b[1]-a[1]);
+    // Só entram categorias com gasto líquido positivo no período — uma categoria cujos
+    // estornos/reembolsos zeram (ou deixam negativo) o total não aparece nos gráficos.
+    const catsOrd=Object.entries(totCat).filter(([,v])=>v>0.005).sort((a,b)=>b[1]-a[1]);
 
     // Média mensal = total ÷ nº de meses com dado real dentro do período, NÃO ÷ nº de
     // meses do período selecionado. Ex.: se o usuário escolhe "5 anos" mas só existem
