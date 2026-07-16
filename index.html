@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 30 -->
+<!-- APP_VERSION: 31 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4694,7 +4694,11 @@ function rcartoes(){
    if(p){p.querySelectorAll('th.sel-col').forEach(th=>th.style.display=_selModeCartoes?'':'none');}
    setTimeout(()=>_refletirSelBar('cartoes'),0);}
   const tf=S.cartoes.reduce((s,c)=>s+c.fatura,0),tl=S.cartoes.reduce((s,c)=>s+c.limite,0);
-  const _compr={};S.cartoes.forEach(c=>{_compr[c.id]=limiteComprometido(c);});
+  // Comprometido considera realizado (fatura + parcelas futuras reais) + previsto
+  // (compras forecast do cartão) — reflete em todos os painéis desta tela (KPIs do
+  // topo, card individual de cada cartão e o gráfico "Utilização de Limite" abaixo)
+  // TODO lançamento em aberto, não só o que já é real.
+  const _compr={};S.cartoes.forEach(c=>{_compr[c.id]=limiteComprometido(c)+comprometidoPrevistoCartao(c.id);});
   const tcompr=S.cartoes.reduce((s,c)=>s+_compr[c.id],0),td=+(tl-tcompr).toFixed(2),up=tl>0?(tcompr/tl*100).toFixed(1):'0.0';
   const hoje=new Date(),prox=S.cartoes.map(c=>{let d=new Date(hoje.getFullYear(),hoje.getMonth(),c.vencimento);if(d<hoje)d=new Date(hoje.getFullYear(),hoje.getMonth()+1,c.vencimento);return{nome:c.nome,dias:Math.ceil((d-hoje)/86400000),fatura:c.fatura}}).sort((a,b)=>a.dias-b.dias)[0];
   document.getElementById('ct-fat').textContent=brl(tf);document.getElementById('ct-fat-d').textContent=S.cartoes.length+' cartões';
@@ -4706,12 +4710,13 @@ function rcartoes(){
   document.getElementById('cc-grid').innerHTML=S.cartoes.map((c,i)=>{
     const m=BG(c.banco),gr=CG[c.banco]||CG.outro,compr=_compr[c.id],disp=+(c.limite-compr).toFixed(2),up2=c.limite>0?Math.min(100,compr/c.limite*100):0,ucl=up2>85?'cr':up2>60?'cgd':'cg';
     const _futuro=comprometidoFuturoCartao(c.id);
+    const _prev=comprometidoPrevistoCartao(c.id);
     const img=ccImgs[c.banco]||'';
     return`<div><div class="cc-vis" style="background:${gr}"><div class="cc-dc" style="width:130px;height:130px;right:-25px;top:-25px"></div><div class="cc-dc" style="width:80px;height:80px;left:-15px;bottom:-15px"></div>
 <div class="cc-bk">${m.nome}</div><div class="cc-bd">${c.bandeira}</div>
 <div><div class="cc-chip"></div><div class="cc-num">•••• •••• •••• ${c.final}</div><div class="cc-br"><div class="cc-hl">${c.titular}</div><div class="cc-ex">Fecha ${c.fechamento<10?'0'+c.fechamento:c.fechamento} · Vence ${c.vencimento<10?'0'+c.vencimento:c.vencimento}</div></div></div></div>
 <div class="cc-info" style="margin-top:11px"><div class="cc-ih"><div class="cc-in">${c.nome}</div><div class="cc-is">${c.bandeira} · Final ${c.final}</div></div>
-<div class="cc-me"><div><div class="cc-ml"><span>Comprometido <strong class="cr">${brl(compr)}</strong></span><span class="mono ${ucl}">${up2.toFixed(0)}%</span></div><div class="cc-mt"><div class="cc-mf" style="width:${up2}%;background:${up2>85?'var(--red)':up2>60?'var(--gld)':'var(--grn)'}"></div></div>${_futuro>0.005?`<div style="font-size:10px;color:var(--txt3);margin-top:4px">Fatura ${brl(c.fatura)} + parcelas futuras ${brl(_futuro)}</div>`:''}</div></div>
+<div class="cc-me"><div><div class="cc-ml"><span>Comprometido <strong class="cr">${brl(compr)}</strong></span><span class="mono ${ucl}">${up2.toFixed(0)}%</span></div><div class="cc-mt"><div class="cc-mf" style="width:${up2}%;background:${up2>85?'var(--red)':up2>60?'var(--gld)':'var(--grn)'}"></div></div>${(_futuro>0.005||_prev>0.005)?`<div style="font-size:10px;color:var(--txt3);margin-top:4px">Fatura ${brl(c.fatura)}${_futuro>0.005?' + parcelas futuras '+brl(_futuro):''}${_prev>0.005?' + previstos '+brl(_prev):''}</div>`:''}</div></div>
 <div class="cc-st"><div class="cc-si"><span class="cc-sl">Limite</span><span class="cc-sv">${brl(c.limite)}</span></div><div class="cc-si"><span class="cc-sl">Disponível</span><span class="cc-sv ${ucl}">${brl(disp)}</span></div><div class="cc-si"><span class="cc-sl">Vencimento</span><span class="cc-sv cgd">Dia ${c.vencimento}</span></div></div>
 <div class="cc-ac"><button class="btn btn-ghost" style="font-size:11px;padding:4px 9px;flex:1" onclick="verFatCart('${c.id}')">Ver fatura</button><button class="btn btn-ghost" style="font-size:11px;padding:4px 9px" onclick="pagarFat(${i})">Pagar</button><button class="btn btn-ed" onclick="editCartao(${i})">✎</button>${S.compras.some(cp=>cp.cartao===c.id)?`<button class="btn btn-d" style="opacity:.4;cursor:not-allowed" onclick="rmCartao(${i})" title="Cartão com lançamentos não pode ser excluído">✕</button>`:`<button class="btn btn-d" onclick="rmCartao(${i})">✕</button>`}</div></div></div>`;
   }).join('')+`<div><div class="add-cc" onclick="openM('m-cartao')"><div class="ai">＋</div><div class="at">Adicionar<br>novo cartão</div></div></div>`;
