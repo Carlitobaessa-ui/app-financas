@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 22 -->
+<!-- APP_VERSION: 23 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -3974,8 +3974,10 @@ function rdash(){
     const mesesComDadosCat=mesesCat.filter(ym=>Object.keys(porMesCat[ym]).length>0);
     const nMesesCatAtivos=Math.max(1,mesesComDadosCat.length);
 
-    // Doughnut: gasto MÉDIO MENSAL por categoria no período (ranking)
-    mkCh('ch-cat-rank',{type:'doughnut',data:{labels:catsOrd.map(([k])=>k),datasets:[{data:catsOrd.map(([,v])=>+(v/nMesesCatAtivos).toFixed(2)),backgroundColor:catsOrd.map(([k])=>corCat(k)),borderWidth:2,borderColor:'#FBFAF6'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{color:C.txt,padding:9,font:{size:10.5}}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+brl(ctx.parsed)+'/mês'}}}}});
+    // Barras horizontais: gasto MÉDIO MENSAL por categoria no período (ranking) —
+    // catsOrd já vem ordenado do maior pro menor gasto, então a 1ª barra (topo) é
+    // sempre a categoria com maior gasto médio mensal.
+    mkCh('ch-cat-rank',{type:'bar',data:{labels:catsOrd.map(([k])=>k),datasets:[{data:catsOrd.map(([,v])=>+(v/nMesesCatAtivos).toFixed(2)),backgroundColor:catsOrd.map(([k])=>corCat(k)),borderRadius:4,barPercentage:0.7,categoryPercentage:0.75}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>brl(ctx.parsed.x)+'/mês'}}},scales:{x:{grid:{color:'rgba(74,122,86,.08)'},ticks:{color:C.muted,font:{size:10},callback:v=>'R$'+(v/1000).toFixed(0)+'k'}},y:{grid:{display:false},ticks:{color:C.txt,font:{size:10.5}}}}}});
 
     // Linha: evolução das principais categorias (top 7 + "Outras" agrupando o resto).
     // Se o período agrega por ano (>5 anos, mesma regra do Fluxo de Caixa), soma por ano;
