@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 20 -->
+<!-- APP_VERSION: 21 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1386,20 +1386,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
 
   <div class="gw">
     <div class="panel">
-      <div class="phd"><div><div class="pt">Evolução Patrimonial</div><div class="ps">Patrimônio líquido projetado a partir do período atual</div></div>
-        <select id="evol-anos" onchange="rdash()" style="background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:8px;padding:4px 8px;font-size:11px;color:var(--txt);font-family:var(--body);outline:none;cursor:pointer">
-          <option value="1" selected>1 ano</option>
-          <option value="2">2 anos</option>
-          <option value="3">3 anos</option>
-          <option value="4">4 anos</option>
-          <option value="5">5 anos</option>
-          <option value="10">10 anos</option>
-          <option value="20">20 anos</option>
-          <option value="30">30 anos</option>
-          <option value="40">40 anos</option>
-          <option value="50">50 anos</option>
-        </select>
-      </div>
+      <div class="phd"><div><div class="pt">Evolução Patrimonial</div><div class="ps">Patrimônio líquido projetado · usa o período do Fluxo de Caixa Consolidado</div></div></div>
       <div class="pbd"><div class="chart-l"><canvas id="ch-evol"></canvas></div></div>
     </div>
     <div class="panel">
@@ -3819,7 +3806,9 @@ function rdash(){
   const _patFinalPeriodo=patrimonioLiquido(); // fotografia contábil: ativos − passivos no momento (sem antecipar previstos)
 
   // Chart evolução patrimonial — projeção FORWARD do patrimônio (caixa ajustado ao período) (1 a 50 anos)
-  const evolAnos=Math.min(50,Math.max(1,parseInt(document.getElementById('evol-anos')?.value)||1));
+  // Vinculado ao MESMO seletor de período do Fluxo de Caixa Consolidado (#fluxo-anos) —
+  // o gráfico não tem mais seu próprio seletor (removido do HTML).
+  const evolAnos=Math.min(50,Math.max(1,parseInt(document.getElementById('fluxo-anos')?.value)||1));
   const evolAgrega=evolAnos>5; // acima de 5 anos, escala anual
   const patAtual=patrimonioLiquido();
   const NOMES_MES_E=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
