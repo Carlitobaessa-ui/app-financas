@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 28 -->
+<!-- APP_VERSION: 29 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -3967,9 +3967,6 @@ function rdash(){
     });
     const totCat={};
     mesesCat.forEach(ym=>{ Object.entries(porMesCat[ym]).forEach(([cat,v])=>{ totCat[cat]=(totCat[cat]||0)+v; }); });
-    // Só entram categorias com gasto líquido positivo no período — uma categoria cujos
-    // estornos/reembolsos zeram (ou deixam negativo) o total não aparece nos gráficos.
-    const catsOrd=Object.entries(totCat).filter(([,v])=>v>0.005).sort((a,b)=>b[1]-a[1]);
 
     // Média mensal = total da categoria ÷ nº de meses em que ELA (a própria categoria)
     // teve dado real dentro do período — POR CATEGORIA, não um denominador global. Ex.:
@@ -3980,15 +3977,26 @@ function rdash(){
     const mesesPorCat={}; // {categoria: nº de meses do período em que ela teve gasto}
     mesesCat.forEach(ym=>{ Object.keys(porMesCat[ym]).forEach(cat=>{ mesesPorCat[cat]=(mesesPorCat[cat]||0)+1; }); });
 
+    // Só entram categorias com gasto líquido positivo no período — uma categoria cujos
+    // estornos/reembolsos zeram (ou deixam negativo) o total não aparece nos gráficos.
+    // catsOrd é [categoria, mediaMensal] ordenado pela MÉDIA (não pelo total) — é o que
+    // o gráfico exibe, então o ranking (1ª barra = maior média) precisa ordenar por ela;
+    // ordenar pelo total podia deixar a 3ª barra menor que a 4ª, por ex., quando duas
+    // categorias têm nº de meses ativos bem diferentes entre si.
+    const catsOrd=Object.entries(totCat)
+      .filter(([,v])=>v>0.005)
+      .map(([cat,v])=>[cat,+(v/Math.max(1,mesesPorCat[cat]||1)).toFixed(2)])
+      .sort((a,b)=>b[1]-a[1]);
+
     // Limite de categorias exibidas nos dois gráficos: só as 5 principais (maior gasto
     // médio mensal) — mantém os dois painéis legíveis mesmo com muitas categorias.
     const TOPN_CAT=5;
     const catsTop=catsOrd.slice(0,TOPN_CAT);
 
     // Barras horizontais: gasto MÉDIO MENSAL por categoria no período (ranking) —
-    // catsTop já vem ordenado do maior pro menor gasto, então a 1ª barra (topo) é
+    // catsTop já vem ordenado da maior pra menor média, então a 1ª barra (topo) é
     // sempre a categoria com maior gasto médio mensal.
-    mkCh('ch-cat-rank',{type:'bar',data:{labels:catsTop.map(([k])=>k),datasets:[{data:catsTop.map(([cat,v])=>+(v/Math.max(1,mesesPorCat[cat]||1)).toFixed(2)),backgroundColor:catsTop.map(([k])=>corCat(k)),borderRadius:4,barPercentage:0.7,categoryPercentage:0.75}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>brl(ctx.parsed.x)+'/mês'}}},scales:{x:{grid:{color:'rgba(74,122,86,.08)'},ticks:{color:C.muted,font:{size:10},callback:v=>'R$'+(v/1000).toFixed(0)+'k'}},y:{grid:{display:false},ticks:{color:C.txt,font:{size:10.5}}}}}});
+    mkCh('ch-cat-rank',{type:'bar',data:{labels:catsTop.map(([k])=>k),datasets:[{data:catsTop.map(([,media])=>media),backgroundColor:catsTop.map(([k])=>corCat(k)),borderRadius:4,barPercentage:0.7,categoryPercentage:0.75}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>brl(ctx.parsed.x)+'/mês'}}},scales:{x:{grid:{color:'rgba(74,122,86,.08)'},ticks:{color:C.muted,font:{size:10},callback:v=>'R$'+(v/1000).toFixed(0)+'k'}},y:{grid:{display:false},ticks:{color:C.txt,font:{size:10.5}}}}}});
 
     // Linha: evolução das 5 principais categorias (sem agrupar o resto em "Outras" —
     // só as 5 aparecem, conforme pedido). Se o período agrega por ano (>5 anos, mesma
