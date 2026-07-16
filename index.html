@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 25 -->
+<!-- APP_VERSION: 26 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -3977,22 +3977,24 @@ function rdash(){
     const mesesComDadosCat=mesesCat.filter(ym=>Object.keys(porMesCat[ym]).length>0);
     const nMesesCatAtivos=Math.max(1,mesesComDadosCat.length);
 
-    // Barras horizontais: gasto MÉDIO MENSAL por categoria no período (ranking) —
-    // catsOrd já vem ordenado do maior pro menor gasto, então a 1ª barra (topo) é
-    // sempre a categoria com maior gasto médio mensal.
-    mkCh('ch-cat-rank',{type:'bar',data:{labels:catsOrd.map(([k])=>k),datasets:[{data:catsOrd.map(([,v])=>+(v/nMesesCatAtivos).toFixed(2)),backgroundColor:catsOrd.map(([k])=>corCat(k)),borderRadius:4,barPercentage:0.7,categoryPercentage:0.75}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>brl(ctx.parsed.x)+'/mês'}}},scales:{x:{grid:{color:'rgba(74,122,86,.08)'},ticks:{color:C.muted,font:{size:10},callback:v=>'R$'+(v/1000).toFixed(0)+'k'}},y:{grid:{display:false},ticks:{color:C.txt,font:{size:10.5}}}}}});
+    // Limite de categorias exibidas nos dois gráficos: só as 5 principais (maior gasto
+    // médio mensal) — mantém os dois painéis legíveis mesmo com muitas categorias.
+    const TOPN_CAT=5;
+    const catsTop=catsOrd.slice(0,TOPN_CAT);
 
-    // Linha: evolução das principais categorias (top 7 + "Outras" agrupando o resto).
-    // Se o período agrega por ano (>5 anos, mesma regra do Fluxo de Caixa), soma por ano;
-    // senão, um ponto por mês.
-    const TOPN_CAT=7;
-    const topCats=catsOrd.slice(0,TOPN_CAT).map(([k])=>k);
-    const outrasCats=catsOrd.slice(TOPN_CAT).map(([k])=>k);
+    // Barras horizontais: gasto MÉDIO MENSAL por categoria no período (ranking) —
+    // catsTop já vem ordenado do maior pro menor gasto, então a 1ª barra (topo) é
+    // sempre a categoria com maior gasto médio mensal.
+    mkCh('ch-cat-rank',{type:'bar',data:{labels:catsTop.map(([k])=>k),datasets:[{data:catsTop.map(([,v])=>+(v/nMesesCatAtivos).toFixed(2)),backgroundColor:catsTop.map(([k])=>corCat(k)),borderRadius:4,barPercentage:0.7,categoryPercentage:0.75}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>brl(ctx.parsed.x)+'/mês'}}},scales:{x:{grid:{color:'rgba(74,122,86,.08)'},ticks:{color:C.muted,font:{size:10},callback:v=>'R$'+(v/1000).toFixed(0)+'k'}},y:{grid:{display:false},ticks:{color:C.txt,font:{size:10.5}}}}}});
+
+    // Linha: evolução das 5 principais categorias (sem agrupar o resto em "Outras" —
+    // só as 5 aparecem, conforme pedido). Se o período agrega por ano (>5 anos, mesma
+    // regra do Fluxo de Caixa), soma por ano; senão, um ponto por mês.
+    const topCats=catsTop.map(([k])=>k);
     const bucketDe=ym=>agregarAno?ym.slice(0,4):ym;
     const bucketsCat=[...new Set(mesesCat.map(bucketDe))];
     const somaBucket=(cats,b)=>mesesCat.filter(ym=>bucketDe(ym)===b).reduce((s,ym)=>s+cats.reduce((s2,cat)=>s2+((porMesCat[ym]||{})[cat]||0),0),0);
     const dsCat=topCats.map(cat=>({label:cat,data:bucketsCat.map(b=>+somaBucket([cat],b).toFixed(2)),borderColor:corCat(cat),backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:bucketsCat.length>18?0:2,borderWidth:1.6}));
-    if(outrasCats.length)dsCat.push({label:'Outras',data:bucketsCat.map(b=>+somaBucket(outrasCats,b).toFixed(2)),borderColor:'#9A9382',backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:bucketsCat.length>18?0:2,borderWidth:1.6,borderDash:[4,3]});
     const labelsCat=agregarAno?bucketsCat:bucketsCat.map(ym=>{const [y,m]=ym.split('-');return NOMES_MES[+m-1]+(nMesesCat>12?'/'+y.slice(2):'');});
     mkCh('ch-cat-evol',{type:'line',data:{labels:labelsCat,datasets:dsCat},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:C.txt,padding:9,font:{size:10},usePointStyle:true,pointStyle:'line'}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+brl(ctx.parsed.y)}}},scales:gridOpts(v=>'R$'+(v/1000).toFixed(0)+'k')}});
   }
