@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 27 -->
+<!-- APP_VERSION: 28 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -2699,6 +2699,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
 <div style="font-size:12px;color:var(--txt2);line-height:1.6;margin-bottom:14px">Duas camadas de proteção: <strong>snapshots internos</strong> automáticos (até 3/dia, rede de segurança contra exclusão ou importação errada) e <strong>exportação em arquivo .json</strong> — o backup que sai do app e sobrevive à limpeza do navegador ou perda do aparelho.</div>
 <div id="backup-status" class="bk-status"></div>
 <div style="display:flex;gap:8px;margin:14px 0"><button class="btn btn-g" style="flex:1" onclick="backupAgora()">＋ Snapshot agora</button><button class="btn btn-b" style="flex:1" onclick="exportarEBackup()">↧ Exportar arquivo .json</button></div>
+<div id="export-pasta-info" style="font-size:10.5px;color:var(--txt3);margin:-6px 0 14px"></div>
 <div class="pt" style="font-size:12.5px;margin:6px 0 8px">Snapshots internos</div>
 <div id="backup-lista" style="max-height:280px;overflow-y:auto"></div>
 <div class="pt" style="font-size:12.5px;margin:16px 0 8px">Rotinas automáticas</div>
@@ -9611,13 +9612,106 @@ function snapshotDados(){
   };
 }
 
-function exportarDados(){
+// ═══ Pasta de exportação lembrada (File System Access API) ═══
+// Deixa a exportação do .json sempre cair na MESMA pasta escolhida pelo usuário,
+// sem abrir diálogo "Salvar como" toda vez. Na 1ª exportação (ou se a pasta salva
+// não existir/perder permissão), pede pra escolher uma pasta e guarda o "handle"
+// no IndexedDB (localStorage não serializa esse tipo de objeto). Nas próximas, só
+// verifica a permissão (sem diálogo de arquivo) e grava direto ali.
+// Só funciona em navegadores com File System Access API (Chrome/Edge) — em
+// Safari/Firefox cai automaticamente no download tradicional (pasta padrão).
+const _FS_DB='portfolio_fs_v1',_FS_STORE='handles',_FS_KEY='exportDir';
+function _fsAbre(){
+  return new Promise((res,rej)=>{
+    const rq=indexedDB.open(_FS_DB,1);
+    rq.onupgradeneeded=()=>rq.result.createObjectStore(_FS_STORE);
+    rq.onsuccess=()=>res(rq.result);
+    rq.onerror=()=>rej(rq.error);
+  });
+}
+async function _fsPegar(){
   try{
-    const blob=new Blob([JSON.stringify(snapshotDados(),null,2)],{type:'application/json'});
+    const db=await _fsAbre();
+    return await new Promise((res,rej)=>{
+      const tx=db.transaction(_FS_STORE,'readonly');
+      const rq=tx.objectStore(_FS_STORE).get(_FS_KEY);
+      rq.onsuccess=()=>res(rq.result||null); rq.onerror=()=>rej(rq.error);
+    });
+  }catch(_){ return null; }
+}
+async function _fsSalvar(handle){
+  try{
+    const db=await _fsAbre();
+    return await new Promise((res,rej)=>{
+      const tx=db.transaction(_FS_STORE,'readwrite');
+      tx.objectStore(_FS_STORE).put(handle,_FS_KEY);
+      tx.oncomplete=()=>res(true); tx.onerror=()=>rej(tx.error);
+    });
+  }catch(_){ return false; }
+}
+async function _fsEsquecer(){
+  try{ const db=await _fsAbre(); db.transaction(_FS_STORE,'readwrite').objectStore(_FS_STORE).delete(_FS_KEY); }catch(_){/*noop*/}
+}
+// Retorna um FileSystemDirectoryHandle pronto pra uso (com permissão readwrite
+// confirmada), ou null se o navegador não suporta / usuário cancelou o diálogo.
+async function _fsGetDirHandle(forcarEscolha){
+  if(!window.showDirectoryPicker) return null;
+  let handle=forcarEscolha?null:await _fsPegar();
+  if(handle){
+    try{
+      const perm=await handle.queryPermission({mode:'readwrite'});
+      if(perm==='granted') return handle;
+      if(perm==='prompt'){ const p2=await handle.requestPermission({mode:'readwrite'}); if(p2==='granted') return handle; }
+    }catch(_){ handle=null; } // pasta apagada/movida — cai pra escolher de novo
+  }
+  try{
+    handle=await window.showDirectoryPicker({id:'financas-export',mode:'readwrite'});
+    await _fsSalvar(handle);
+    return handle;
+  }catch(_){ return null; } // usuário cancelou o diálogo de pasta
+}
+async function _fsTrocarPasta(){
+  const h=await _fsGetDirHandle(true);
+  await _atualizarExportPastaInfo();
+  if(h) toast('✓ Pasta de exportação atualizada: '+(h.name||'selecionada'));
+}
+// Mostra, na Central de Backup, qual pasta está lembrada (ou se ainda não há uma)
+async function _atualizarExportPastaInfo(){
+  const el=document.getElementById('export-pasta-info');
+  if(!el)return;
+  if(!window.showDirectoryPicker){
+    el.innerHTML='Seu navegador não suporta lembrar a pasta — cada exportação abre o download padrão.';
+    return;
+  }
+  const h=await _fsPegar();
+  if(h){
+    let ok=false; try{ ok=(await h.queryPermission({mode:'readwrite'}))==='granted'; }catch(_){ }
+    el.innerHTML=(ok?'📁 Pasta lembrada: <strong>'+(h.name||'selecionada')+'</strong>':'📁 Pasta salva anteriormente perdeu a permissão — a próxima exportação vai pedir de novo.')
+      +' · <a href="javascript:void(0)" onclick="_fsTrocarPasta()" style="color:var(--acc,#4A7A56);text-decoration:underline">trocar pasta</a>';
+  } else {
+    el.innerHTML='Nenhuma pasta lembrada ainda — a 1ª exportação vai pedir uma vez e guardar pra sempre.';
+  }
+}
+async function exportarDados(){
+  const dt=new Date();
+  const nome='financas-backup-'+dt.getFullYear()+String(dt.getMonth()+1).padStart(2,'0')+String(dt.getDate()).padStart(2,'0')+'-'+String(dt.getHours()).padStart(2,'0')+String(dt.getMinutes()).padStart(2,'0')+'.json';
+  const conteudo=JSON.stringify(snapshotDados(),null,2);
+  try{
+    const dirHandle=await _fsGetDirHandle(false);
+    if(dirHandle){
+      const fileHandle=await dirHandle.getFileHandle(nome,{create:true});
+      const writable=await fileHandle.createWritable();
+      await writable.write(conteudo);
+      await writable.close();
+      toast('✓ Backup salvo em '+(dirHandle.name||'pasta selecionada')+': '+nome);
+      _atualizarExportPastaInfo();
+      return;
+    }
+    // Sem File System Access API (ou usuário cancelou o diálogo de pasta) —
+    // usa o download tradicional (pasta padrão de Downloads do navegador).
+    const blob=new Blob([conteudo],{type:'application/json'});
     const url=URL.createObjectURL(blob);
     const a=document.createElement('a');
-    const dt=new Date();
-    const nome='financas-backup-'+dt.getFullYear()+String(dt.getMonth()+1).padStart(2,'0')+String(dt.getDate()).padStart(2,'0')+'-'+String(dt.getHours()).padStart(2,'0')+String(dt.getMinutes()).padStart(2,'0')+'.json';
     a.href=url;a.download=nome;document.body.appendChild(a);a.click();
     setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url)},100);
     toast('✓ Backup exportado: '+nome);
@@ -9866,11 +9960,12 @@ function _talvezNudgeExport(){
   }
 }
 function fecharNudgeExport(){const b=document.getElementById('backup-nudge');if(b)b.style.display='none';}
-function exportarEBackup(){ exportarDados(); _marcarExportFeito(); fecharNudgeExport(); }
+async function exportarEBackup(){ await exportarDados(); _marcarExportFeito(); fecharNudgeExport(); }
 
 // ─── Painel de Backup (Configurações) ───
 function _fmtBackupTs(ts){const d=new Date(ts);return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})+' '+d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});}
 function _refletirBackupUI(){
+  _atualizarExportPastaInfo();
   // Reflete o toggle da rotina de limpeza de previstos (independe de haver snapshots)
   const sw=document.getElementById('rotina-prev-switch');
   if(sw)sw.classList.toggle('on',limparPrevistosAtivo());
