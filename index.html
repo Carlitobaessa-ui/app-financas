@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 19 -->
+<!-- APP_VERSION: 20 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1436,6 +1436,18 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="pbd">
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px" id="fluxo-kpis"></div>
       <div class="chart-l"><canvas id="ch-fluxo-dash"></canvas></div>
+    </div>
+  </div>
+
+  <!-- GASTOS POR CATEGORIA — CONSOLIDADO (Cartões de Crédito + Contas Correntes) -->
+  <div class="gw mb">
+    <div class="panel">
+      <div class="phd"><div><div class="pt">Gastos por Categoria — Média Mensal</div><div class="ps">Cartões de crédito + Contas correntes · usa o período do Fluxo de Caixa acima</div></div><span class="badge b-gd">Consolidado</span></div>
+      <div class="pbd"><div class="chart-l"><canvas id="ch-cat-rank"></canvas></div></div>
+    </div>
+    <div class="panel">
+      <div class="phd"><div><div class="pt">Gastos por Categoria — Evolução</div><div class="ps">Principais categorias ao longo do período (histórico real)</div></div></div>
+      <div class="pbd"><div class="chart-l"><canvas id="ch-cat-evol"></canvas></div></div>
     </div>
   </div>
 
@@ -3933,6 +3945,56 @@ function rdash(){
     {label:'Líquido',data:liqPrev,borderColor:C.blu,backgroundColor:'transparent',fill:false,tension:0.4,pointRadius:0,pointBackgroundColor:C.blu,borderWidth:1.5,borderDash:[5,3]},
     {label:'Líquido Acumulado',data:acumulado,borderColor:'#9C6B4F',backgroundColor:'transparent',fill:false,tension:0.4,pointRadius:_pr,pointBackgroundColor:'#9C6B4F',borderWidth:1.5}
   ]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:14,bottom:8}},plugins:{legend:{position:'top',labels:{color:C.txt,padding:14,font:{size:11},usePointStyle:true,pointStyle:'line'}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+brl(ctx.parsed.y)}}},scales:gridOpts(v=>'R$'+(v/1000).toFixed(0)+'k')},plugins:[_fluxoLabelPlugin]});
+
+  // ═══ GASTOS POR CATEGORIA — CONSOLIDADO (Cartões de Crédito + Contas Correntes) ═══
+  // Usa o MESMO período escolhido no Fluxo de Caixa Consolidado (fluxoAnos/agregarAno),
+  // mas olhando para TRÁS (histórico real) — diferente do fluxo, que projeta pra frente.
+  // Categoria de gasto é só dado real: não faz sentido "prever" categoria futura.
+  // Fontes: compras no cartão (S.compras) + débitos categorizados de conta corrente
+  // (S.lancamentos, tipo débito, com .cat) — a mesma combinação já usada no Orçamento,
+  // porém aqui SEM S.gastos, pra bater exatamente com o que o usuário pediu (Cartões +
+  // Contas Correntes). Gastos em dinheiro (forma='dinheiro') ficam fora, propositalmente.
+  {
+    const nMesesCat=Math.max(1,agregarAno?Math.round(fluxoAnos)*12:Math.round(fluxoAnos*12));
+    const mesesCat=[]; // ['YYYY-MM',...] do mais antigo pro mais recente, terminando no mês atual
+    for(let k=nMesesCat-1;k>=0;k--){
+      const dt=new Date(_hojeDt.getFullYear(),_hojeDt.getMonth()-k,1);
+      mesesCat.push(dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'));
+    }
+    const _ymSetCat=new Set(mesesCat);
+    const porMesCat={}; // {ym:{categoria:valor}}
+    mesesCat.forEach(ym=>porMesCat[ym]={});
+    S.compras.forEach(cp=>{
+      if(cp.forecast||!cp.cat)return;
+      const ym=(cp.data||'').slice(0,7); if(!_ymSetCat.has(ym))return;
+      porMesCat[ym][cp.cat]=(porMesCat[ym][cp.cat]||0)+cp.valor;
+    });
+    S.lancamentos.forEach(l=>{
+      if(l.forecast||l.tipo!=='debito'||!l.cat)return;
+      const ym=(l.data||'').slice(0,7); if(!_ymSetCat.has(ym))return;
+      porMesCat[ym][l.cat]=(porMesCat[ym][l.cat]||0)+l.valor;
+    });
+    const totCat={};
+    mesesCat.forEach(ym=>{ Object.entries(porMesCat[ym]).forEach(([cat,v])=>{ totCat[cat]=(totCat[cat]||0)+v; }); });
+    const catsOrd=Object.entries(totCat).sort((a,b)=>b[1]-a[1]);
+
+    // Doughnut: gasto MÉDIO MENSAL por categoria no período (ranking)
+    mkCh('ch-cat-rank',{type:'doughnut',data:{labels:catsOrd.map(([k])=>k),datasets:[{data:catsOrd.map(([,v])=>+(v/nMesesCat).toFixed(2)),backgroundColor:catsOrd.map(([k])=>corCat(k)),borderWidth:2,borderColor:'#FBFAF6'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{color:C.txt,padding:9,font:{size:10.5}}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+brl(ctx.parsed)+'/mês'}}}}});
+
+    // Linha: evolução das principais categorias (top 7 + "Outras" agrupando o resto).
+    // Se o período agrega por ano (>5 anos, mesma regra do Fluxo de Caixa), soma por ano;
+    // senão, um ponto por mês.
+    const TOPN_CAT=7;
+    const topCats=catsOrd.slice(0,TOPN_CAT).map(([k])=>k);
+    const outrasCats=catsOrd.slice(TOPN_CAT).map(([k])=>k);
+    const bucketDe=ym=>agregarAno?ym.slice(0,4):ym;
+    const bucketsCat=[...new Set(mesesCat.map(bucketDe))];
+    const somaBucket=(cats,b)=>mesesCat.filter(ym=>bucketDe(ym)===b).reduce((s,ym)=>s+cats.reduce((s2,cat)=>s2+((porMesCat[ym]||{})[cat]||0),0),0);
+    const dsCat=topCats.map(cat=>({label:cat,data:bucketsCat.map(b=>+somaBucket([cat],b).toFixed(2)),borderColor:corCat(cat),backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:bucketsCat.length>18?0:2,borderWidth:1.6}));
+    if(outrasCats.length)dsCat.push({label:'Outras',data:bucketsCat.map(b=>+somaBucket(outrasCats,b).toFixed(2)),borderColor:'#9A9382',backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:bucketsCat.length>18?0:2,borderWidth:1.6,borderDash:[4,3]});
+    const labelsCat=agregarAno?bucketsCat:bucketsCat.map(ym=>{const [y,m]=ym.split('-');return NOMES_MES[+m-1]+(nMesesCat>12?'/'+y.slice(2):'');});
+    mkCh('ch-cat-evol',{type:'line',data:{labels:labelsCat,datasets:dsCat},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:C.txt,padding:9,font:{size:10},usePointStyle:true,pointStyle:'line'}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+brl(ctx.parsed.y)}}},scales:gridOpts(v=>'R$'+(v/1000).toFixed(0)+'k')}});
+  }
 
   // Circulação entre baldes (conta ↔ cartão ↔ investimento)
   renderFluxoBaldes();
