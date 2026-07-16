@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 31 -->
+<!-- APP_VERSION: 32 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -338,6 +338,7 @@ tr.provisorio td:first-child{box-shadow:inset 3px 0 0 rgba(122,96,32,.45)}
 .phd{padding:14px 20px;border-bottom:0.5px solid var(--bdr);display:flex;align-items:center;justify-content:space-between;gap:10px}
 .pt{font-size:12px;font-weight:600;color:var(--txt);letter-spacing:.2px}
 .ps{font-size:11px;color:var(--txt3)}
+.pft{font-size:10.5px;color:var(--txt3);padding-top:10px;margin-top:10px;border-top:0.5px solid var(--bdr)}
 .pbd{padding:20px}
 
 /* ─── TABLE ──── */
@@ -1387,11 +1388,11 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <div class="gw">
     <div class="panel">
       <div class="phd"><div><div class="pt">Evolução Patrimonial</div><div class="ps">Patrimônio líquido projetado · usa o período do Fluxo de Caixa Consolidado</div></div></div>
-      <div class="pbd"><div class="chart-l"><canvas id="ch-evol"></canvas></div></div>
+      <div class="pbd"><div class="chart-l"><canvas id="ch-evol"></canvas></div><div class="pft">Patrimônio líquido projetado a partir de hoje · período = seletor do Fluxo de Caixa Consolidado abaixo</div></div>
     </div>
     <div class="panel">
       <div class="phd"><div class="pt">Composição do Patrimônio</div><span class="badge b-n">consolidado</span></div>
-      <div class="pbd"><div class="chart-l"><canvas id="ch-aloc"></canvas></div></div>
+      <div class="pbd"><div class="chart-l"><canvas id="ch-aloc"></canvas></div><div class="pft">Composição atual: ativos BR/EUA/FIIs/RF + saldo em bancos + bens + grãos</div></div>
     </div>
   </div>
 
@@ -1423,6 +1424,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="pbd">
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px" id="fluxo-kpis"></div>
       <div class="chart-l"><canvas id="ch-fluxo-dash"></canvas></div>
+      <div class="pft">Créditos e débitos de todo o portfólio, incluindo previstos · projeção para frente</div>
     </div>
   </div>
 
@@ -1431,11 +1433,11 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <div class="g2">
     <div class="panel">
       <div class="phd"><div><div class="pt">Gastos por Categoria — Média Mensal</div><div class="ps">Cartões de crédito + Contas correntes · usa o período do Fluxo de Caixa acima</div></div><span class="badge b-gd">Consolidado</span></div>
-      <div class="pbd"><div class="chart-l"><canvas id="ch-cat-rank"></canvas></div></div>
+      <div class="pbd"><div class="chart-l"><canvas id="ch-cat-rank"></canvas></div><div class="pft">Cartões + Contas correntes, só realizados (sem previstos) · período do Fluxo de Caixa acima</div></div>
     </div>
     <div class="panel">
       <div class="phd"><div><div class="pt">Gastos por Categoria — Evolução</div><div class="ps">Principais categorias ao longo do período (histórico real)</div></div></div>
-      <div class="pbd"><div class="chart-l"><canvas id="ch-cat-evol"></canvas></div></div>
+      <div class="pbd"><div class="chart-l"><canvas id="ch-cat-evol"></canvas></div><div class="pft">Top 5 categorias (cartões + contas), só realizados · mesmo período do gráfico acima</div></div>
     </div>
   </div>
 
@@ -1454,10 +1456,12 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="panel">
       <div class="phd"><div class="pt">Maiores Posições</div><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="goTo('carteira')">Ver todas →</button></div>
       <table><thead><tr><th>Ativo</th><th>Tipo</th><th class="tr">Posição</th><th class="tr">Rent.</th></tr></thead><tbody id="top-pos"></tbody></table>
+      <div class="pft">Top 6 ativos por posição atual, entre os que têm cotação</div>
     </div>
     <div class="panel">
       <div class="phd"><div class="pt">Últimas Despesas</div><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="goTo('gastos')">Ver todas →</button></div>
       <table><thead><tr><th>Descrição</th><th>Categoria</th><th class="tr">Valor</th></tr></thead><tbody id="ul-gas"></tbody></table>
+      <div class="pft">6 lançamentos mais recentes de Gastos Avulsos (S.gastos)</div>
     </div>
   </div>
 </div>
@@ -1474,10 +1478,12 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <div class="panel mb">
     <div class="phd"><div><div class="pt">Ações BR · B3</div></div><span class="badge b-g">B3</span></div>
     <table><thead><tr><th>Ticker</th><th>Qtd</th><th>PM</th><th>Atual</th><th class="tr">Posição</th><th class="tr">Resultado</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-br"></tbody></table>
+    <div class="pft">Todas as ações B3 cadastradas na carteira, posição atual</div>
   </div>
   <div class="panel mb">
     <div class="phd"><div><div class="pt">Stocks · NYSE / NASDAQ</div></div><span class="badge b-b">EUA</span></div>
     <table><thead><tr><th>Ticker</th><th>Qtd</th><th>PM (USD)</th><th>Atual</th><th class="tr">Posição BRL</th><th class="tr">Resultado</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-us"></tbody></table>
+    <div class="pft">Todas as stocks EUA cadastradas, posição convertida em BRL</div>
   </div>
   <!-- ALUGUEL DE AÇÕES -->
   <div class="panel mb" id="panel-aluguel" style="margin-top:16px">
@@ -1488,10 +1494,11 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div id="aluguel-kpis" class="kpi-row" style="margin-bottom:12px"></div>
     <div id="aluguel-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum contrato de aluguel cadastrado. Use <strong>+ Contrato</strong> ou importe por foto/PDF.</div>
     <table id="aluguel-tabela"><thead><tr><th>Ativo</th><th>Papel</th><th class="tr">Qtd</th><th class="tr">Preço médio</th><th class="tr">Preço ação</th><th class="tr">Posição</th><th class="tr">Rent.</th><th class="tr">Vencimento</th><th></th></tr></thead><tbody id="tb-aluguel"></tbody></table>
+    <div class="pft">Todos os contratos de aluguel de ações cadastrados (doador/tomador)</div>
   </div>
 
   <!-- FUNDOS IMOBILIÁRIOS -->
-  <div class="panel mb" style="margin-top:16px"><div class="phd"><div class="pt">Fundos Imobiliários</div><div class="ha"><button class="btn btn-ghost" onclick="abrirFotoImport('ativos')"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportAtivos()">⭳ Importar</button><span class="badge b-gd">FII</span></div></div><table><thead><tr><th>Fundo</th><th>Qtd</th><th>PM</th><th>Atual</th><th class="tr">DY</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-fii"></tbody></table></div>
+  <div class="panel mb" style="margin-top:16px"><div class="phd"><div class="pt">Fundos Imobiliários</div><div class="ha"><button class="btn btn-ghost" onclick="abrirFotoImport('ativos')"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportAtivos()">⭳ Importar</button><span class="badge b-gd">FII</span></div></div><table><thead><tr><th>Fundo</th><th>Qtd</th><th>PM</th><th>Atual</th><th class="tr">DY</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-fii"></tbody></table><div class="pft">Todos os fundos imobiliários cadastrados na carteira</div></div>
 
   <!-- FUNDOS DE INVESTIMENTO -->
   <div class="panel mb" id="panel-fundos" style="margin-top:16px">
@@ -1502,10 +1509,11 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div id="fundos-kpis" class="kpi-row" style="margin-bottom:12px"></div>
     <div id="fundos-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum fundo cadastrado. Use <strong>+ Fundo</strong> ou importe por foto/PDF da posição.</div>
     <table id="fundos-tabela"><thead><tr><th>Fundo</th><th class="tr">Aplicado</th><th class="tr">Posição</th><th class="tr">Rendimento</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-fundos"></tbody></table>
+    <div class="pft">Fundos DI/RF/multimercado cadastrados, por valor aplicado e posição atual</div>
   </div>
 
   <!-- RENDA FIXA · CDB -->
-  <div class="panel mb" style="margin-top:16px"><div class="phd"><div class="pt">Renda Fixa · CDB</div><div class="ha"><button class="btn btn-ghost" onclick="abrirFotoImport('ativos')"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportAtivos()">⭳ Importar</button><span class="badge b-n">RF</span></div></div><table><thead><tr><th>Produto</th><th>Inst.</th><th>Taxa</th><th class="tr">Valor</th><th class="tr">Vencimento</th><th></th></tr></thead><tbody id="tb-rf"></tbody></table></div>
+  <div class="panel mb" style="margin-top:16px"><div class="phd"><div class="pt">Renda Fixa · CDB</div><div class="ha"><button class="btn btn-ghost" onclick="abrirFotoImport('ativos')"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportAtivos()">⭳ Importar</button><span class="badge b-n">RF</span></div></div><table><thead><tr><th>Produto</th><th>Inst.</th><th>Taxa</th><th class="tr">Valor</th><th class="tr">Vencimento</th><th></th></tr></thead><tbody id="tb-rf"></tbody></table><div class="pft">Todos os CDBs e títulos de renda fixa cadastrados (exceto fundos)</div></div>
 
   <!-- SATÉLITE · POSIÇÕES ASSIMÉTRICAS -->
   <div class="panel mb" id="panel-sat" style="margin-top:16px">
@@ -1515,6 +1523,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     </div>
     <div id="sat-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhuma posição satélite. O Comitê recomenda no máximo 5% da carteira — aposta pequena e assimétrica.</div>
     <table id="sat-tabela"><thead><tr><th>Ticker</th><th>Qtd</th><th>PM</th><th>Atual</th><th class="tr">Posição</th><th class="tr">Resultado</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-sat"></tbody></table>
+    <div class="pft">Posições satélite (convicção assimétrica), todas cadastradas</div>
   </div>
 
   <!-- GRÃOS / COMMODITIES -->
@@ -1529,6 +1538,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <div id="grao-exposicao" style="margin-top:18px"></div>
       <div id="grao-evol-wrap" style="margin-top:18px"><div class="pt" style="font-size:13px;margin-bottom:10px">Evolução do Estoque &amp; Resultado</div><div class="chart-m"><canvas id="ch-grao-evol"></canvas></div></div>
       <div style="margin-top:18px"><div class="pt" style="font-size:13px;margin-bottom:10px">Operações</div><div style="overflow-x:auto"><table id="tb-grao-ops"><thead><tr><th>Data</th><th>Produto</th><th>Op.</th><th class="tr">Sacas</th><th class="tr">R$/saca</th><th class="tr">Total</th><th>Contraparte</th><th class="tr">Hedge</th><th></th></tr></thead><tbody id="tb-grao"></tbody></table></div></div>
+      <div class="pft">Trading físico + hedge de grãos: todo o histórico de operações (S.graos), sem previstos</div>
     </div>
   </div>
 </div>
@@ -1555,11 +1565,11 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <div class="g2 mb">
     <div class="panel">
       <div class="phd"><div><div class="pt">Soja — Histórico 12 meses (USD/bu)</div></div><span class="badge b-g">ZS</span></div>
-      <div class="pbd"><div class="chart-m"><canvas id="ch-soja"></canvas></div></div>
+      <div class="pbd"><div class="chart-m"><canvas id="ch-soja"></canvas></div><div class="pft">Cotação simulada da soja (ZS), últimos 12 meses · não reflete posições da carteira</div></div>
     </div>
     <div class="panel">
       <div class="phd"><div><div class="pt">Milho & Trigo — Histórico 12 meses</div></div><span class="badge b-gd">ZC · ZW</span></div>
-      <div class="pbd"><div class="chart-m"><canvas id="ch-milho-trigo"></canvas></div></div>
+      <div class="pbd"><div class="chart-m"><canvas id="ch-milho-trigo"></canvas></div><div class="pft">Cotação simulada de milho (ZC) e trigo (ZW), últimos 12 meses · dado simulado</div></div>
     </div>
   </div>
 
@@ -1607,12 +1617,13 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="kpi"><div class="kpi-eye">A Receber (provisionado)</div><div class="kpi-val cb" id="dv-prj">—</div></div>
   </div>
   <div class="g2 mb">
-    <div class="panel"><div class="phd"><div class="pt">Por Mês</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-div"></canvas></div></div></div>
-    <div class="panel"><div class="phd"><div class="pt">Por Ativo</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-div-at"></canvas></div></div></div>
+    <div class="panel"><div class="phd"><div class="pt">Por Mês</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-div"></canvas></div><div class="pft">Proventos recebidos, Jan–Jun do ano de referência (mais recente com dado)</div></div></div>
+    <div class="panel"><div class="phd"><div class="pt">Por Ativo</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-div-at"></canvas></div><div class="pft">Todos os proventos recebidos e a receber, agrupados por ativo · todo o histórico</div></div></div>
   </div>
   <div class="panel">
     <div class="phd"><div class="pt">Histórico Detalhado</div></div>
     <table><thead><tr><th>Data</th><th>Ativo</th><th>Tipo</th><th>Cotas</th><th class="tr">R$/Cota</th><th class="tr">Total</th><th></th></tr></thead><tbody id="tb-div"></tbody></table>
+    <div class="pft">Todo o histórico de proventos, incluindo os ainda a receber (futuro)</div>
   </div>
 </div>
 
@@ -1621,7 +1632,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <div class="ph"><svg class="ph-watermark"><use href="#ic-trigo"/></svg><div><div class="ph-eye">Estratégia</div><div class="ph-title">Alocação de Ativos</div><div class="ph-sub">Atual vs. faixas-alvo do Comitê de Investimentos</div></div></div>
   <div class="g2 mb">
     <div class="panel"><div class="phd"><div class="pt">Atual × Faixa-alvo</div></div><div class="pbd" id="aloc-bars"></div></div>
-    <div class="panel"><div class="phd"><div class="pt">Distribuição</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-aloc-pie"></canvas></div></div></div>
+    <div class="panel"><div class="phd"><div class="pt">Distribuição</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-aloc-pie"></canvas></div><div class="pft">Distribuição atual da carteira de investimentos por classe de ativo</div></div></div>
   </div>
   <div class="panel">
     <div class="phd"><div class="pt">Configurar Alvos</div><span class="badge b-n">Soma dos alvos = 100%</span></div>
@@ -1641,8 +1652,8 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <div id="recon-alert" class="recon-alert" style="display:none"></div>
   <div class="bc-grid" id="bc-grid"></div>
   <div class="g2 mb">
-    <div class="panel"><div class="phd"><div><div class="pt">Fluxo de Caixa — 6 meses</div></div><span class="badge b-gd">Consolidado</span></div><div class="pbd"><div class="chart-m"><canvas id="ch-fluxo"></canvas></div></div></div>
-    <div class="panel"><div class="phd"><div class="pt">Saldo por Banco</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-bc-pie"></canvas></div></div></div>
+    <div class="panel"><div class="phd"><div><div class="pt">Fluxo de Caixa — 6 meses</div></div><span class="badge b-gd">Consolidado</span></div><div class="pbd"><div class="chart-m"><canvas id="ch-fluxo"></canvas></div><div class="pft">Só lançamentos reais de contas (sem previstos) · janela fixa de 6 meses</div></div></div>
+    <div class="panel"><div class="phd"><div class="pt">Saldo por Banco</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-bc-pie"></canvas></div><div class="pft">Contas correntes ativas com saldo positivo · saldo atual por banco</div></div></div>
   </div>
   <div class="panel">
     <div class="phd">
@@ -1655,6 +1666,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     </div>
     <div class="sel-bar" id="sel-bar-contas" style="display:none"></div>
     <table><thead><tr><th class="sel-col" style="display:none"><input type="checkbox" id="sel-all-contas" onclick="selAll('contas',this.checked)"></th><th>Data</th><th>Banco</th><th>Descrição</th><th>Tipo</th><th class="tr">Valor</th><th class="tr">Saldo</th><th></th></tr></thead><tbody id="tb-ext"></tbody></table>
+    <div class="pft">Lançamentos bancários · Realizados ou Previstos conforme aba selecionada acima</div>
   </div>
 </div>
 
@@ -1669,8 +1681,8 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   </div>
   <div class="cc-grid" id="cc-grid"></div>
   <div class="g2 mb">
-    <div class="panel"><div class="phd"><div><div class="pt">Gastos por Categoria</div></div><span class="badge b-gd">Fatura aberta</span></div><div class="pbd"><div class="chart-m"><canvas id="ch-cc-cat"></canvas></div></div></div>
-    <div class="panel"><div class="phd"><div class="pt">Utilização de Limite</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-cc-uso"></canvas></div></div></div>
+    <div class="panel"><div class="phd"><div><div class="pt">Gastos por Categoria</div></div><span class="badge b-gd">Fatura aberta</span></div><div class="pbd"><div class="chart-m"><canvas id="ch-cc-cat"></canvas></div><div class="pft">Compras no cartão, só realizadas (sem previstos) · mês da fatura aberta</div></div></div>
+    <div class="panel"><div class="phd"><div class="pt">Utilização de Limite</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-cc-uso"></canvas></div><div class="pft">Comprometido = realizado (fatura + parcelas futuras) + previstos · Limite = total do cartão</div></div></div>
   </div>
   <div class="panel">
     <div class="phd">
@@ -1683,10 +1695,12 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     </div>
     <div class="sel-bar" id="sel-bar-cartoes" style="display:none"></div>
     <table><thead><tr><th class="sel-col" style="display:none"><input type="checkbox" id="sel-all-cartoes" onclick="selAll('cartoes',this.checked)"></th><th>Data</th><th>Cartão</th><th>Descrição</th><th>Categoria</th><th class="tr">Valor</th><th class="tr">Parcelas</th><th></th></tr></thead><tbody id="tb-comp"></tbody></table>
+    <div class="pft">Compras no cartão · Realizadas ou Previstas conforme aba selecionada acima</div>
   </div>
   <div class="panel" id="painel-pagfat" style="margin-top:16px;display:none">
     <div class="phd"><div><div class="pt">Pagamentos de Fatura</div><div class="ps">Histórico de pagamentos · editável</div></div></div>
     <table><thead><tr><th>Data</th><th>Cartão</th><th>Origem</th><th class="tr">Valor Pago</th><th></th></tr></thead><tbody id="tb-pagfat"></tbody></table>
+    <div class="pft">Histórico de pagamentos de fatura, todos os cartões (ou o filtrado acima)</div>
   </div>
 </div>
 
@@ -1701,11 +1715,12 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   </div>
   <div class="gw">
     <div class="panel"><div class="phd"><div class="pt">Por Categoria</div></div><div class="pbd" id="cat-lista"></div></div>
-    <div class="panel"><div class="phd"><div class="pt">Distribuição</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-gas-pie"></canvas></div></div></div>
+    <div class="panel"><div class="phd"><div class="pt">Distribuição</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-gas-pie"></canvas></div><div class="pft">Gastos avulsos (S.gastos) não-previstos do mês de referência</div></div></div>
   </div>
   <div class="panel">
     <div class="phd"><div class="pt">Todos os Lançamentos</div></div>
     <table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Origem</th><th class="tr">Valor</th><th></th></tr></thead><tbody id="tb-gas"></tbody></table>
+    <div class="pft">Gastos avulsos · Realizados ou Previstos conforme aba selecionada acima</div>
   </div>
   <div class="panel">
     <div class="phd"><div class="pt">Gerenciar Categorias</div><button class="btn btn-g" style="font-size:11px;padding:5px 12px" onclick="abrirAddCategoria()">+ Nova Categoria</button></div>
@@ -1737,11 +1752,11 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <div class="g2 mb">
     <div class="panel">
       <div class="phd"><div class="pt">Progresso por Objetivo</div><span class="badge b-g">acumulado vs. meta</span></div>
-      <div class="pbd"><div style="position:relative;height:240px"><canvas id="ch-obj-bar"></canvas></div></div>
+      <div class="pbd"><div style="position:relative;height:240px"><canvas id="ch-obj-bar"></canvas></div><div class="pft">Todos os objetivos cadastrados: acumulado vs. meta, sem filtro de período</div></div>
     </div>
     <div class="panel">
       <div class="phd"><div class="pt">Distribuição de Aportes Mensais</div></div>
-      <div class="pbd"><div style="position:relative;height:240px"><canvas id="ch-obj-pie"></canvas></div></div>
+      <div class="pbd"><div style="position:relative;height:240px"><canvas id="ch-obj-pie"></canvas></div><div class="pft">Aporte mensal necessário por objetivo, todos os objetivos cadastrados</div></div>
     </div>
   </div>
 
@@ -1837,11 +1852,11 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <div class="g2 mb">
     <div class="panel">
       <div class="phd"><div class="pt">Distribuição por Categoria</div></div>
-      <div class="pbd"><div class="chart-m"><canvas id="ch-bens-pie"></canvas></div></div>
+      <div class="pbd"><div class="chart-m"><canvas id="ch-bens-pie"></canvas></div><div class="pft">Todos os bens cadastrados, valor atual por categoria</div></div>
     </div>
     <div class="panel">
       <div class="phd"><div><div class="pt">Valorização / Depreciação</div><div class="ps">Valor atual vs. valor de aquisição</div></div></div>
-      <div class="pbd"><div class="chart-m"><canvas id="ch-bens-bar"></canvas></div></div>
+      <div class="pbd"><div class="chart-m"><canvas id="ch-bens-bar"></canvas></div><div class="pft">Todos os bens cadastrados: valor de aquisição vs. valor atual</div></div>
     </div>
   </div>
 
@@ -1867,6 +1882,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       </tr></thead>
       <tbody id="tb-bens"></tbody>
     </table>
+    <div class="pft">Lista completa de todos os bens patrimoniais cadastrados</div>
   </div>
 </div>
 
@@ -1904,7 +1920,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <div class="g2 mb">
     <div class="panel">
       <div class="phd"><div class="pt">Radar de Exposição Integrada</div><span class="badge b-n">3 níveis</span></div>
-      <div class="pbd"><div style="position:relative;height:280px"><canvas id="ch-sinais-radar"></canvas></div></div>
+      <div class="pbd"><div style="position:relative;height:280px"><canvas id="ch-sinais-radar"></canvas></div><div class="pft">Fotografia atual do patrimônio (6 dimensões), sem projeção temporal</div></div>
     </div>
     <div class="panel">
       <div class="phd"><div class="pt">Sinais Fracos Detectados</div><span class="badge b-gd" id="sinais-count">—</span></div>
@@ -1928,6 +1944,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="pbd">
       <div style="position:relative;height:240px;margin-bottom:10px"><canvas id="ch-impactos"></canvas></div>
       <div id="impactos-leg" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px"></div>
+      <div class="pft">Projeção do patrimônio líquido atual em 3 cenários, de hoje até 5 anos</div>
     </div>
   </div>
 
@@ -2178,7 +2195,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       </div>
       <div class="panel">
         <div class="phd"><div class="pt">Distribuição da Carga Tributária</div></div>
-        <div class="pbd"><div style="position:relative;height:220px"><canvas id="ch-fiscal-pie"></canvas></div></div>
+        <div class="pbd"><div style="position:relative;height:220px"><canvas id="ch-fiscal-pie"></canvas></div><div class="pft">Estimativa de impostos do ano corrente, com base no patrimônio e proventos atuais</div></div>
       </div>
     </div>
     <div class="panel">
@@ -2193,7 +2210,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="g2 mb">
       <div class="panel">
         <div class="phd"><div class="pt">Radar de Risco Patrimonial</div></div>
-        <div class="pbd"><div style="position:relative;height:240px"><canvas id="ch-risco-radar"></canvas></div></div>
+        <div class="pbd"><div style="position:relative;height:240px"><canvas id="ch-risco-radar"></canvas></div><div class="pft">Fotografia atual da carteira (6 dimensões de risco), sem histórico</div></div>
       </div>
       <div class="panel">
         <div class="phd"><div class="pt">Concentração de Risco</div></div>
@@ -2216,7 +2233,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
           <span id="sc-inf-val" class="mono" style="font-size:11px;min-width:32px">5%</span>
         </div>
       </div>
-      <div class="pbd"><div style="position:relative;height:280px"><canvas id="ch-cenarios"></canvas></div></div>
+      <div class="pbd"><div style="position:relative;height:280px"><canvas id="ch-cenarios"></canvas></div><div class="pft">Projeção de 10 anos a partir do patrimônio atual, 3 cenários (retorno/inflação ajustáveis)</div></div>
     </div>
     <div class="g2">
       <div class="panel">
@@ -11167,7 +11184,7 @@ function rsinais(){
         <td class="tc-center" style="text-align:center"><span style="font-size:10px;color:var(--txt2)">${r.impacto}</span></td>
         <td style="font-size:11px;color:var(--txt3)">${r.mit}</td>
       </tr>`).join('')}
-      </tbody></table></div>`;
+      </tbody></table></div><div class="pft">Riscos internos e externos identificados a partir da fotografia atual do patrimônio</div>`;
 
   // ── Projeção de impactos no tempo ──
   const horizontes=['Hoje','6 meses','1 ano','2 anos','3 anos','5 anos'];
