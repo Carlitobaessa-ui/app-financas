@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 33 -->
+<!-- APP_VERSION: 34 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1283,6 +1283,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <button class="nav-quick-btn" onclick="lancarPorVoz()" title="Lançar por voz"><span class="nqi"><svg><use href="#ic-mic"/></svg></span><span class="nql">Áudio</span></button>
       <button class="nav-quick-btn" onclick="abrirCapturaFoto()" title="Tirar foto do comprovante"><span class="nqi"><svg><use href="#ic-camera"/></svg></span><span class="nql">Foto</span></button>
       <button class="nav-quick-btn" onclick="abrirUploadRecibo()" title="Subir recibo da galeria"><span class="nqi"><svg><use href="#ic-upload"/></svg></span><span class="nql">Recibo</span></button>
+      <button class="nav-quick-btn" id="btn-ocultar-valores" onclick="toggleValoresOcultos()" title="Ocultar todos os valores"><span class="nqi" id="ic-ocultar-valores">👁</span><span class="nql" id="lbl-ocultar-valores">Ocultar</span></button>
     </div>
   </div>
   <div class="nav-scroll">
@@ -3000,11 +3001,33 @@ function popularCategorias(){
 }
 
 // ─── FORMAT
-const brl=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
-const usd=v=>'$ '+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+// Modo "ocultar valores" — mascara todo R$/US$ exibido no app (útil pra tela
+// compartilhada/print). Fica persistido (localStorage) e cobre praticamente
+// 100% dos valores monetários do app, já que brl()/usd() são as únicas funções
+// usadas pra formatar dinheiro em toda a base de código (~200 chamadas).
+let _valoresOcultos=(()=>{ try{ return localStorage.getItem('pv_ocultar_valores')==='1'; }catch(_){ return false; } })();
+const brl=v=>_valoresOcultos?'R$ ••••••':'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+const usd=v=>_valoresOcultos?'$ ••••':'$ '+v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
 const pct=v=>(v>=0?'+':'')+v.toFixed(2)+'%';
 const fdt=d=>{const[y,m,dy]=d.split('-');return`${dy}/${m}/${y}`};
 const fmt=v=>v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+// Alterna o modo e re-renderiza a página ativa pra aplicar a máscara imediatamente
+// em tudo que já está na tela (KPIs, cards, tabelas e tooltips de gráfico).
+function toggleValoresOcultos(){
+  _valoresOcultos=!_valoresOcultos;
+  try{ localStorage.setItem('pv_ocultar_valores',_valoresOcultos?'1':'0'); }catch(_){}
+  _atualizarBtnOcultarValores();
+  const pgAtiva=document.querySelector('.page.active');
+  const p=pgAtiva?pgAtiva.id.replace('page-',''):null;
+  if(p&&typeof render==='function')render(p);
+  if(typeof toast==='function')toast(_valoresOcultos?'🙈 Valores ocultos':'👁 Valores visíveis');
+}
+function _atualizarBtnOcultarValores(){
+  const ic=document.getElementById('ic-ocultar-valores'),lb=document.getElementById('lbl-ocultar-valores'),btn=document.getElementById('btn-ocultar-valores');
+  if(ic)ic.textContent=_valoresOcultos?'🙈':'👁';
+  if(lb)lb.textContent=_valoresOcultos?'Mostrar':'Ocultar';
+  if(btn)btn.title=_valoresOcultos?'Mostrar todos os valores':'Ocultar todos os valores';
+}
 
 // ─── HELPERS
 const pos=a=>{const p=a.preco||a.pm;if(a.tipo==='US')return a.qtd*p*S.usdBrl;if(a.tipo==='RF')return a.preco||a.pm;return a.qtd*p};
@@ -11327,6 +11350,9 @@ function renderDisrupcao(dis,m){
   const saud=h<12?'Bom dia':h<18?'Boa tarde':'Boa noite';
   const bg=document.getElementById('banner-greet');
   if(bg)bg.textContent=`${saud}, Carlito`;
+
+  // Reflete no botão o estado de "ocultar valores" salvo de uma sessão anterior
+  _atualizarBtnOcultarValores();
 
   rdash();
 
