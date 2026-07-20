@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 34 -->
+<!-- APP_VERSION: 35 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1283,7 +1283,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <button class="nav-quick-btn" onclick="lancarPorVoz()" title="Lançar por voz"><span class="nqi"><svg><use href="#ic-mic"/></svg></span><span class="nql">Áudio</span></button>
       <button class="nav-quick-btn" onclick="abrirCapturaFoto()" title="Tirar foto do comprovante"><span class="nqi"><svg><use href="#ic-camera"/></svg></span><span class="nql">Foto</span></button>
       <button class="nav-quick-btn" onclick="abrirUploadRecibo()" title="Subir recibo da galeria"><span class="nqi"><svg><use href="#ic-upload"/></svg></span><span class="nql">Recibo</span></button>
-      <button class="nav-quick-btn" id="btn-ocultar-valores" onclick="toggleValoresOcultos()" title="Ocultar todos os valores"><span class="nqi" id="ic-ocultar-valores">👁</span><span class="nql" id="lbl-ocultar-valores">Ocultar</span></button>
+      <button class="nav-quick-btn" id="btn-ocultar-valores" onclick="toggleValoresOcultos()" title="Ocultar todos os valores"><span class="nqi" id="ic-ocultar-valores"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg></span><span class="nql" id="lbl-ocultar-valores">Ocultar</span></button>
     </div>
   </div>
   <div class="nav-scroll">
@@ -3022,9 +3022,13 @@ function toggleValoresOcultos(){
   if(p&&typeof render==='function')render(p);
   if(typeof toast==='function')toast(_valoresOcultos?'🙈 Valores ocultos':'👁 Valores visíveis');
 }
+// Ícones minimalistas em linha (olho/olho riscado), no mesmo estilo stroke dos
+// demais ícones do app — trocados via innerHTML conforme o estado atual.
+const _SVG_OLHO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7-11-7-11-7Z"/><circle cx="12" cy="12" r="3"/></svg>';
+const _SVG_OLHO_RISCADO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M9.9 4.24A10.94 10.94 0 0 1 12 4c7 0 11 7 11 7a13.16 13.16 0 0 1-1.67 2.68M6.61 6.61A13.5 13.5 0 0 0 1 11s4 7 11 7a10.9 10.9 0 0 0 5.39-1.61M14.12 14.12a3 3 0 1 1-4.24-4.24"/><path d="M1 1l22 22"/></svg>';
 function _atualizarBtnOcultarValores(){
   const ic=document.getElementById('ic-ocultar-valores'),lb=document.getElementById('lbl-ocultar-valores'),btn=document.getElementById('btn-ocultar-valores');
-  if(ic)ic.textContent=_valoresOcultos?'🙈':'👁';
+  if(ic)ic.innerHTML=_valoresOcultos?_SVG_OLHO_RISCADO:_SVG_OLHO;
   if(lb)lb.textContent=_valoresOcultos?'Mostrar':'Ocultar';
   if(btn)btn.title=_valoresOcultos?'Mostrar todos os valores':'Ocultar todos os valores';
 }
