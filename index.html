@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 36 -->
+<!-- APP_VERSION: 37 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -289,6 +289,11 @@ tr.provisorio td:first-child{box-shadow:inset 3px 0 0 rgba(122,96,32,.45)}
 .orc-tipo-f{background:var(--grn-dim);color:var(--grn)}
 .orc-tipo-v{background:var(--gld-dim);color:var(--gld)}
 .orc-inp{width:100px;font-family:var(--mono);font-size:12px;background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:4px;padding:5px 8px;color:var(--txt);text-align:right}
+/* Ocultar valores: campos de edição do Orçamento (Receita/Contas Fixas/Variáveis)
+   mostram o valor real no atributo (necessário para edição), então a máscara aqui
+   é visual — borra o número e revela ao focar o campo para editar. */
+body.valores-ocultos .orc-inp{filter:blur(4px);transition:filter .15s}
+body.valores-ocultos .orc-inp:focus{filter:none}
 .orc-tipo-sel{font-size:10px;background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:4px;padding:4px 6px;color:var(--txt);font-family:var(--body)}
 
 .pillar{padding:10px 12px;border-radius:var(--r);background:var(--bg2);border:0.5px solid var(--bdr)}
@@ -3031,6 +3036,10 @@ function _atualizarBtnOcultarValores(){
   if(ic)ic.innerHTML=_valoresOcultos?_SVG_OLHO_RISCADO:_SVG_OLHO;
   if(lb)lb.textContent=_valoresOcultos?'Mostrar':'Ocultar';
   if(btn)btn.title=_valoresOcultos?'Mostrar todos os valores':'Ocultar todos os valores';
+  // Campos numéricos editáveis (ex.: Orçamento — Receita/Contas Fixas/Variáveis) não
+  // passam por brl(), pois precisam manter o valor real para edição. Nesses casos a
+  // máscara é aplicada visualmente via CSS (classe no <body>), e some ao focar o campo.
+  document.body.classList.toggle('valores-ocultos',_valoresOcultos);
 }
 
 // ─── HELPERS
