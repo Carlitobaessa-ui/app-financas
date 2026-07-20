@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 37 -->
+<!-- APP_VERSION: 38 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -3324,7 +3324,12 @@ function _agendarRetryChart(){
     }
   },250);
 }
-const gridOpts=(cb=v=>v)=>({x:{grid:{color:'rgba(74,122,86,.08)'},ticks:{color:C.muted,font:{size:10}}},y:{grid:{color:'rgba(74,122,86,.08)'},ticks:{color:C.muted,font:{size:10},callback:cb}}});
+// Rótulos de eixo (ticks) dos gráficos são desenhados pelo próprio Chart.js via
+// callback — não passam por brl(), então "Ocultar valores" precisa mascará-los
+// aqui também. _maskTick envolve qualquer callback de formatação de eixo e troca
+// o texto por marcadores quando o modo estiver ativo.
+const _maskTick=cb=>v=>_valoresOcultos?'••••':cb(v);
+const gridOpts=(cb=v=>v)=>({x:{grid:{color:'rgba(74,122,86,.08)'},ticks:{color:C.muted,font:{size:10}}},y:{grid:{color:'rgba(74,122,86,.08)'},ticks:{color:C.muted,font:{size:10},callback:_maskTick(cb)}}});
 
 // ─── PAGE TITLES for mobile header
 const PAGE_TITLES = {
@@ -3727,7 +3732,10 @@ function renderFluxoBaldes(){
 }
 
 // Rótulo compacto de valor para labels no gráfico (R$1,2k / R$850)
+// Desenhado manualmente via ctx.fillText (fora do fluxo de brl()), então respeita
+// "Ocultar valores" diretamente aqui.
 function _lblCompacto(v){
+  if(_valoresOcultos) return '••••';
   const a=Math.abs(v), s=v<0?'-':'';
   if(a>=1000) return s+'R$'+(a/1000).toFixed(a>=10000?0:1).replace('.',',')+'k';
   return s+'R$'+a.toFixed(0);
@@ -4055,7 +4063,7 @@ function rdash(){
     // Barras horizontais: gasto MÉDIO MENSAL por categoria no período (ranking) —
     // catsTop já vem ordenado da maior pra menor média, então a 1ª barra (topo) é
     // sempre a categoria com maior gasto médio mensal.
-    mkCh('ch-cat-rank',{type:'bar',data:{labels:catsTop.map(([k])=>k),datasets:[{data:catsTop.map(([,media])=>media),backgroundColor:catsTop.map(([k])=>corCat(k)),borderRadius:4,barPercentage:0.7,categoryPercentage:0.75}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>brl(ctx.parsed.x)+'/mês'}}},scales:{x:{grid:{color:'rgba(74,122,86,.08)'},ticks:{color:C.muted,font:{size:10},callback:v=>'R$'+(v/1000).toFixed(0)+'k'}},y:{grid:{display:false},ticks:{color:C.txt,font:{size:10.5}}}}}});
+    mkCh('ch-cat-rank',{type:'bar',data:{labels:catsTop.map(([k])=>k),datasets:[{data:catsTop.map(([,media])=>media),backgroundColor:catsTop.map(([k])=>corCat(k)),borderRadius:4,barPercentage:0.7,categoryPercentage:0.75}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>brl(ctx.parsed.x)+'/mês'}}},scales:{x:{grid:{color:'rgba(74,122,86,.08)'},ticks:{color:C.muted,font:{size:10},callback:_maskTick(v=>'R$'+(v/1000).toFixed(0)+'k')}},y:{grid:{display:false},ticks:{color:C.txt,font:{size:10.5}}}}}});
 
     // Linha: evolução das 10 principais categorias (sem agrupar o resto em "Outras" —
     // só as 10 aparecem, conforme pedido). Se o período agrega por ano (>5 anos, mesma
@@ -7099,7 +7107,7 @@ function rbens(){
   const byCat={};S.bens.forEach(b=>{byCat[b.cat]=(byCat[b.cat]||0)+b.vlAt});
   const catK=Object.keys(byCat);
   mkCh('ch-bens-pie',{type:'doughnut',data:{labels:catK.map(k=>BENS_LABEL[k]),datasets:[{data:Object.values(byCat),backgroundColor:catK.map(k=>BENS_COL[k]),borderWidth:2,borderColor:'#FBFAF6'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:10,font:{size:11}}}}}});
-  mkCh('ch-bens-bar',{type:'bar',data:{labels:S.bens.map(b=>b.nome.split(' ').slice(0,3).join(' ')),datasets:[{label:'Aquisição',data:S.bens.map(b=>b.vlAq),backgroundColor:'rgba(100,95,80,.2)',borderColor:'rgba(100,95,80,.5)',borderWidth:1,borderRadius:3},{label:'Atual',data:S.bens.map(b=>b.vlAt),backgroundColor:S.bens.map(b=>b.vlAt>=b.vlAq?'rgba(74,122,86,.3)':'rgba(163,58,46,.3)'),borderColor:S.bens.map(b=>b.vlAt>=b.vlAq?C.grn:C.red),borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{position:'top',labels:{color:C.txt,padding:12,font:{size:11}}}},scales:{x:{grid:{color:'rgba(100,95,80,.07)'},ticks:{color:C.muted,font:{size:9},callback:v=>'R$'+(v/1000).toFixed(0)+'k'}},y:{grid:{display:false},ticks:{color:C.txt,font:{size:9}}}}}});
+  mkCh('ch-bens-bar',{type:'bar',data:{labels:S.bens.map(b=>b.nome.split(' ').slice(0,3).join(' ')),datasets:[{label:'Aquisição',data:S.bens.map(b=>b.vlAq),backgroundColor:'rgba(100,95,80,.2)',borderColor:'rgba(100,95,80,.5)',borderWidth:1,borderRadius:3},{label:'Atual',data:S.bens.map(b=>b.vlAt),backgroundColor:S.bens.map(b=>b.vlAt>=b.vlAq?'rgba(74,122,86,.3)':'rgba(163,58,46,.3)'),borderColor:S.bens.map(b=>b.vlAt>=b.vlAq?C.grn:C.red),borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{position:'top',labels:{color:C.txt,padding:12,font:{size:11}}}},scales:{x:{grid:{color:'rgba(100,95,80,.07)'},ticks:{color:C.muted,font:{size:9},callback:_maskTick(v=>'R$'+(v/1000).toFixed(0)+'k')}},y:{grid:{display:false},ticks:{color:C.txt,font:{size:9}}}}}});
 
   // Tabela completa
   document.getElementById('tb-bens').innerHTML=S.bens.map((b,i)=>{
