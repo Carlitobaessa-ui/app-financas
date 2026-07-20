@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 39 -->
+<!-- APP_VERSION: 40 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1486,10 +1486,22 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <table><thead><tr><th>Ticker</th><th>Qtd</th><th>PM</th><th>Atual</th><th class="tr">Posição</th><th class="tr">Resultado</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-br"></tbody></table>
     <div class="pft">Todas as ações B3 cadastradas na carteira, posição atual</div>
   </div>
+  <!-- MONITORAMENTO DE DIVIDENDOS — AÇÕES BR -->
+  <div class="panel mb" style="margin-top:16px">
+    <div class="phd"><div><div class="pt">Monitoramento de Dividendos — Ações BR</div><div class="ps">Proventos já recebidos, agrupados por empresa</div></div><button class="btn btn-g" onclick="openM('m-dividendo')">+ Provento</button></div>
+    <div id="div-monitor-br"></div>
+    <div class="pft">Soma de dividendos/JCP recebidos (data já passada) por ação B3 cadastrada na carteira, ordenado do maior para o menor total · DY 12M sobre a posição atual</div>
+  </div>
   <div class="panel mb">
     <div class="phd"><div><div class="pt">Stocks · NYSE / NASDAQ</div></div><span class="badge b-b">EUA</span></div>
     <table><thead><tr><th>Ticker</th><th>Qtd</th><th>PM (USD)</th><th>Atual</th><th class="tr">Posição BRL</th><th class="tr">Resultado</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-us"></tbody></table>
     <div class="pft">Todas as stocks EUA cadastradas, posição convertida em BRL</div>
+  </div>
+  <!-- MONITORAMENTO DE DIVIDENDOS — STOCKS EUA -->
+  <div class="panel mb" style="margin-top:16px">
+    <div class="phd"><div><div class="pt">Monitoramento de Dividendos — Stocks EUA</div><div class="ps">Proventos já recebidos, agrupados por empresa</div></div><button class="btn btn-g" onclick="openM('m-dividendo')">+ Provento</button></div>
+    <div id="div-monitor-us"></div>
+    <div class="pft">Soma de dividendos recebidos (data já passada) por stock EUA cadastrada na carteira, valores convertidos em BRL · DY 12M sobre a posição atual</div>
   </div>
   <!-- ALUGUEL DE AÇÕES -->
   <div class="panel mb" id="panel-aluguel" style="margin-top:16px">
@@ -4101,6 +4113,42 @@ function rcar(){
   rfundos();
   raluguel();
   rgraos();
+  rdivMonitor();
+}
+// ─── MONITORAMENTO DE DIVIDENDOS POR EMPRESA (Ações BR / Stocks EUA) ───
+// Cruza S.dividendos (lançados por ticker, sem distinção de mercado) com S.ativos
+// (que sabe se o ticker é BR ou US) pra agrupar os proventos já recebidos por
+// empresa, e calcula o DY 12M usando a posição atual do ativo (pos()).
+function _divPorEmpresa(tipoAtivo){
+  const hoje=_hojeISO();
+  const corte12m=new Date();corte12m.setFullYear(corte12m.getFullYear()-1);
+  const corteISO=corte12m.toISOString().slice(0,10);
+  const porAtivo={};
+  S.dividendos.filter(d=>(d.data||'')<=hoje).forEach(d=>{
+    const at=S.ativos.find(a=>a.ticker===d.ativo&&a.tipo===tipoAtivo);
+    if(!at)return;
+    if(!porAtivo[d.ativo])porAtivo[d.ativo]={ticker:d.ativo,total:0,n:0,ultData:'',ultValor:0,rec12:0};
+    const e=porAtivo[d.ativo];
+    e.total+=d.total||0;e.n++;
+    if((d.data||'')>=corteISO)e.rec12+=d.total||0;
+    if((d.data||'')>e.ultData){e.ultData=d.data;e.ultValor=d.total||0;}
+  });
+  return Object.values(porAtivo).map(e=>{
+    const at=S.ativos.find(a=>a.ticker===e.ticker&&a.tipo===tipoAtivo);
+    const posAtual=at?pos(at):0;
+    e.dy=posAtual>0?e.rec12/posAtual*100:null;
+    return e;
+  }).sort((a,b)=>b.total-a.total);
+}
+function _divMonitorHTML(tipoAtivo){
+  const linhas=_divPorEmpresa(tipoAtivo);
+  if(!linhas.length)return `<div class="empty-hint" style="padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum provento recebido ainda para este mercado. Use <strong>+ Provento</strong> ou lance na tela Dividendos.</div>`;
+  return `<table><thead><tr><th>Empresa</th><th class="tr">Total Recebido</th><th class="tr">Nº Pagtos</th><th>Último Pagamento</th><th class="tr">Valor Último</th><th class="tr">DY 12M</th></tr></thead><tbody>${linhas.map(e=>`
+    <tr><td><strong class="mono">${e.ticker}</strong></td><td class="tr mono cgd"><strong>${brl(e.total)}</strong></td><td class="tr mono">${e.n}</td><td class="mono" style="font-size:11px">${e.ultData?fdt(e.ultData):'—'}</td><td class="tr mono">${brl(e.ultValor)}</td><td class="tr mono">${e.dy!=null?e.dy.toFixed(2)+'%':'—'}</td></tr>`).join('')}</tbody></table>`;
+}
+function rdivMonitor(){
+  const elBr=document.getElementById('div-monitor-br');if(elBr)elBr.innerHTML=_divMonitorHTML('BR');
+  const elUs=document.getElementById('div-monitor-us');if(elUs)elUs.innerHTML=_divMonitorHTML('US');
 }
 // Render do painel de Fundos de Investimento (ativos RF marcados como fundo)
 function rfundos(){
