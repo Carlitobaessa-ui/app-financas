@@ -1626,16 +1626,37 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="pbd"><div class="tg" id="tg-ouro"></div></div>
   </div>
 
+  <!-- ANÁLISE — OURO -->
+  <div class="panel mb">
+    <div class="phd"><div><div class="pt">Análise — Ouro</div><div class="ps">Um card por item cadastrado acima · gerado sob demanda pela IA</div></div></div>
+    <div id="fund-analise-ouro"></div>
+    <div class="pft">Análises geradas por IA (mesma chave do Assistente Estrategista); podem conter imprecisões — use como apoio, não como recomendação de investimento</div>
+  </div>
+
   <!-- Cripto -->
   <div class="panel mb">
     <div class="phd"><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--gld);margin-right:5px"><use href="#ic-cripto"/></svg>Cripto</div><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('cripto')">+ Incluir</button></div>
     <div class="pbd"><div class="tg" id="tg-cripto"></div></div>
   </div>
 
+  <!-- ANÁLISE — CRIPTO -->
+  <div class="panel mb">
+    <div class="phd"><div><div class="pt">Análise — Cripto</div><div class="ps">Um card por item cadastrado acima · gerado sob demanda pela IA</div></div></div>
+    <div id="fund-analise-cripto"></div>
+    <div class="pft">Análises geradas por IA (mesma chave do Assistente Estrategista); podem conter imprecisões — use como apoio, não como recomendação de investimento</div>
+  </div>
+
   <!-- Câmbio -->
   <div class="panel mb">
     <div class="phd"><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--gld);margin-right:5px"><use href="#ic-moeda"/></svg>Câmbio</div><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('fx')">+ Incluir</button></div>
     <div class="pbd"><div class="tg" id="tg-fx"></div></div>
+  </div>
+
+  <!-- ANÁLISE — CÂMBIO -->
+  <div class="panel mb">
+    <div class="phd"><div><div class="pt">Análise — Câmbio</div><div class="ps">Um card por item cadastrado acima · gerado sob demanda pela IA</div></div></div>
+    <div id="fund-analise-fx"></div>
+    <div class="pft">Análises geradas por IA (mesma chave do Assistente Estrategista); podem conter imprecisões — use como apoio, não como recomendação de investimento</div>
   </div>
 </div>
 
@@ -4166,20 +4187,29 @@ function rdivMonitor(){
   const elUs=document.getElementById('div-monitor-us');if(elUs)elUs.innerHTML=_divMonitorHTML('US');
 }
 
-// ─── ANÁLISE FUNDAMENTALISTA POR EMPRESA (todas as ações cadastradas em Cotações ao Vivo) ───
-// Gera, sob demanda e por empresa, uma análise fundamentalista via IA (mesma
-// integração/chave já usada pelo Assistente Estrategista — chamarClaudeAPI).
-// A lista de empresas vem da watchlist da própria tela Cotações ao Vivo
-// (S.cotWatch.br / S.cotWatch.us) — ou seja, TODAS as ações cadastradas ali,
-// e não apenas as que já receberam proventos. _tipoPorTicker() é usado como
-// filtro para excluir índices (IBOV, S&P 500, NASDAQ etc.) que também moram
-// nessas listas, mantendo só tickers com formato de ação individual.
+// ─── ANÁLISE (fundamentalista/mercado) POR ITEM — cobre TUDO cadastrado em
+// Cotações ao Vivo: Ações BR, Stocks EUA, Ouro, Cripto e Câmbio ───
+// Gera, sob demanda e por item, uma análise via IA (mesma integração/chave já
+// usada pelo Assistente Estrategista — chamarClaudeAPI). A lista de itens vem
+// da própria watchlist de Cotações ao Vivo (S.cotWatch.br/us/ouro/cripto/fx) —
+// ou seja, TUDO que estiver cadastrado ali, não só o que já recebeu proventos.
+// Em br/us, _tipoPorTicker() filtra fora índices (IBOV, S&P 500, NASDAQ etc.),
+// mantendo só tickers no formato de ação individual; ouro/cripto/fx não têm
+// esse problema (todo item cadastrado ali já é um ativo negociável).
 // O app não tem uma fonte de indicadores fundamentalistas (P/L, P/VP, ROE etc.)
-// cadastrada — só cotação via brapi.dev — então a análise é gerada por IA a
-// partir do ticker (e do histórico de proventos, quando existir). Resultado
-// fica em cache (localStorage) por ticker, com botão "Atualizar" para regerar.
+// nem de análise macro cadastrada — só cotação via brapi.dev/AwesomeAPI/
+// CoinGecko — então a análise é gerada por IA a partir do ticker (e do
+// histórico de proventos, quando existir, para br/us). Cache em localStorage
+// por ticker, com botão "Atualizar" para regerar.
 const _FUND_STORE='fund_analises';
 let _fundGerando={}; // ticker -> true enquanto uma chamada está em andamento
+const _FUND_CATS={
+  BR:{key:'br',label:'ação brasileira',mercado:'B3 (mercado brasileiro)'},
+  US:{key:'us',label:'stock do mercado americano',mercado:'mercado americano (NYSE/NASDAQ)'},
+  OURO:{key:'ouro',label:'ativo de ouro',mercado:'mercado de ouro (spot/futuro)'},
+  CRIPTO:{key:'cripto',label:'criptoativo',mercado:'mercado de criptomoedas'},
+  FX:{key:'fx',label:'par de câmbio',mercado:'mercado de câmbio (FX)'},
+};
 
 function _lerFundAnalises(){
   try{ const raw=localStorage.getItem(_FUND_STORE); return raw?JSON.parse(raw):{}; }catch(_){ return {}; }
@@ -4188,49 +4218,71 @@ function _salvarFundAnalises(obj){
   try{ localStorage.setItem(_FUND_STORE, JSON.stringify(obj)); }catch(_){}
 }
 
-// Ações individuais cadastradas na watchlist de Cotações ao Vivo, para o
-// mercado indicado ('BR' ou 'US') — exclui índices via _tipoPorTicker().
-function _acoesCotWatch(tipoAtivo){
-  const lista=(S.cotWatch && S.cotWatch[tipoAtivo==='US'?'us':'br'])||[];
-  return lista.filter(it=>it && it.tk && _tipoPorTicker(it.tk)===tipoAtivo);
+// Itens cadastrados na watchlist de Cotações ao Vivo para a categoria indicada
+// ('BR'|'US'|'OURO'|'CRIPTO'|'FX'). Em BR/US, exclui índices via _tipoPorTicker().
+function _itensCotWatch(cat){
+  const info=_FUND_CATS[cat]; if(!info)return [];
+  const lista=(S.cotWatch && S.cotWatch[info.key])||[];
+  if(cat==='BR'||cat==='US') return lista.filter(it=>it && it.tk && _tipoPorTicker(it.tk)===cat);
+  return lista.filter(it=>it && it.tk);
 }
 
-function _fundPrompt(ticker,nome,tipoAtivo,divInfo,precoInfo){
-  const mercado = tipoAtivo==='US' ? 'mercado americano (NYSE/NASDAQ)' : 'B3 (mercado brasileiro)';
-  const divCtx = divInfo
-    ? `Já recebi ${divInfo.n} pagamento(s) de proventos desta empresa, totalizando ${brl(divInfo.total)}` + (divInfo.dy!=null ? `, com DY 12M de ${divInfo.dy.toFixed(2)}% sobre a posição atual.` : '.')
-    : 'Ainda não recebi proventos registrados desta empresa no app.';
-  const moeda = tipoAtivo==='US' ? 'USD' : 'BRL';
+function _fundPrompt(ticker,nome,cat,divInfo,precoInfo){
+  const info=_FUND_CATS[cat]||_FUND_CATS.BR;
+  const moeda = cat==='US' ? 'USD' : (cat==='OURO'||cat==='CRIPTO') ? (/BRL$/.test(ticker)?'BRL':'USD') : 'BRL';
   const precoCtx = precoInfo && precoInfo.p!=null
     ? `Cotação atual: ${moeda} ${precoInfo.p.toFixed(2)}${precoInfo.dp!=null?` (variação do dia: ${precoInfo.dp>=0?'+':''}${precoInfo.dp.toFixed(2)}%)`:''}.`
     : 'Cotação atual não disponível no app.';
-  return `Você é um analista de investimentos. Faça uma análise fundamentalista objetiva da empresa ${nome||ticker} (ticker ${ticker}), negociada no ${mercado}.
+  const baseInstrucao=`**Base da análise**: 1 frase citando em que a avaliação se apoiou (ex.: "estimativas com base em dados públicos e consenso de mercado até o conhecimento do modelo, sem acesso a dados em tempo real"). Deixe claro que não é uma cotação de indicadores em tempo real e recomende conferir uma fonte oficial (corretora/home broker, B3/SEC, ou o Banco Central, conforme o caso) antes de decidir.`;
+
+  if(cat==='BR'||cat==='US'){
+    const divCtx = divInfo
+      ? `Já recebi ${divInfo.n} pagamento(s) de proventos desta empresa, totalizando ${brl(divInfo.total)}` + (divInfo.dy!=null ? `, com DY 12M de ${divInfo.dy.toFixed(2)}% sobre a posição atual.` : '.')
+      : 'Ainda não recebi proventos registrados desta empresa no app.';
+    return `Você é um analista de investimentos. Faça uma análise fundamentalista objetiva da empresa ${nome||ticker} (ticker ${ticker}), negociada no ${info.mercado}.
 Contexto do investidor: ${divCtx} ${precoCtx}
-Estruture a resposta EXATAMENTE assim, em Markdown simples, em português brasileiro, no máximo 200 palavras no total:
+Estruture a resposta EXATAMENTE assim, em Markdown simples, em português brasileiro, no máximo 240 palavras no total:
 **Indicadores-chave** (estimativas aproximadas, avise se não tiver certeza): P/L, P/VP (ou P/E, se EUA), ROE, Dívida/Patrimônio.
 **Saúde financeira**: 1-2 frases.
 **Política de dividendos**: 1-2 frases.
 **Principais riscos**: até 3 riscos, bullets curtos.
-**Veredito**: 2 frases objetivas. A primeira sobre fundamentos (ex.: "fundamentos sólidos, dividendo sustentável" ou "atenção ao endividamento"). A segunda avaliando especificamente se o PREÇO ATUAL parece barato, justo ou caro frente aos fundamentos e à cotação informada (ex.: "no preço atual, o papel parece descontado frente ao P/L histórico" ou "após a alta recente, o preço já reflete boa parte dos fundamentos positivos").
+**Veredito**: 3 frases objetivas, nesta ordem — (1) fundamentos: ex. "fundamentos sólidos, dividendo sustentável" ou "atenção ao endividamento"; (2) avaliação do PREÇO ATUAL frente aos fundamentos e à cotação informada — barato, justo ou caro (ex. "no preço atual, o papel parece descontado frente ao P/L histórico"); (3) uma recomendação objetiva de **Compra**, **Venda** ou **Manter (posição neutra)**, com a justificativa em poucas palavras.
+${baseInstrucao}
+Seja direto, sem saudação, sem repetir o ticker no início.`;
+  }
+
+  const driversPorCat={
+    OURO:'juros reais dos EUA, força do dólar (DXY), demanda de bancos centrais, aversão a risco/inflação',
+    CRIPTO:'fluxo institucional/ETFs, regulação, ciclo de liquidez global, adoção e narrativa de mercado',
+    FX:'diferencial de juros (carry), risco fiscal/político, termos de troca, fluxo de capital estrangeiro',
+  };
+  return `Você é um analista de mercado. Faça uma análise objetiva de ${nome||ticker} (${ticker}), ${info.label}, no ${info.mercado}.
+Contexto: ${precoCtx}
+Estruture a resposta EXATAMENTE assim, em Markdown simples, em português brasileiro, no máximo 220 palavras no total:
+**Contexto atual**: 1-2 frases sobre o momento do ativo.
+**Fatores-chave**: até 4 bullets com os principais direcionadores (ex.: ${driversPorCat[cat]||'fatores macro relevantes'}).
+**Principais riscos**: até 3 riscos, bullets curtos.
+**Veredito**: 3 frases objetivas, nesta ordem — (1) viés atual (alta/baixa/neutro) e por quê; (2) avaliação do PREÇO ATUAL frente ao contexto — barato, justo ou caro; (3) uma recomendação objetiva de **Compra**, **Venda** ou **Manter (posição neutra)**, com a justificativa em poucas palavras.
+${baseInstrucao}
 Seja direto, sem saudação, sem repetir o ticker no início.`;
 }
 
-async function gerarAnaliseFundamentalista(ticker,tipoAtivo){
-  if(!temApiKey()){ toast('⚠ Configure sua chave de API em Configurações para gerar análises fundamentalistas'); return; }
-  const item=_acoesCotWatch(tipoAtivo).find(x=>x.tk===ticker);
+async function gerarAnaliseFundamentalista(ticker,cat){
+  if(!temApiKey()){ toast('⚠ Configure sua chave de API em Configurações para gerar análises'); return; }
+  const item=_itensCotWatch(cat).find(x=>x.tk===ticker);
   if(!item)return;
-  const divInfo=_divPorEmpresa(tipoAtivo).find(x=>x.ticker===ticker)||null;
+  const divInfo=(cat==='BR'||cat==='US') ? (_divPorEmpresa(cat).find(x=>x.ticker===ticker)||null) : null;
   const qv=(typeof getQ==='function'?getQ(ticker):null)||(typeof MQ!=='undefined'?MQ[ticker]:null);
   const precoInfo=qv?{p:qv.p,dp:qv.dp}:null;
   _fundGerando[ticker]=true;
   rfundAnalise();
   try{
-    const resp=await chamarClaudeAPI({model:'claude-sonnet-4-6',max_tokens:550,messages:[{role:'user',content:_fundPrompt(ticker,item.nome,tipoAtivo,divInfo,precoInfo)}]});
+    const resp=await chamarClaudeAPI({model:'claude-sonnet-4-6',max_tokens:700,messages:[{role:'user',content:_fundPrompt(ticker,item.nome,cat,divInfo,precoInfo)}]});
     const data=await resp.json();
     if(data.error) throw new Error(data.error.message||'erro na API');
     const txt=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join(' ').trim();
     const cache=_lerFundAnalises();
-    cache[ticker]={texto:txt||'(sem resposta)',geradoEm:new Date().toISOString(),tipo:tipoAtivo};
+    cache[ticker]={texto:txt||'(sem resposta)',geradoEm:new Date().toISOString(),tipo:cat};
     _salvarFundAnalises(cache);
   }catch(err){
     toast('⚠ Falha ao gerar análise: '+err.message);
@@ -4240,48 +4292,88 @@ async function gerarAnaliseFundamentalista(ticker,tipoAtivo){
   }
 }
 
-function _fundCardHTML(item,tipoAtivo){
+function _fundCardHTML(item,cat){
   const ticker=item.tk;
   const cache=_lerFundAnalises();
   const cached=cache[ticker];
   const gerando=!!_fundGerando[ticker];
-  const divInfo=_divPorEmpresa(tipoAtivo).find(x=>x.ticker===ticker);
+  const divInfo=(cat==='BR'||cat==='US') ? _divPorEmpresa(cat).find(x=>x.ticker===ticker) : null;
   let corpo;
   if(gerando){
-    corpo=`<div style="color:var(--blu);font-size:12.5px;padding:6px 0">✦ analisando fundamentos…</div>`;
+    corpo=`<div style="color:var(--blu);font-size:12.5px;padding:6px 0">✦ analisando…</div>`;
   } else if(cached){
     const geradoFmt=new Date(cached.geradoEm).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
     corpo=`<div style="font-size:12.5px;line-height:1.6;color:var(--txt2)">${_mdBriefing(cached.texto)}</div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--bdr)">
         <span style="font-size:10.5px;color:var(--txt3)">Gerado em ${geradoFmt}</span>
-        <button class="btn btn-ghost" style="font-size:11px;padding:3px 9px" onclick="gerarAnaliseFundamentalista('${ticker}','${tipoAtivo}')">↻ Atualizar</button>
+        <button class="btn btn-ghost" style="font-size:11px;padding:3px 9px" onclick="gerarAnaliseFundamentalista('${ticker}','${cat}')">↻ Atualizar</button>
       </div>`;
   } else {
-    corpo=`<button class="btn btn-g" style="font-size:11.5px;padding:5px 12px" onclick="gerarAnaliseFundamentalista('${ticker}','${tipoAtivo}')">🔍 Analisar Fundamentos</button>`;
+    corpo=`<button class="btn btn-g" style="font-size:11.5px;padding:5px 12px" onclick="gerarAnaliseFundamentalista('${ticker}','${cat}')">🔍 Analisar</button>`;
   }
-  const corAcento = tipoAtivo==='US' ? 'var(--blu)' : 'var(--grn)';
+  const corAcentoPorCat={BR:'var(--grn)',US:'var(--blu)',OURO:'var(--gld)',CRIPTO:'var(--red)',FX:'var(--blu)'};
+  const corAcento=corAcentoPorCat[cat]||'var(--grn)';
   return `<div class="card" style="margin-bottom:16px;padding:12px 14px 14px 13px;border-left:3px solid ${corAcento}">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-bottom:8px;border-bottom:0.5px solid var(--bdr)">
-      <div><strong class="mono" style="font-size:13px">${ticker}</strong>${item.nome?`<strong style="font-size:11.5px;color:var(--txt2);font-weight:600;margin-left:7px">${item.nome}</strong>`:''}</div>
+      <div><strong class="mono" style="font-size:13px">${item.sym||ticker}</strong>${item.nome?`<strong style="font-size:11.5px;color:var(--txt2);font-weight:600;margin-left:7px">${item.nome}</strong>`:''}</div>
       ${divInfo && divInfo.dy!=null?`<span style="font-size:10.5px;color:var(--txt3)">DY 12M ${divInfo.dy.toFixed(2)}%</span>`:''}
     </div>
     ${corpo}
   </div>`;
 }
 
-function _fundAnaliseHTML(tipoAtivo){
-  const lista=_acoesCotWatch(tipoAtivo);
-  if(!lista.length)return `<div class="empty-hint" style="padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhuma ação ${tipoAtivo==='US'?'do mercado americano':'brasileira'} cadastrada em Cotações ao Vivo. Use <strong>+ Incluir</strong> no painel acima.</div>`;
+function _fundAnaliseHTML(cat){
+  const lista=_itensCotWatch(cat);
+  if(!lista.length)return `<div class="empty-hint" style="padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum item cadastrado nesta lista ainda. Use <strong>+ Incluir</strong> no painel acima.</div>`;
   const semChave=!temApiKey() ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--paper);border:0.5px solid var(--bdr);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:11.5px;color:var(--txt3)">
       <span>🔑 Sem chave de API configurada — necessária para gerar novas análises (mesma chave do Assistente Estrategista).</span>
       <button class="btn btn-ghost" style="font-size:11px;padding:3px 9px" onclick="abrirConfigApi()">Configurar chave</button>
     </div>` : '';
-  return semChave + lista.map(item=>_fundCardHTML(item,tipoAtivo)).join('');
+  return semChave + lista.map(item=>_fundCardHTML(item,cat)).join('');
 }
 
 function rfundAnalise(){
-  const elBr=document.getElementById('fund-analise-br');if(elBr)elBr.innerHTML=_fundAnaliseHTML('BR');
-  const elUs=document.getElementById('fund-analise-us');if(elUs)elUs.innerHTML=_fundAnaliseHTML('US');
+  Object.keys(_FUND_CATS).forEach(cat=>{
+    const id='fund-analise-'+_FUND_CATS[cat].key;
+    const el=document.getElementById(id);
+    if(el)el.innerHTML=_fundAnaliseHTML(cat);
+  });
+}
+
+// ─── Contexto de Cotações ao Vivo + Análises geradas — injetado nos 3
+// assistentes (Básico, Estrategista, CFO) para que consigam responder sobre
+// QUALQUER item cadastrado em Cotações ao Vivo (ações BR/EUA, índices, ouro,
+// cripto, câmbio), mesmo que não esteja na Carteira, e citar os vereditos
+// já gerados pelo painel de Análise.
+function _contextoCotacoesEAnalises(){
+  const q=k=>(typeof getQ==='function'?getQ(k):null)||(typeof MQ!=='undefined'?MQ[k]:null);
+  const linhaItem=it=>{
+    const qv=q(it.tk);
+    const preco=qv? `${it.pf||''}${qv.p.toFixed(2)} (${qv.dp>=0?'+':''}${qv.dp.toFixed(2)}% hoje)` : 'sem cotação carregada';
+    return `${it.sym||it.tk} [${it.tk}]: ${preco}`;
+  };
+  const blocos=[
+    ['Índices/Ações BR',S.cotWatch?.br],
+    ['Mercado Global/EUA',S.cotWatch?.us],
+    ['Ouro',S.cotWatch?.ouro],
+    ['Cripto',S.cotWatch?.cripto],
+    ['Câmbio',S.cotWatch?.fx],
+  ].map(([label,lista])=>`${label}: ${(lista||[]).map(linhaItem).join('; ')||'nenhum item cadastrado'}`).join('\n');
+
+  const analises=_lerFundAnalises();
+  const analisesTxt=Object.entries(analises).map(([tk,a])=>{
+    const m=(a.texto||'').match(/\*\*Veredito\*\*:?\s*([\s\S]*?)(?:\n\*\*|$)/);
+    const veredito=(m?m[1]:(a.texto||'')).replace(/\n/g,' ').trim().slice(0,320);
+    return `${tk}: ${veredito}`;
+  }).join('\n');
+
+  return `
+
+COTAÇÕES AO VIVO — TODOS OS ITENS CADASTRADOS NA TELA (use para responder qualquer pergunta sobre ações BR/EUA, índices, ouro, cripto ou câmbio, mesmo que o item não esteja na Carteira):
+${blocos}
+
+ANÁLISES DE MERCADO/FUNDAMENTALISTAS JÁ GERADAS PELA IA (painel "Análise" em Cotações ao Vivo, vereditos resumidos — cite quando relevante para a pergunta do usuário):
+${analisesTxt || 'nenhuma análise gerada ainda'}`;
 }
 // Render do painel de Fundos de Investimento (ativos RF marcados como fundo)
 function rfundos(){
@@ -10591,7 +10683,7 @@ INSTRUÇÕES DE COMPORTAMENTO:
 - Use formatação Markdown simples (negrito, listas) para clareza
 - Limite respostas a 400 palavras exceto quando análise complexa requerer mais
 - Você pode sugerir: rebalanceamento de carteira, ajustes de orçamento, priorização de objetivos, alertas de risco, oportunidades de investimento
-- Nunca invente dados. Se não souber, diga claramente`;
+- Nunca invente dados. Se não souber, diga claramente` + _contextoCotacoesEAnalises();
 }
 
 // ─── Perguntas sugeridas dinâmicas
@@ -10861,7 +10953,7 @@ SEU PAPEL:
 - Seja quantitativo: use números reais da carteira acima
 - Tom: analista sênior de research, direto, sem rodeios
 - Responda em português, sem markdown excessivo, foco em insights acionáveis
-- Máx 450 palavras por resposta`;
+- Máx 450 palavras por resposta` + _contextoCotacoesEAnalises();
 }
 
 function rassistenteMid(){
@@ -10996,7 +11088,7 @@ SEU PAPEL — CFO PESSOAL:
 - Estratégia de crédito: capacidade de endividamento, garantias, custo de capital
 - Responda em português, tom de CFO sênior, seja quantitativo e específico
 - Use os números reais acima — nunca invente dados
-- Máx 500 palavras por resposta, use listas quando facilitar a leitura`;
+- Máx 500 palavras por resposta, use listas quando facilitar a leitura` + _contextoCotacoesEAnalises();
 }
 
 function rassistenteAdv(){
