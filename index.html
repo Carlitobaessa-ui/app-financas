@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 49 -->
+<!-- APP_VERSION: 50 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4239,13 +4239,22 @@ function _dyAssetLevel(ticker){
   const hoje=_hojeISO();
   const corte12m=new Date();corte12m.setFullYear(corte12m.getFullYear()-1);
   const corteISO=corte12m.toISOString().slice(0,10);
-  let somaPorCota=0;
+  let somaPorCota=0,temDado=false;
   S.dividendos.forEach(d=>{
     if(d.ativo!==ticker)return;
     const dt=d.data||'';
-    if(dt<=hoje && dt>=corteISO) somaPorCota+=d.valorcota||0;
+    if(!(dt<=hoje && dt>=corteISO))return;
+    // Tenta o valor por ação; se o lançamento não tiver valorcota nem qtd
+    // (comum em importações de extrato sem quantidade), ignora esse
+    // lançamento em vez de estimar errado — melhor omitir o badge do que
+    // mostrar um DY calculado com dado incompleto.
+    let v=null;
+    if(d.valorcota>0) v=d.valorcota;
+    else if(d.qtd>0) v=(d.total||0)/d.qtd;
+    if(v==null)return;
+    somaPorCota+=v; temDado=true;
   });
-  if(!somaPorCota)return null;
+  if(!temDado)return null;
   const q=(typeof getQ==='function'?getQ(ticker):null)||(typeof MQ!=='undefined'?MQ[ticker]:null);
   if(!q || !q.p)return null;
   return somaPorCota/q.p*100;
@@ -4337,20 +4346,32 @@ function _divSerieMensalTicker(ticker){
   const hoje=_hojeISO();
   const anoAtual=+hoje.slice(0,4);
   const mesAtual=+hoje.slice(5,7);
-  const realizado=new Array(12).fill(0);       // pago este ano (por ação/cota), data<=hoje
+  const entradas=S.dividendos.filter(d=>d.ativo===ticker && (d.data||'').length>=10);
+  // Modo "por ação": só é possível quando TODOS os lançamentos do ticker
+  // permitem calcular o valor por ação (valorcota informado, ou qtd
+  // informado pra derivar total/qtd). Muitos lançamentos importados de
+  // extrato só trazem o total (sem quantidade) — nesse caso não dá pra
+  // separar "quanto a empresa pagou por ação" de "quanto eu recebi", então
+  // caímos pro total agregado (ainda assim é a série de proventos DESSE
+  // ticker, não da carteira como um todo — só não normalizado por ação).
+  const modoPorAcao=entradas.length>0 && entradas.every(d=>(d.valorcota>0)||(d.qtd>0));
+  const valorDaEntrada=d=>{
+    if(!modoPorAcao) return d.total||0;
+    return d.valorcota>0 ? d.valorcota : (d.total||0)/d.qtd;
+  };
+  const realizado=new Array(12).fill(0);       // pago este ano, data<=hoje
   const previsto=new Array(12).fill(0);        // já cadastrado no app, data futura dentro do ano atual
   const historicoPorMes=new Array(12).fill(0); // soma de anos anteriores, por mês (p/ estimar sazonalidade)
   const anosHistoricos=new Set();
-  S.dividendos.filter(d=>d.ativo===ticker).forEach(d=>{
-    const dt=d.data||''; if(dt.length<10)return;
-    const ano=+dt.slice(0,4), mes=+dt.slice(5,7);
+  entradas.forEach(d=>{
+    const dt=d.data; const ano=+dt.slice(0,4), mes=+dt.slice(5,7);
     if(!mes||mes<1||mes>12)return;
-    const valorPorAcao=d.valorcota||0;
+    const v=valorDaEntrada(d);
     if(ano===anoAtual){
-      if(dt<=hoje) realizado[mes-1]+=valorPorAcao;
-      else previsto[mes-1]+=valorPorAcao;
+      if(dt<=hoje) realizado[mes-1]+=v;
+      else previsto[mes-1]+=v;
     } else if(ano<anoAtual){
-      historicoPorMes[mes-1]+=valorPorAcao;
+      historicoPorMes[mes-1]+=v;
       anosHistoricos.add(ano);
     }
   });
@@ -4371,32 +4392,42 @@ function _divSerieMensalTicker(ticker){
   let proximo=null;
   for(let m=mesAtual-1;m<12;m++){ if(previsto[m]>0){ proximo={mesIdx:m,valor:previsto[m],real:true}; break; } }
   if(!proximo) for(let m=mesAtual-1;m<12;m++){ if(estimativa[m]>0){ proximo={mesIdx:m,valor:estimativa[m],real:false}; break; } }
-  return {anoAtual,mesAtual,realizado,previsto,estimativa,temAlgumDado,proximo};
+  return {anoAtual,mesAtual,realizado,previsto,estimativa,temAlgumDado,proximo,modoPorAcao};
 }
 
 // Formata valor por ação/cota com mais casas decimais (valores costumam ser
 // pequenos, ex. R$ 0,108) — diferente de brl() que arredonda em 2 casas.
 const _fmtPorAcao=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:4});
+// Formatador usado no gráfico: por ação (mais casas) quando modoPorAcao,
+// senão total agregado normal (brl(), 2 casas) — ver _divSerieMensalTicker.
+const _fmtDivChart=(v,porAcao)=>porAcao?_fmtPorAcao(v):brl(v);
+const _sufixoDivChart=porAcao=>porAcao?'/ação':'';
 
 // Bloco HTML (título + canvas + linha de próximo pagamento/estimativa). Vazio
 // se não houver nenhum provento (realizado, previsto ou histórico p/ estimar)
-// no ano atual, ou se a categoria não for BR/US. Os valores são POR
-// AÇÃO/COTA — refletem o ativo listado em Cotações ao Vivo, não a minha
-// posição na carteira (ver comentário em _divSerieMensalTicker).
+// no ano atual, ou se a categoria não for BR/US. Sempre que os lançamentos
+// do ticker permitirem, usa o valor POR AÇÃO/COTA (asset-level, igual pra
+// qualquer investidor); quando não dá (lançamentos importados sem
+// quantidade), cai pro total recebido daquele ticker — que ainda é sobre o
+// ATIVO listado em Cotações ao Vivo, só não normalizado por ação (ver
+// _divSerieMensalTicker para o critério).
 function _divChartBlockHTML(ticker,cat){
   if(cat!=='BR' && cat!=='US')return '';
   const serie=_divSerieMensalTicker(ticker);
   if(!serie.temAlgumDado)return '';
   const canvasId='ch-funddiv-'+ticker.replace(/[^A-Za-z0-9]/g,'_');
+  const suf=_sufixoDivChart(serie.modoPorAcao);
   let linha='';
   if(serie.proximo){
     const nomeMes=_MESES_ABREV[serie.proximo.mesIdx];
+    const valorFmt=_fmtDivChart(serie.proximo.valor,serie.modoPorAcao)+suf;
     linha = serie.proximo.real
-      ? `Próximo pagamento agendado: <strong>${nomeMes}/${serie.anoAtual}</strong> · ${_fmtPorAcao(serie.proximo.valor)}/ação`
-      : `Sem pagamento agendado — estimativa para <strong>${nomeMes}/${serie.anoAtual}</strong> baseada na sazonalidade histórica: <strong>~${_fmtPorAcao(serie.proximo.valor)}/ação</strong>`;
+      ? `Próximo pagamento agendado: <strong>${nomeMes}/${serie.anoAtual}</strong> · ${valorFmt}`
+      : `Sem pagamento agendado — estimativa para <strong>${nomeMes}/${serie.anoAtual}</strong> baseada na sazonalidade histórica: <strong>~${valorFmt}</strong>`;
   }
+  const titulo=serie.modoPorAcao ? `Proventos por ação, por mês, em ${serie.anoAtual} — realizado &amp; previsto` : `Proventos por mês em ${serie.anoAtual} — realizado &amp; previsto`;
   return `<div style="margin:8px 0 10px">
-    <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.03em">Proventos por ação, por mês, em ${serie.anoAtual} — realizado &amp; previsto</div>
+    <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.03em">${titulo}</div>
     <div style="height:120px"><canvas id="${canvasId}"></canvas></div>
     ${linha?`<div style="font-size:11px;margin-top:5px;color:var(--txt2)">${linha}</div>`:''}
   </div>`;
@@ -4416,11 +4447,12 @@ function _renderDivChartsFund(cat){
     const realizado=serie.realizado.map(v=>v>0?v:null);
     const previsto=serie.previsto.map(v=>v>0?v:null);
     const estimativa=serie.estimativa.map(v=>v>0?v:null);
+    const suf=_sufixoDivChart(serie.modoPorAcao);
     mkCh(canvasId,{type:'bar',data:{labels:_MESES_ABREV,datasets:[
       {label:'Realizado',data:realizado,backgroundColor:C.grn,borderRadius:3,maxBarThickness:16},
       {label:'Previsto (agendado)',data:previsto,backgroundColor:C.gldlt,borderRadius:3,maxBarThickness:16},
       {label:'Estimativa (sazonal)',data:estimativa,backgroundColor:'rgba(154,147,130,.35)',borderColor:C.muted,borderWidth:1,borderDash:[4,3],borderRadius:3,maxBarThickness:16},
-    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:9,font:{size:8.5},color:C.txt,padding:5}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${_fmtPorAcao(ctx.parsed.y)}/ação`}}},scales:gridOpts(v=>_fmtPorAcao(v))}});
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:9,font:{size:8.5},color:C.txt,padding:5}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${_fmtDivChart(ctx.parsed.y,serie.modoPorAcao)}${suf}`}}},scales:gridOpts(v=>_fmtDivChart(v,serie.modoPorAcao))}});
   });
 }
 
