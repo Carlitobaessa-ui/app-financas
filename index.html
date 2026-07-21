@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 60 -->
+<!-- APP_VERSION: 61 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -6676,8 +6676,23 @@ function _riscoDiaCot(dp){
   if(a>=2) return {txt:'Volatilidade moderada',cls:''};
   return {txt:'Estável',cls:'cg'};
 }
+// Ocultar/exibir o painel de Sinais de Risco e Decisões — estado
+// persistido em localStorage (mesmo padrão de _lerFundColapso), pra
+// sobreviver a reload. Usa o helper genérico já existente (_fundSecaoColapsada/
+// toggleFundSecao), com sua própria chave ('cotSinais'/'painel') pra não
+// interferir nas seções de Análise Fundamentalista.
+function toggleCotSinaisConsolidado(){
+  const st=_lerFundColapso();
+  if(!st.cotSinais)st.cotSinais={};
+  st.cotSinais.painel=!st.cotSinais.painel;
+  _salvarFundColapso(st);
+  rcotSinaisConsolidado();
+}
 function rcotSinaisConsolidado(){
   const el=document.getElementById('cot-sinais-body'); if(!el)return;
+  const colapsado=_fundSecaoColapsada('cotSinais','painel');
+  const toggleBtn=`<button class="btn btn-ghost" style="font-size:11px;padding:3px 9px;margin-bottom:8px" onclick="toggleCotSinaisConsolidado()">${colapsado?'▸ Exibir':'▾ Ocultar'} Painel</button>`;
+  if(colapsado){ el.innerHTML=toggleBtn; return; }
   const cats=[['br','Ação BR'],['us','Stock EUA'],['ouro','Ouro'],['cripto','Cripto'],['fx','Câmbio']];
   const cache=_lerFundAnalises();
   let linhas=[];
@@ -6690,7 +6705,7 @@ function rcotSinaisConsolidado(){
     });
   });
   if(!linhas.length){
-    el.innerHTML='<div class="empty-hint" style="padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum ativo cadastrado em Mercado de Ações ainda.</div>';
+    el.innerHTML=toggleBtn+'<div class="empty-hint" style="padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum ativo cadastrado em Mercado de Ações ainda.</div>';
     return;
   }
   linhas.sort((a,b)=>Math.abs(b.dp||0)-Math.abs(a.dp||0));
@@ -6720,7 +6735,7 @@ function rcotSinaisConsolidado(){
       <td class="tr ${r.cls}">${r.txt}</td>
     </tr>`;
   }).join('');
-  el.innerHTML=`${resumo}<div style="overflow-x:auto"><table>
+  el.innerHTML=`${toggleBtn}${resumo}<div style="overflow-x:auto"><table>
     <thead><tr><th style="text-align:left">Ativo</th><th style="text-align:left">Categoria</th><th style="text-align:left">Preço</th><th class="tr">Var. dia</th><th class="tr">Sinal</th><th class="tr">Risco do dia</th></tr></thead>
     <tbody>${linhasHtml}</tbody>
   </table></div>`;
