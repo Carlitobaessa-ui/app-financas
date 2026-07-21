@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 47 -->
+<!-- APP_VERSION: 48 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -7244,6 +7244,31 @@ async function atualizarCotacoes(){
   else if(aoVivo>=totalTickers){ toast(`↻ Cotações ao vivo atualizadas (${aoVivo} ativos)`); }
   else if(aoVivo>0){ toast(`↻ ${aoVivo} de ${totalTickers} ativos com cotação ao vivo — resto usa último valor conhecido`); }
   else{ toast('⚠ Não foi possível buscar cotações ao vivo agora — mantendo últimos valores'); }
+  // Também atualiza (regera) as análises de Cotações ao Vivo já geradas
+  // antes, pra refletirem a cotação/proventos recém-atualizados. Roda em
+  // segundo plano — não trava o botão nem o toast das cotações.
+  _atualizarAnalisesCotacoes();
+}
+
+// Regera as análises fundamentalistas já geradas (cache) para os itens de
+// Cotações ao Vivo (BR/US/Ouro/Cripto/Câmbio) que ainda estão cadastrados na
+// watchlist. Não gera análise nova pra quem nunca clicou em "Analisar" —
+// só atualiza o que já existia, pra não disparar chamadas de API que o
+// usuário não pediu. Sequencial (uma de cada vez) pra não estourar rate
+// limit da API. Chamada por atualizarCotacoes() após atualizar as cotações.
+async function _atualizarAnalisesCotacoes(){
+  if(!temApiKey())return;
+  const cache=_lerFundAnalises();
+  const alvos=Object.keys(cache).filter(tk=>{
+    const cat=cache[tk]?.tipo;
+    return cat && _FUND_CATS[cat] && _itensCotWatch(cat).some(it=>it.tk===tk);
+  });
+  if(!alvos.length)return;
+  for(const tk of alvos){
+    const cat=cache[tk].tipo;
+    try{ await gerarAnaliseFundamentalista(tk,cat); }catch(_){}
+  }
+  toast(`✓ ${alvos.length} análise(s) de Cotações ao Vivo atualizada(s)`);
 }
 
 // ─── TOAST
