@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 64 -->
+<!-- APP_VERSION: 65 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -2769,7 +2769,7 @@ async function atualizarMercadoGraos(){
   <div class="cg3">
     <div class="cc"><div class="cl">// valor_imóvel</div><div class="im-cr"><input type="range" id="im-s_vi" min="100000" max="800000" step="10000" value="350000"><span class="cv" id="im-v_vi">R$ 350k</span></div></div>
     <div class="cc"><div class="cl">// entrada_%</div><div class="im-cr"><input type="range" id="im-s_en" min="20" max="80" step="5" value="30"><span class="cv" id="im-v_en">30%</span></div></div>
-    <div class="cc"><div class="cl">// taxa_a.a.</div><div class="im-cr"><input type="range" id="im-s_tf" min="8" max="15" step="0.25" value="10.5"><span class="cv" id="im-v_tf">10,5%</span></div></div>
+    <div class="cc"><div class="cl">// taxa_a.a.</div><div class="im-cr"><input type="range" id="im-s_tf" min="8" max="15" step="0.25" value="10.5"><span class="cv" id="im-v_tf">10,5%</span></div><div id="im-tf-ref" style="font-size:9px;color:var(--d1);margin-top:3px"></div></div>
     <div class="cc"><div class="cl">// prazo_anos</div><div class="im-cr"><input type="range" id="im-s_pf" min="5" max="30" step="5" value="20"><span class="cv" id="im-v_pf">20a</span></div></div>
     <div class="cc"><div class="cl">// valorização_aa</div><div class="im-cr"><input type="range" id="im-s_vf" min="3" max="12" step="0.5" value="6"><span class="cv" id="im-v_vf">6,0%</span></div></div>
     <div class="cc"><div class="cl">// cap_rate</div><div class="im-cr"><input type="range" id="im-s_cf" min="3" max="8" step="0.25" value="5"><span class="cv" id="im-v_cf">5,0%</span></div></div>
@@ -3162,6 +3162,12 @@ function imP0(){
 function imP1(){
   const vi=+imG('im-s_vi').value,en=+imG('im-s_en').value/100,tf=+imG('im-s_tf').value/100,pf=+imG('im-s_pf').value,vf=+imG('im-s_vf').value/100,cf=+imG('im-s_cf').value/100;
   imG('im-v_vi').textContent=imFK(vi);imG('im-v_en').textContent=Math.round(en*100)+'%';imG('im-v_tf').textContent=imFP(tf*100);imG('im-v_pf').textContent=pf+'a';imG('im-v_vf').textContent=imFP(vf*100);imG('im-v_cf').textContent=imFP(cf*100);
+  const tfRefEl=imG('im-tf-ref');
+  if(tfRefEl){
+    tfRefEl.innerHTML = (typeof imIndicadores!=='undefined' && imIndicadores.selic!=null)
+      ? `Selic atual (BCB): <strong>${imIndicadores.selic.toFixed(2).replace('.',',')}% a.a.</strong> — financiamento imobiliário no Brasil (SFH/poupança) costuma ficar pouco correlacionado à Selic; use a taxa real da proposta do seu banco, não uma projeção.`
+      : `Clique em "Atualizar Tudo" para ver a Selic real (BCB) como referência.`;
+  }
   const ent=vi*en,fin=vi*(1-en),tm=Math.pow(1+tf,1/12)-1,mf=pf*12,prest=fin*tm/(1-Math.pow(1+tm,-mf)),custo=ent+prest*mf-vi,rl=.094;
   const labs=[],sav=[],sfin=[],salt=[];
   for(let a=1;a<=10;a++){
@@ -3261,7 +3267,7 @@ function imP3(){
 /* ─── SIGNALS DATA ─── */
 const imSIGS=[
   {type:'pos',label:'interno · estrutural',title:'Crescimento urbano Cascavel / Toledo',desc:'Expansão de 4,2% a.a. sustenta demanda habitacional real. Valorização histórica acima da inflação nos últimos 8 anos.',tags:['DEMANDA','REGIONAL'],prob:4,impact:4},
-  {type:'pos',label:'externo · médio prazo',title:'Ciclo de queda estrutural da Selic',desc:'Cortes projetados para 2027+ reduziriam custo do financiamento de 10,5% para 7–8% a.a., ampliando demanda imobiliária.',tags:['JURO','MACRO'],prob:3,impact:4},
+  {type:'pos',label:'externo · médio prazo',title:'Ciclo de queda estrutural da Selic',desc:()=>_imDescSelicCiclo(),tags:['JURO','MACRO'],prob:3,impact:4},
   {type:'pos',label:'externo · estrutural',title:'Agronegócio como âncora regional',desc:'C.Vale e cooperativas sustentam nível de renda e emprego estável — suporte direto à demanda de aluguel residencial e comercial.',tags:['AGRO','RENDA'],prob:5,impact:3},
   {type:'warn',label:'externo · médio prazo',title:'Reforma tributária — dividendos 2026',desc:'Tributação de 10–15% de IR sobre dividendos reduziria vantagem da holding. Janela de 2–3 anos para ajuste estrutural.',tags:['TRIBUTÁRIO','LEGISLAÇÃO'],prob:3,impact:4},
   {type:'warn',label:'interno · curto prazo',title:'Vacância em ciclo de recessão',desc:'Crises elevam vacância para 20–30%. Com prestação de financiamento, o custo fixo vira risco de caixa imediato e relevante.',tags:['VACÂNCIA','FLUXO'],prob:2,impact:3},
@@ -3293,27 +3299,33 @@ const imMODEL_ALT=[
 ];
 
 /* ─── INDICADORES PÚBLICOS (BCB/SGS) — contextualizam os sinais de risco com dados reais ─── */
-let imIndicadores={selic:null, ipca12m:null, fetchedAt:null};
+let imIndicadores={selic:null, ipca12m:null, igpm12m:null, fetchedAt:null};
+
+function _imAcumula12m(serie){
+  if(!Array.isArray(serie) || !serie.length) return null;
+  let fator=1;
+  serie.forEach(m=>{ const v=parseFloat(String(m.valor).replace(',','.')); if(!isNaN(v)) fator*=(1+v/100); });
+  return (fator-1)*100;
+}
 
 async function imFetchIndicadoresPublicos(){
   try{
-    const [rSelic,rIpca]=await Promise.allSettled([
+    const [rSelic,rIpca,rIgpm]=await Promise.allSettled([
       fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json'),
-      fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.433/dados/ultimos/12?formato=json')
+      fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.433/dados/ultimos/12?formato=json'),
+      fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.189/dados/ultimos/12?formato=json')
     ]);
     if(rSelic.status==='fulfilled' && rSelic.value.ok){
       const j=await rSelic.value.json();
       if(j && j[0] && j[0].valor) imIndicadores.selic=parseFloat(String(j[0].valor).replace(',','.'));
     }
     if(rIpca.status==='fulfilled' && rIpca.value.ok){
-      const j=await rIpca.value.json();
-      if(Array.isArray(j) && j.length){
-        let fator=1;
-        j.forEach(m=>{ const v=parseFloat(String(m.valor).replace(',','.')); if(!isNaN(v)) fator*=(1+v/100); });
-        imIndicadores.ipca12m=(fator-1)*100;
-      }
+      imIndicadores.ipca12m=_imAcumula12m(await rIpca.value.json());
     }
-    if(imIndicadores.selic!=null || imIndicadores.ipca12m!=null) imIndicadores.fetchedAt=new Date();
+    if(rIgpm.status==='fulfilled' && rIgpm.value.ok){
+      imIndicadores.igpm12m=_imAcumula12m(await rIgpm.value.json());
+    }
+    if(imIndicadores.selic!=null || imIndicadores.ipca12m!=null || imIndicadores.igpm12m!=null) imIndicadores.fetchedAt=new Date();
   }catch(e){}
 }
 
@@ -3326,6 +3338,7 @@ function imRenderIndicadores(){
   const f=imIndicadores.fetchedAt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   const selicTxt=imIndicadores.selic!=null?`${imIndicadores.selic.toFixed(2)}% a.a.`:'—';
   const ipcaTxt=imIndicadores.ipca12m!=null?`${imIndicadores.ipca12m.toFixed(2)}% (12m)`:'—';
+  const igpmTxt=imIndicadores.igpm12m!=null?`${imIndicadores.igpm12m.toFixed(2)}% (12m)`:'—';
   const riscoJuro=imIndicadores.selic!=null
     ? (imIndicadores.selic>=12 ? {t:'⚠ financiamento caro — pressiona viabilidade de novas compras alavancadas',c:'cr'}
       : imIndicadores.selic>=9 ? {t:'custo de financiamento moderado',c:''}
@@ -3335,11 +3348,22 @@ function imRenderIndicadores(){
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
       <span class="badge live">🟢 Selic (meta) ${selicTxt}</span>
       <span class="badge live">🟢 IPCA acum. ${ipcaTxt}</span>
+      <span class="badge live">🟢 IGP-M acum. ${igpmTxt}</span>
       ${riscoJuro?`<span class="badge ${riscoJuro.c}">${riscoJuro.t}</span>`:''}
-      <span class="badge" style="opacity:.75">fonte: BCB/SGS séries 432 e 433 · ${f}</span>
+      <span class="badge" style="opacity:.75">fonte: BCB/SGS séries 432, 433 e 189 · ${f}</span>
     </div>
-    <div class="ps" style="margin-top:6px;font-size:11px">Selic e IPCA são buscados ao vivo do Banco Central a cada "Atualizar Tudo" e contextualizam os sinais abaixo (ex.: "Selic alta", "Ciclo de queda da Selic", "INCC > IPCA"). Os demais sinais, matriz de risco e radar são uma leitura qualitativa curada — não recalculados automaticamente a partir desses indicadores.</div>`;
+    <div class="ps" style="margin-top:6px;font-size:11px">Selic, IPCA e IGP-M (usado em reajuste de aluguel) são buscados ao vivo do Banco Central a cada "Atualizar Tudo" e contextualizam os sinais abaixo (ex.: "Selic alta", "Ciclo de queda da Selic", "INCC > IPCA"). Os demais sinais, matriz de risco e radar são uma leitura qualitativa curada — não recalculados automaticamente a partir desses indicadores.</div>`;
 }
+
+function _imDescSelicCiclo(){
+  if(imIndicadores.selic!=null){
+    const atual=imIndicadores.selic.toFixed(2).replace('.',',');
+    return `Selic atual em ${atual}% a.a. (BCB, ao vivo). Um eventual ciclo de cortes nos próximos anos reduziria o custo do financiamento imobiliário, ampliando a demanda — quanto mais alta a Selic hoje, maior o espaço de queda futura.`;
+  }
+  return 'Um eventual ciclo de cortes nos próximos anos reduziria o custo do financiamento imobiliário, ampliando a demanda. Clique em "Atualizar Tudo" para ver a Selic real (BCB, ao vivo).';
+}
+
+function _imDesc(s){ return typeof s.desc==='function' ? s.desc() : s.desc; }
 
 function imBuildSignals(){
   imRenderIndicadores();
@@ -3357,7 +3381,7 @@ function imBuildSignals(){
       <div class="sb">
         <div class="slb">${s.label}</div>
         <div class="sti">${s.title}</div>
-        <div class="sde">${s.desc}</div>
+        <div class="sde">${_imDesc(s)}</div>
         <div class="stags">${s.tags.map(t=>`<span class="stag" style="background:${bM[s.type]};color:${cM[s.type]}">${t}</span>`).join('')}</div>
       </div>
     </div>`).join('');
@@ -3376,8 +3400,8 @@ function imBuildSignals(){
 
   const posS=imSIGS.filter(s=>s.type==='pos');
   const negS=imSIGS.filter(s=>s.type!=='pos');
-  imG('im-cat-pos').innerHTML=posS.map(s=>`<div class="cat-item pos"><div class="cat-t">${s.title}</div><div class="cat-d">${s.desc}</div></div>`).join('');
-  imG('im-cat-neg').innerHTML=negS.map(s=>`<div class="cat-item ${s.type}"><div class="cat-t">${s.title}</div><div class="cat-d">${s.desc}</div></div>`).join('');
+  imG('im-cat-pos').innerHTML=posS.map(s=>`<div class="cat-item pos"><div class="cat-t">${s.title}</div><div class="cat-d">${_imDesc(s)}</div></div>`).join('');
+  imG('im-cat-neg').innerHTML=negS.map(s=>`<div class="cat-item ${s.type}"><div class="cat-t">${s.title}</div><div class="cat-d">${_imDesc(s)}</div></div>`).join('');
 }
 
 /* ─── MATRIX ─── */
