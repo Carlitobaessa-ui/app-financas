@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 70 -->
+<!-- APP_VERSION: 71 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -5707,18 +5707,25 @@ const _catEvolLabelPlugin={
     ctx.restore();
   }
 };
-// Rótulo de valor para gráficos de rosca/pizza (ex.: Gastos por Categoria da
-// fatura aberta). Testamos anexar valor+% ao texto da legenda nativa, mas
-// com muitas categorias isso estoura a 2ª coluna da legenda (texto cortado
-// no limite do painel) — por isso o rótulo aparece diretamente sobre a
-// fatia, e só nas fatias com participação relevante no total (fatias
-// pequenas ficariam ilegíveis); as demais continuam disponíveis ao passar o
-// mouse (tooltip). Reaproveita _lblCompacto (some com o valor quando o modo
-// privacidade estiver ativo).
+// Rótulo de valor para gráficos de rosca/pizza (Gastos por Categoria da
+// fatura aberta, Composição do Patrimônio, Dividendos por Ativo, Alocação,
+// Saldo por Banco, Distribuição de Gastos/Aportes/Bens). Testamos anexar
+// valor+% ao texto da legenda nativa, mas com muitas categorias isso estoura
+// a 2ª coluna da legenda (texto cortado no limite do painel) — por isso o
+// rótulo aparece diretamente sobre a fatia, e só nas fatias com participação
+// relevante no total (fatias pequenas ficariam ilegíveis); as demais
+// continuam disponíveis ao passar o mouse (tooltip). 'moeda' reaproveita
+// _lblCompacto (some com o valor quando o modo privacidade estiver ativo);
+// 'pct' é usado no único gráfico cujos dados já são percentuais (Alocação).
+const _PIZZAS_ROTULO_VALOR={
+  'ch-cc-cat':'moeda','ch-aloc':'moeda','ch-div-at':'moeda','ch-aloc-pie':'pct',
+  'ch-bc-pie':'moeda','ch-gas-pie':'moeda','ch-obj-pie':'moeda','ch-bens-pie':'moeda'
+};
 const _donutValueLabelPlugin={
   id:'donutValueLabels',
   afterDatasetsDraw(chart){
-    if(chart.canvas.id!=='ch-cc-cat')return;
+    const modo=_PIZZAS_ROTULO_VALOR[chart.canvas.id];
+    if(!modo)return;
     const meta=chart.getDatasetMeta(0);
     if(!meta||!meta.data||!meta.data.length)return;
     const ds=chart.data.datasets[0];
@@ -5734,7 +5741,7 @@ const _donutValueLabelPlugin={
       if(v==null)return;
       if((v/total)<0.06)return; // fatia pequena demais pra rótulo legível
       const pos=arc.getCenterPoint();
-      const txt=_lblCompacto(v);
+      const txt=modo==='pct'?v.toFixed(0)+'%':_lblCompacto(v);
       ctx.lineWidth=2.5; ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.strokeText(txt,pos.x,pos.y);
       ctx.fillStyle='#fff';
       ctx.fillText(txt,pos.x,pos.y);
@@ -5892,7 +5899,7 @@ function rdash(){
   const alocLabels=['Invest. BR','Invest. EUA','FIIs','Renda Fixa','Saldo Bancos','Bens','Grãos'];
   const alocData=[al.BR?.val||0,al.US?.val||0,al.FII?.val||0,al.RF?.val||0,banc,bens,_graosVal];
   const alocColors=[C.grn,C.blu,C.gld,'#9C6B4F','#2A8C6E','#C15F3C','#B8860B'];
-  mkCh('ch-aloc',{type:'doughnut',data:{labels:alocLabels,datasets:[{data:alocData,backgroundColor:alocColors,borderWidth:2,borderColor:'#FBFAF6'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:10,font:{size:10}}}}}});
+  mkCh('ch-aloc',{type:'doughnut',data:{labels:alocLabels,datasets:[{data:alocData,backgroundColor:alocColors,borderWidth:2,borderColor:'#FBFAF6'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:10,font:{size:10}}}}},plugins:[_donutValueLabelPlugin]});
 
   // ── FLUXO DE CAIXA CONSOLIDADO (todos os créditos e débitos do portfólio)
   // Período em anos, digitado pelo usuário (1 a 30). Acima de 5 anos, agrega por ANO.
@@ -7106,7 +7113,7 @@ function rdiv(){
   document.getElementById('dv-prj').textContent=brl(totAR);
   const meses=['Jan','Fev','Mar','Abr','Mai','Jun'];
   mkCh('ch-div',{type:'bar',data:{labels:meses,datasets:[{label:'Dividendos',data:pm,backgroundColor:'rgba(193,95,60,.22)',borderColor:C.gld,borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:gridOpts(v=>'R$ '+v)}});
-  mkCh('ch-div-at',{type:'doughnut',data:{labels:Object.keys(pa),datasets:[{data:Object.values(pa),backgroundColor:[C.gld,C.grn,C.blu,'#9C6B4F',C.red],borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:10,font:{size:11}}}}}});
+  mkCh('ch-div-at',{type:'doughnut',data:{labels:Object.keys(pa),datasets:[{data:Object.values(pa),backgroundColor:[C.gld,C.grn,C.blu,'#9C6B4F',C.red],borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:10,font:{size:11}}}}},plugins:[_donutValueLabelPlugin]});
   document.getElementById('tb-div').innerHTML=[...S.dividendos].sort((a,b)=>b.data.localeCompare(a.data)).map((d,i)=>{
     const futuro=(d.data||'')>hojeISO;
     const dataCell=`${fdt(d.data)}${futuro?' <span class="badge b-n" style="font-size:8px">a receber</span>':''}`;
@@ -7127,7 +7134,7 @@ function raloc(){
     const wLo=Math.max(0,Math.min(100,lo)), wRange=Math.max(0,Math.min(100,hi)-wLo);
     return`<div class="prog-row"><div class="prog-lbl"><span><strong>${lbls[k]}</strong> <span class="mono" style="color:${cols[k]}">${at.toFixed(1)}%</span></span><span class="cm" style="font-size:11px">faixa ${lo}–${hi}% <span class="${cls}">${st}</span></span></div><div class="prog-track" style="position:relative"><div style="position:absolute;top:0;bottom:0;left:${wLo}%;width:${wRange}%;background:rgba(0,0,0,.05);border-left:1px dashed ${cols[k]};border-right:1px dashed ${cols[k]}"></div><div class="prog-fill" style="width:${Math.min(100,at)}%;background:${cols[k]};position:relative"></div></div></div>`
   }).join('');
-  mkCh('ch-aloc-pie',{type:'pie',data:{labels:ordem.map(k=>lbls[k]),datasets:[{data:ordem.map(k=>al[k].pct),backgroundColor:ordem.map(k=>cols[k]),borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:12,font:{size:11}}}}}});
+  mkCh('ch-aloc-pie',{type:'pie',data:{labels:ordem.map(k=>lbls[k]),datasets:[{data:ordem.map(k=>al[k].pct),backgroundColor:ordem.map(k=>cols[k]),borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:12,font:{size:11}}}}},plugins:[_donutValueLabelPlugin]});
   document.getElementById('meta-form').innerHTML='<div class="fgrid">'+ordem.filter(k=>k in S.metas).map(k=>{const f=fx[k]||[];return`<div class="fg"><label style="color:${cols[k]}">${lbls[k]} (alvo %)</label><input type="number" id="mt-${k}" value="${S.metas[k]}" min="0" max="100"><span class="cm" style="font-size:10px;display:block;margin-top:2px">faixa comitê: ${f[0]??'—'}–${f[1]??'—'}%</span></div>`}).join('')+'</div>';
 }
 function salvarMetas(){Object.keys(S.metas).forEach(k=>{const v=parseFloat(document.getElementById('mt-'+k)?.value);if(!isNaN(v))S.metas[k]=v});persistir();toast('✓ Metas salvas');raloc()}
@@ -7227,7 +7234,7 @@ function rcontas(){
   const fs=ymsFlx.map(ym=>S.lancamentos.filter(l=>l.data.startsWith(ym)&&l.tipo==='debito'&&!l.forecast).reduce((s,l)=>s+l.valor,0));
   mkCh('ch-fluxo',{type:'bar',data:{labels:ml,datasets:[{label:'Entradas',data:fe,backgroundColor:'rgba(74,122,86,.2)',borderColor:C.grn,borderWidth:1,borderRadius:3},{label:'Saídas',data:fs,backgroundColor:'rgba(163,58,46,.18)',borderColor:C.red,borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:C.txt,padding:12,font:{size:11}}}},scales:gridOpts(v=>'R$'+(v/1000).toFixed(0)+'k')}});
   const ativos=S.contas.filter(c=>c.ativa&&c.saldo>0);
-  mkCh('ch-bc-pie',{type:'doughnut',data:{labels:ativos.map(c=>c.nome),datasets:[{data:ativos.map(c=>c.saldo),backgroundColor:ativos.map(c=>BG(c.banco).stripe),borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:10,font:{size:11}}}}}});
+  mkCh('ch-bc-pie',{type:'doughnut',data:{labels:ativos.map(c=>c.nome),datasets:[{data:ativos.map(c=>c.saldo),backgroundColor:ativos.map(c=>BG(c.banco).stripe),borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:10,font:{size:11}}}}},plugins:[_donutValueLabelPlugin]});
   const sel=document.getElementById('fil-banco');if(sel.options.length<=1)_ordAlfa(S.contas,c=>c.nome).forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nome;sel.appendChild(o)});
   const fb=sel.value,ft=document.getElementById('fil-tipo').value;
   const _prev=_fcTab.contas==='previstos';
@@ -7813,7 +7820,7 @@ function rgas(){
   document.getElementById('g-tot').textContent=brl(tm);document.getElementById('g-ant').textContent=brl(ta);
   document.getElementById('g-cat').textContent=sorted[0]?.[0]||'—';document.getElementById('g-num').textContent=mes.length;
   document.getElementById('cat-lista').innerHTML=sorted.map(([cat,val])=>{const p=(val/tm*100).toFixed(0);return`<div class="cat-row"><div class="cat-dot" style="background:${corCat(cat)}"></div><div class="cat-nm">${cat}</div><div class="cat-bar"><div class="cat-fill" style="width:${p}%;background:${corCat(cat)}"></div></div><div class="cat-v mono">${brl(val)}</div><div class="cat-p">${p}%</div></div>`}).join('');
-  mkCh('ch-gas-pie',{type:'doughnut',data:{labels:sorted.map(([k])=>k),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:sorted.map(([k])=>corCat(k)),borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:10,font:{size:11}}}}}});
+  mkCh('ch-gas-pie',{type:'doughnut',data:{labels:sorted.map(([k])=>k),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:sorted.map(([k])=>corCat(k)),borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:10,font:{size:11}}}}},plugins:[_donutValueLabelPlugin]});
   const _prevG=_fcTab.gastos==='previstos';
   _injetarFcTabs('gastos','tb-gas');
   const _linhasG=[...S.gastos].sort((a,b)=>b.data.localeCompare(a.data));
@@ -8069,7 +8076,7 @@ function robjetivos(){
   mkCh('ch-obj-pie',{type:'doughnut',data:{
     labels:objs.map(o=>o.nome),
     datasets:[{data:objs.map(o=>aporteNecessario(o)),backgroundColor:objs.map(o=>o.cor||C.grn),borderWidth:2,borderColor:'#FBFAF6'}]
-  },options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:10,font:{size:11}}}}}});
+  },options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:10,font:{size:11}}}}},plugins:[_donutValueLabelPlugin]});
 
   // Impacto no orçamento
   const varBudget=budgetVariavel();
@@ -9813,7 +9820,7 @@ function rbens(){
   // Charts
   const byCat={};S.bens.forEach(b=>{byCat[b.cat]=(byCat[b.cat]||0)+b.vlAt});
   const catK=Object.keys(byCat);
-  mkCh('ch-bens-pie',{type:'doughnut',data:{labels:catK.map(k=>BENS_LABEL[k]),datasets:[{data:Object.values(byCat),backgroundColor:catK.map(k=>BENS_COL[k]),borderWidth:2,borderColor:'#FBFAF6'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:10,font:{size:11}}}}}});
+  mkCh('ch-bens-pie',{type:'doughnut',data:{labels:catK.map(k=>BENS_LABEL[k]),datasets:[{data:Object.values(byCat),backgroundColor:catK.map(k=>BENS_COL[k]),borderWidth:2,borderColor:'#FBFAF6'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:10,font:{size:11}}}}},plugins:[_donutValueLabelPlugin]});
   mkCh('ch-bens-bar',{type:'bar',data:{labels:S.bens.map(b=>b.nome.split(' ').slice(0,3).join(' ')),datasets:[{label:'Aquisição',data:S.bens.map(b=>b.vlAq),backgroundColor:'rgba(100,95,80,.2)',borderColor:'rgba(100,95,80,.5)',borderWidth:1,borderRadius:3},{label:'Atual',data:S.bens.map(b=>b.vlAt),backgroundColor:S.bens.map(b=>b.vlAt>=b.vlAq?'rgba(74,122,86,.3)':'rgba(163,58,46,.3)'),borderColor:S.bens.map(b=>b.vlAt>=b.vlAq?C.grn:C.red),borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{position:'top',labels:{color:C.txt,padding:12,font:{size:11}}}},scales:{x:{grid:{color:'rgba(100,95,80,.07)'},ticks:{color:C.muted,font:{size:9},callback:_maskTick(v=>'R$'+(v/1000).toFixed(0)+'k')}},y:{grid:{display:false},ticks:{color:C.txt,font:{size:9}}}}}});
 
   // Tabela completa
