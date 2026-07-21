@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 44 -->
+<!-- APP_VERSION: 45 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4195,19 +4195,23 @@ function _acoesCotWatch(tipoAtivo){
   return lista.filter(it=>it && it.tk && _tipoPorTicker(it.tk)===tipoAtivo);
 }
 
-function _fundPrompt(ticker,nome,tipoAtivo,divInfo){
+function _fundPrompt(ticker,nome,tipoAtivo,divInfo,precoInfo){
   const mercado = tipoAtivo==='US' ? 'mercado americano (NYSE/NASDAQ)' : 'B3 (mercado brasileiro)';
   const divCtx = divInfo
     ? `Já recebi ${divInfo.n} pagamento(s) de proventos desta empresa, totalizando ${brl(divInfo.total)}` + (divInfo.dy!=null ? `, com DY 12M de ${divInfo.dy.toFixed(2)}% sobre a posição atual.` : '.')
     : 'Ainda não recebi proventos registrados desta empresa no app.';
+  const moeda = tipoAtivo==='US' ? 'USD' : 'BRL';
+  const precoCtx = precoInfo && precoInfo.p!=null
+    ? `Cotação atual: ${moeda} ${precoInfo.p.toFixed(2)}${precoInfo.dp!=null?` (variação do dia: ${precoInfo.dp>=0?'+':''}${precoInfo.dp.toFixed(2)}%)`:''}.`
+    : 'Cotação atual não disponível no app.';
   return `Você é um analista de investimentos. Faça uma análise fundamentalista objetiva da empresa ${nome||ticker} (ticker ${ticker}), negociada no ${mercado}.
-Contexto do investidor: ${divCtx}
-Estruture a resposta EXATAMENTE assim, em Markdown simples, em português brasileiro, no máximo 180 palavras no total:
+Contexto do investidor: ${divCtx} ${precoCtx}
+Estruture a resposta EXATAMENTE assim, em Markdown simples, em português brasileiro, no máximo 200 palavras no total:
 **Indicadores-chave** (estimativas aproximadas, avise se não tiver certeza): P/L, P/VP (ou P/E, se EUA), ROE, Dívida/Patrimônio.
 **Saúde financeira**: 1-2 frases.
 **Política de dividendos**: 1-2 frases.
 **Principais riscos**: até 3 riscos, bullets curtos.
-**Veredito**: 1 frase objetiva (ex.: "fundamentos sólidos, dividendo sustentável" ou "atenção ao endividamento").
+**Veredito**: 2 frases objetivas. A primeira sobre fundamentos (ex.: "fundamentos sólidos, dividendo sustentável" ou "atenção ao endividamento"). A segunda avaliando especificamente se o PREÇO ATUAL parece barato, justo ou caro frente aos fundamentos e à cotação informada (ex.: "no preço atual, o papel parece descontado frente ao P/L histórico" ou "após a alta recente, o preço já reflete boa parte dos fundamentos positivos").
 Seja direto, sem saudação, sem repetir o ticker no início.`;
 }
 
@@ -4216,10 +4220,12 @@ async function gerarAnaliseFundamentalista(ticker,tipoAtivo){
   const item=_acoesCotWatch(tipoAtivo).find(x=>x.tk===ticker);
   if(!item)return;
   const divInfo=_divPorEmpresa(tipoAtivo).find(x=>x.ticker===ticker)||null;
+  const qv=(typeof getQ==='function'?getQ(ticker):null)||(typeof MQ!=='undefined'?MQ[ticker]:null);
+  const precoInfo=qv?{p:qv.p,dp:qv.dp}:null;
   _fundGerando[ticker]=true;
   rfundAnalise();
   try{
-    const resp=await chamarClaudeAPI({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:_fundPrompt(ticker,item.nome,tipoAtivo,divInfo)}]});
+    const resp=await chamarClaudeAPI({model:'claude-sonnet-4-6',max_tokens:550,messages:[{role:'user',content:_fundPrompt(ticker,item.nome,tipoAtivo,divInfo,precoInfo)}]});
     const data=await resp.json();
     if(data.error) throw new Error(data.error.message||'erro na API');
     const txt=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join(' ').trim();
@@ -4253,9 +4259,10 @@ function _fundCardHTML(item,tipoAtivo){
   } else {
     corpo=`<button class="btn btn-g" style="font-size:11.5px;padding:5px 12px" onclick="gerarAnaliseFundamentalista('${ticker}','${tipoAtivo}')">🔍 Analisar Fundamentos</button>`;
   }
-  return `<div class="card" style="margin-bottom:10px;padding:12px 14px">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-      <div><strong class="mono" style="font-size:13px">${ticker}</strong>${item.nome?`<span style="font-size:11px;color:var(--txt3);margin-left:7px">${item.nome}</span>`:''}</div>
+  const corAcento = tipoAtivo==='US' ? 'var(--blu)' : 'var(--grn)';
+  return `<div class="card" style="margin-bottom:16px;padding:12px 14px 14px 13px;border-left:3px solid ${corAcento}">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-bottom:8px;border-bottom:0.5px solid var(--bdr)">
+      <div><strong class="mono" style="font-size:13px">${ticker}</strong>${item.nome?`<strong style="font-size:11.5px;color:var(--txt2);font-weight:600;margin-left:7px">${item.nome}</strong>`:''}</div>
       ${divInfo && divInfo.dy!=null?`<span style="font-size:10.5px;color:var(--txt3)">DY 12M ${divInfo.dy.toFixed(2)}%</span>`:''}
     </div>
     ${corpo}
