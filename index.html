@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 62 -->
+<!-- APP_VERSION: 63 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -6722,6 +6722,15 @@ function toggleCotSinaisConsolidado(){
   _salvarFundColapso(st);
   rcotSinaisConsolidado();
 }
+// Filtro dos badges de resumo (Comprar/Vender/Manter/Sem análise) — clicar
+// num badge filtra a tabela abaixo pra só aquele grupo; clicar de novo no
+// mesmo badge (ou no "Todos") limpa o filtro. Estado em memória (não
+// precisa persistir entre sessões).
+let _cotSinaisFiltro=null; // null | 'compra' | 'venda' | 'manter' | 'sem'
+function cotSinaisSetFiltro(v){
+  _cotSinaisFiltro = (_cotSinaisFiltro===v) ? null : v;
+  rcotSinaisConsolidado();
+}
 function rcotSinaisConsolidado(){
   const el=document.getElementById('cot-sinais-body'); if(!el)return;
   const colapsado=_fundSecaoColapsada('cotSinais','painel');
@@ -6748,16 +6757,26 @@ function rcotSinaisConsolidado(){
   const nManter=linhas.filter(l=>l.sinal==='manter').length;
   const nSem=linhas.filter(l=>!l.sinal).length;
   const nAltoRisco=linhas.filter(l=>Math.abs(l.dp||0)>=5).length;
+  // Se o filtro ativo ficou sem nenhum item (ex.: análise removida), limpa
+  // sozinho em vez de mostrar uma tabela vazia sem explicação.
+  const contagemFiltro={compra:nComprar,venda:nVender,manter:nManter,sem:nSem};
+  if(_cotSinaisFiltro && !contagemFiltro[_cotSinaisFiltro]) _cotSinaisFiltro=null;
+  const ativo=v=>_cotSinaisFiltro===v;
+  const badgeStyle=(v,corFundo)=>`cursor:pointer;background:${corFundo};${ativo(v)?'outline:2px solid currentColor;font-weight:700':''}`;
   const resumo=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-    <span class="badge cg" style="background:rgba(30,125,69,.10)">Comprar: ${nComprar}</span>
-    <span class="badge cr" style="background:rgba(192,57,43,.10)">Vender: ${nVender}</span>
-    <span class="badge cm" style="background:var(--bg2)">Manter: ${nManter}</span>
-    <span class="badge cm" style="background:var(--bg2)">Sem análise: ${nSem}</span>
+    <span class="badge cg" style="${badgeStyle('compra','rgba(30,125,69,.10)')}" onclick="cotSinaisSetFiltro('compra')" title="Clique para filtrar">Comprar: ${nComprar}</span>
+    <span class="badge cr" style="${badgeStyle('venda','rgba(192,57,43,.10)')}" onclick="cotSinaisSetFiltro('venda')" title="Clique para filtrar">Vender: ${nVender}</span>
+    <span class="badge cm" style="${badgeStyle('manter','var(--bg2)')}" onclick="cotSinaisSetFiltro('manter')" title="Clique para filtrar">Manter: ${nManter}</span>
+    <span class="badge cm" style="${badgeStyle('sem','var(--bg2)')}" onclick="cotSinaisSetFiltro('sem')" title="Clique para filtrar">Sem análise: ${nSem}</span>
     ${nAltoRisco?`<span class="badge cr" style="background:rgba(192,57,43,.10)">⚠ ${nAltoRisco} em alta volatilidade hoje</span>`:''}
+    ${_cotSinaisFiltro?`<span class="badge" style="cursor:pointer;background:var(--bg2);text-decoration:underline" onclick="cotSinaisSetFiltro(null)">✕ limpar filtro</span>`:''}
   </div>`;
   const sinalTxt={compra:'Comprar',venda:'Vender',manter:'Manter'};
   const sinalCls={compra:'cg',venda:'cr',manter:'cm'};
-  const linhasHtml=linhas.map(l=>{
+  const linhasFiltradas = _cotSinaisFiltro
+    ? linhas.filter(l=> _cotSinaisFiltro==='sem' ? !l.sinal : l.sinal===_cotSinaisFiltro)
+    : linhas;
+  const linhasHtml=linhasFiltradas.map(l=>{
     const r=_riscoDiaCot(l.dp);
     const up=l.dp>=0;
     return `<tr>
