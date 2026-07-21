@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 53 -->
+<!-- APP_VERSION: 54 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4223,6 +4223,29 @@ function _salvarFundAnalises(obj){
   try{ localStorage.setItem(_FUND_STORE, JSON.stringify(obj)); }catch(_){}
 }
 
+// ─── Ocultar/exibir seções da Análise Fundamentalista (por categoria: BR,
+// US, OURO, CRIPTO, FX) — duas seções independentes por categoria: a
+// "consolidada" (só existe em BR/US) e a "por ativo" (lista de cards, um
+// por ticker). Estado persistido em localStorage pra sobreviver a reload.
+const _FUND_COLAPSO_STORE='fund_colapso';
+function _lerFundColapso(){
+  try{ const raw=localStorage.getItem(_FUND_COLAPSO_STORE); return raw?JSON.parse(raw):{}; }catch(_){ return {}; }
+}
+function _salvarFundColapso(obj){
+  try{ localStorage.setItem(_FUND_COLAPSO_STORE, JSON.stringify(obj)); }catch(_){}
+}
+function _fundSecaoColapsada(cat,secao){
+  const st=_lerFundColapso();
+  return !!(st[cat] && st[cat][secao]);
+}
+function toggleFundSecao(cat,secao){
+  const st=_lerFundColapso();
+  if(!st[cat])st[cat]={};
+  st[cat][secao]=!st[cat][secao];
+  _salvarFundColapso(st);
+  rfundAnalise();
+}
+
 // ─── Análise de Consolidação do mercado (BR/EUA) — diferente dos cards por
 // ticker acima (que analisam UM ativo já cadastrado na watchlist), esta é
 // uma leitura do MERCADO como um todo, com sugestão de boas pagadoras de
@@ -4574,6 +4597,13 @@ function _fundCardHTML(item,cat){
   </div>`;
 }
 
+// Botão de ocultar/exibir de uma seção (consolidada ou por ativo). label é
+// o nome da seção mostrado no botão; contagem é opcional (ex.: nº de ativos).
+function _toggleBtnHTML(cat,secao,label,colapsada,contagem){
+  const sufixo = contagem!=null ? ` (${contagem})` : '';
+  return `<button class="btn btn-ghost" style="font-size:11px;padding:3px 9px;margin-bottom:8px" onclick="toggleFundSecao('${cat}','${secao}')">${colapsada?'▸ Exibir':'▾ Ocultar'} ${label}${sufixo}</button>`;
+}
+
 function _fundAnaliseHTML(cat){
   const lista=_itensCotWatch(cat);
   const semChave=!temApiKey() ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--paper);border:0.5px solid var(--bdr);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:11.5px;color:var(--txt3)">
@@ -4583,9 +4613,28 @@ function _fundAnaliseHTML(cat){
   // A consolidação de mercado (sugestão de novas empresas pagadoras de
   // dividendos, sob a ótica de Barsi e de Peter Lynch) não depende dos itens
   // já cadastrados na watchlist — por isso aparece mesmo com a lista vazia.
-  const consolidacao=_consolidacaoHTML(cat);
-  if(!lista.length)return semChave + consolidacao + `<div class="empty-hint" style="padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum item cadastrado nesta lista ainda. Use <strong>+ Incluir</strong> no painel acima.</div>`;
-  return semChave + consolidacao + lista.map(item=>_fundCardHTML(item,cat)).join('');
+  // Só existe para BR/US, cada uma com seu próprio botão de ocultar/exibir.
+  let blocoConsolidacao='';
+  if(cat==='BR'||cat==='US'){
+    const colapsada=_fundSecaoColapsada(cat,'consolidada');
+    blocoConsolidacao=`<div style="margin-bottom:6px">
+      ${_toggleBtnHTML(cat,'consolidada','Análise de Consolidação',colapsada)}
+      ${colapsada?'':_consolidacaoHTML(cat)}
+    </div>`;
+  }
+  // Seção "por ativo": um botão pra ocultar/exibir a lista inteira de cards
+  // por ticker, independente da consolidação acima.
+  const colapsadaAtivos=_fundSecaoColapsada(cat,'ativos');
+  const toggleAtivos=lista.length ? _toggleBtnHTML(cat,'ativos','Análise por Ativo',colapsadaAtivos,lista.length) : '';
+  let blocoAtivos;
+  if(!lista.length){
+    blocoAtivos=`<div class="empty-hint" style="padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum item cadastrado nesta lista ainda. Use <strong>+ Incluir</strong> no painel acima.</div>`;
+  } else if(colapsadaAtivos){
+    blocoAtivos='';
+  } else {
+    blocoAtivos=lista.map(item=>_fundCardHTML(item,cat)).join('');
+  }
+  return semChave + blocoConsolidacao + toggleAtivos + blocoAtivos;
 }
 
 function rfundAnalise(){
