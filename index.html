@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 45 -->
+<!-- APP_VERSION: 46 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4292,6 +4292,84 @@ async function gerarAnaliseFundamentalista(ticker,cat){
   }
 }
 
+// ─── Série anual de proventos por ticker (histórico recebido + agendado +
+// projeção), usada no mini-gráfico dentro do card de análise fundamentalista.
+// Só faz sentido para BR/US (ouro/cripto/câmbio não pagam proventos no app).
+function _divSerieTicker(ticker){
+  const hoje=_hojeISO();
+  const porAno={};
+  let proxFuturo=null;
+  S.dividendos.filter(d=>d.ativo===ticker).forEach(d=>{
+    const dt=d.data||''; if(dt.length<4)return;
+    const ano=dt.slice(0,4);
+    if(!porAno[ano])porAno[ano]={recebido:0,aReceber:0};
+    if(dt<=hoje){ porAno[ano].recebido+=d.total||0; }
+    else{
+      porAno[ano].aReceber+=d.total||0;
+      if(!proxFuturo||dt<proxFuturo.data)proxFuturo={data:dt,total:d.total||0};
+    }
+  });
+  const anos=Object.keys(porAno).sort();
+  // Sem nenhum pagamento agendado (a receber) cadastrado, mas com histórico
+  // suficiente: projeta o próximo ano usando a média dos últimos até 3 anos
+  // com pagamento recebido — só uma estimativa simples, não é dado oficial.
+  let projAno=null,projValor=null;
+  const temFuturo=anos.some(a=>porAno[a].aReceber>0);
+  const anosComRecebido=anos.filter(a=>porAno[a].recebido>0);
+  if(!temFuturo && anosComRecebido.length){
+    const ultimos=anosComRecebido.slice(-3);
+    const media=ultimos.reduce((s,a)=>s+porAno[a].recebido,0)/ultimos.length;
+    projAno=String(+anosComRecebido[anosComRecebido.length-1]+1);
+    projValor=media;
+  }
+  return {anos,porAno,proxFuturo,projAno,projValor};
+}
+
+// Bloco HTML (título + canvas + linha de próximo pagamento/projeção). Vazio
+// se não houver nenhum provento (recebido, agendado ou histórico) cadastrado
+// para o ticker, ou se a categoria não for BR/US.
+function _divChartBlockHTML(ticker,cat){
+  if(cat!=='BR' && cat!=='US')return '';
+  const serie=_divSerieTicker(ticker);
+  if(!serie.anos.length && !serie.projAno)return '';
+  const canvasId='ch-funddiv-'+ticker.replace(/[^A-Za-z0-9]/g,'_');
+  let linha='';
+  if(serie.proxFuturo){
+    linha=`Próximo pagamento agendado: <strong>${fdt(serie.proxFuturo.data)}</strong> · ${brl(serie.proxFuturo.total)}`;
+  } else if(serie.projAno){
+    linha=`Sem pagamento agendado — projeção ${serie.projAno} baseada na média dos últimos anos: <strong>~${brl(serie.projValor)}</strong>`;
+  }
+  return `<div style="margin:8px 0 10px">
+    <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.03em">Histórico &amp; previsão de proventos</div>
+    <div style="height:120px"><canvas id="${canvasId}"></canvas></div>
+    ${linha?`<div style="font-size:11px;margin-top:5px;color:var(--txt2)">${linha}</div>`:''}
+  </div>`;
+}
+
+// Renderiza os canvases criados por _divChartBlockHTML — precisa rodar DEPOIS
+// do innerHTML já ter inserido os <canvas> no DOM (chamado em rfundAnalise()).
+function _renderDivChartsFund(cat){
+  if(cat!=='BR' && cat!=='US')return;
+  _itensCotWatch(cat).forEach(item=>{
+    const ticker=item.tk;
+    const serie=_divSerieTicker(ticker);
+    if(!serie.anos.length && !serie.projAno)return;
+    const canvasId='ch-funddiv-'+ticker.replace(/[^A-Za-z0-9]/g,'_');
+    const el=document.getElementById(canvasId);
+    if(!el)return;
+    let labels=serie.anos.slice();
+    let recebido=labels.map(a=>serie.porAno[a].recebido||null);
+    let aReceber=labels.map(a=>serie.porAno[a].aReceber||null);
+    let projecao=labels.map(()=>null);
+    if(serie.projAno){ labels=labels.concat([serie.projAno]); recebido=recebido.concat([null]); aReceber=aReceber.concat([null]); projecao=projecao.concat([serie.projValor]); }
+    mkCh(canvasId,{type:'bar',data:{labels,datasets:[
+      {label:'Recebido',data:recebido,backgroundColor:C.grn,borderRadius:3,maxBarThickness:28},
+      {label:'A receber (agendado)',data:aReceber,backgroundColor:C.gldlt,borderRadius:3,maxBarThickness:28},
+      {label:'Projeção (estimativa)',data:projecao,backgroundColor:'rgba(154,147,130,.35)',borderColor:C.muted,borderWidth:1,borderDash:[4,3],borderRadius:3,maxBarThickness:28},
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:9,font:{size:9},color:C.txt,padding:6}}},scales:gridOpts(v=>'R$ '+v)}});
+  });
+}
+
 function _fundCardHTML(item,cat){
   const ticker=item.tk;
   const cache=_lerFundAnalises();
@@ -4313,11 +4391,13 @@ function _fundCardHTML(item,cat){
   }
   const corAcentoPorCat={BR:'var(--grn)',US:'var(--blu)',OURO:'var(--gld)',CRIPTO:'var(--red)',FX:'var(--blu)'};
   const corAcento=corAcentoPorCat[cat]||'var(--grn)';
+  const divChart=_divChartBlockHTML(ticker,cat);
   return `<div class="card" style="margin-bottom:16px;padding:12px 14px 14px 13px;border-left:3px solid ${corAcento}">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-bottom:8px;border-bottom:0.5px solid var(--bdr)">
       <div><strong class="mono" style="font-size:13px">${item.sym||ticker}</strong>${item.nome?`<strong style="font-size:11.5px;color:var(--txt2);font-weight:600;margin-left:7px">${item.nome}</strong>`:''}</div>
       ${divInfo && divInfo.dy!=null?`<span style="font-size:10.5px;color:var(--txt3)">DY 12M ${divInfo.dy.toFixed(2)}%</span>`:''}
     </div>
+    ${divChart}
     ${corpo}
   </div>`;
 }
@@ -4336,7 +4416,7 @@ function rfundAnalise(){
   Object.keys(_FUND_CATS).forEach(cat=>{
     const id='fund-analise-'+_FUND_CATS[cat].key;
     const el=document.getElementById(id);
-    if(el)el.innerHTML=_fundAnaliseHTML(cat);
+    if(el){ el.innerHTML=_fundAnaliseHTML(cat); _renderDivChartsFund(cat); }
   });
 }
 
