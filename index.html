@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 73 -->
+<!-- APP_VERSION: 74 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -981,6 +981,31 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   table td:first-child,table th:first-child{position:sticky;left:0;background:var(--surf);z-index:1;box-shadow:2px 0 5px rgba(0,0,0,.05)}
   #page-imoveis table td:first-child,#page-imoveis table th:first-child{background:var(--im-s1)}
   #page-graos table td:first-child,#page-graos table th:first-child{background:var(--pg-surface)}
+
+  /* ═══ CORREÇÃO — tabelas densas viram cards empilhados (sem rolagem) ═══
+     A correção anterior (1ª coluna fixa) ajudava mas não resolvia de vez:
+     tabelas com 6-9 colunas (Extrato, Cartões, Carteira, Dividendos, Bens,
+     Ações/Sinais, Grãos) continuavam exigindo arrastar bastante pro lado, e
+     os botões de editar/excluir ficavam sempre no fim, difíceis de alcançar
+     — reportado repetidamente mesmo após a correção de 1ª coluna fixa.
+     Correção definitiva: cada linha (<tr>) vira um cartão independente
+     empilhado verticalmente, e cada célula (<td>) mostra o rótulo da coluna
+     (via atributo data-label, adicionado nas funções de render) empilhado
+     acima do valor. Zero rolagem horizontal nessas tabelas específicas
+     (marcadas com a classe tbl-mob-cards) — as demais tabelas do app não
+     mudam, continuam com a rolagem horizontal + 1ª coluna fixa de antes. */
+  .tbl-mob-cards{overflow-x:visible!important}
+  .tbl-mob-cards,.tbl-mob-cards tbody{display:block;width:100%;max-width:100%}
+  .tbl-mob-cards thead{display:none}
+  .tbl-mob-cards tr{display:block;background:var(--surf);border:0.5px solid var(--bdr);border-radius:var(--r);padding:10px 12px;margin-bottom:8px}
+  .tbl-mob-cards tr:last-child{margin-bottom:0}
+  #page-imoveis .tbl-mob-cards tr{background:var(--im-s1)}
+  #page-graos .tbl-mob-cards tr{background:var(--pg-surface)}
+  .tbl-mob-cards td{display:block!important;position:static!important;background:transparent!important;box-shadow:none!important;padding:4px 0!important;border-bottom:none!important;text-align:left!important}
+  .tbl-mob-cards td[data-label]::before{content:attr(data-label);display:block;font-size:9px;text-transform:uppercase;letter-spacing:.4px;color:var(--txt3);font-weight:600;margin-bottom:1px}
+  .tbl-mob-cards td.sel-col{display:none!important}
+  .tbl-mob-cards td.td-act{display:flex!important;justify-content:flex-end;gap:8px;padding-top:8px!important;margin-top:6px;border-top:0.5px solid var(--bdr)}
+  .tbl-mob-cards td[colspan]{text-align:center!important}
 }
 </style>
 </head>
@@ -1504,12 +1529,12 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <div class="g2">
     <div class="panel">
       <div class="phd"><div class="pt">Maiores Posições</div><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="goTo('carteira')">Ver todas →</button></div>
-      <table><thead><tr><th>Ativo</th><th>Tipo</th><th class="tr">Posição</th><th class="tr">Rent.</th></tr></thead><tbody id="top-pos"></tbody></table>
+      <table class="tbl-mob-cards"><thead><tr><th>Ativo</th><th>Tipo</th><th class="tr">Posição</th><th class="tr">Rent.</th></tr></thead><tbody id="top-pos"></tbody></table>
       <div class="pft">Top 6 ativos por posição atual, entre os que têm cotação</div>
     </div>
     <div class="panel">
       <div class="phd"><div class="pt">Últimas Despesas</div><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="goTo('gastos')">Ver todas →</button></div>
-      <table><thead><tr><th>Descrição</th><th>Categoria</th><th class="tr">Valor</th></tr></thead><tbody id="ul-gas"></tbody></table>
+      <table class="tbl-mob-cards"><thead><tr><th>Descrição</th><th>Categoria</th><th class="tr">Valor</th></tr></thead><tbody id="ul-gas"></tbody></table>
       <div class="pft">6 lançamentos mais recentes de Gastos Avulsos (S.gastos)</div>
     </div>
   </div>
@@ -1526,7 +1551,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   </div>
   <div class="panel mb">
     <div class="phd"><div><div class="pt">Ações BR · B3</div></div><span class="badge b-g">B3</span></div>
-    <table><thead><tr><th>Ticker</th><th>Qtd</th><th>PM</th><th>Atual</th><th class="tr">Posição</th><th class="tr">Resultado</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-br"></tbody></table>
+    <table class="tbl-mob-cards"><thead><tr><th>Ticker</th><th>Qtd</th><th>PM</th><th>Atual</th><th class="tr">Posição</th><th class="tr">Resultado</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-br"></tbody></table>
     <div class="pft">Todas as ações B3 cadastradas na carteira, posição atual</div>
   </div>
   <!-- MONITORAMENTO DE DIVIDENDOS — AÇÕES BR -->
@@ -1537,7 +1562,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   </div>
   <div class="panel mb">
     <div class="phd"><div><div class="pt">Stocks · NYSE / NASDAQ</div></div><span class="badge b-b">EUA</span></div>
-    <table><thead><tr><th>Ticker</th><th>Qtd</th><th>PM (USD)</th><th>Atual</th><th class="tr">Posição BRL</th><th class="tr">Resultado</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-us"></tbody></table>
+    <table class="tbl-mob-cards"><thead><tr><th>Ticker</th><th>Qtd</th><th>PM (USD)</th><th>Atual</th><th class="tr">Posição BRL</th><th class="tr">Resultado</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-us"></tbody></table>
     <div class="pft">Todas as stocks EUA cadastradas, posição convertida em BRL</div>
   </div>
   <!-- MONITORAMENTO DE DIVIDENDOS — STOCKS EUA -->
@@ -1554,12 +1579,12 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     </div>
     <div id="aluguel-kpis" class="kpi-row" style="margin-bottom:12px"></div>
     <div id="aluguel-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum contrato de aluguel cadastrado. Use <strong>+ Contrato</strong> ou importe por foto/PDF.</div>
-    <table id="aluguel-tabela"><thead><tr><th>Ativo</th><th>Papel</th><th class="tr">Qtd</th><th class="tr">Preço médio</th><th class="tr">Preço ação</th><th class="tr">Posição</th><th class="tr">Rent.</th><th class="tr">Vencimento</th><th></th></tr></thead><tbody id="tb-aluguel"></tbody></table>
+    <table id="aluguel-tabela" class="tbl-mob-cards"><thead><tr><th>Ativo</th><th>Papel</th><th class="tr">Qtd</th><th class="tr">Preço médio</th><th class="tr">Preço ação</th><th class="tr">Posição</th><th class="tr">Rent.</th><th class="tr">Vencimento</th><th></th></tr></thead><tbody id="tb-aluguel"></tbody></table>
     <div class="pft">Todos os contratos de aluguel de ações cadastrados (doador/tomador)</div>
   </div>
 
   <!-- FUNDOS IMOBILIÁRIOS -->
-  <div class="panel mb" style="margin-top:16px"><div class="phd"><div class="pt">Fundos Imobiliários</div><div class="ha"><button class="btn btn-ghost" onclick="abrirFotoImport('ativos')"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportAtivos()">⭳ Importar</button><button class="btn btn-g" onclick="abrirAtivoTipo('FII')">+ Fundo</button><span class="badge b-gd">FII</span></div></div><table><thead><tr><th>Fundo</th><th>Qtd</th><th>PM</th><th>Atual</th><th class="tr">DY</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-fii"></tbody></table><div class="pft">Todos os fundos imobiliários cadastrados na carteira</div></div>
+  <div class="panel mb" style="margin-top:16px"><div class="phd"><div class="pt">Fundos Imobiliários</div><div class="ha"><button class="btn btn-ghost" onclick="abrirFotoImport('ativos')"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportAtivos()">⭳ Importar</button><button class="btn btn-g" onclick="abrirAtivoTipo('FII')">+ Fundo</button><span class="badge b-gd">FII</span></div></div><table class="tbl-mob-cards"><thead><tr><th>Fundo</th><th>Qtd</th><th>PM</th><th>Atual</th><th class="tr">DY</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-fii"></tbody></table><div class="pft">Todos os fundos imobiliários cadastrados na carteira</div></div>
 
   <!-- FUNDOS DE INVESTIMENTO -->
   <div class="panel mb" id="panel-fundos" style="margin-top:16px">
@@ -1569,12 +1594,12 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     </div>
     <div id="fundos-kpis" class="kpi-row" style="margin-bottom:12px"></div>
     <div id="fundos-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum fundo cadastrado. Use <strong>+ Fundo</strong> ou importe por foto/PDF da posição.</div>
-    <table id="fundos-tabela"><thead><tr><th>Fundo</th><th class="tr">Aplicado</th><th class="tr">Posição</th><th class="tr">Rendimento</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-fundos"></tbody></table>
+    <table id="fundos-tabela" class="tbl-mob-cards"><thead><tr><th>Fundo</th><th class="tr">Aplicado</th><th class="tr">Posição</th><th class="tr">Rendimento</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-fundos"></tbody></table>
     <div class="pft">Fundos DI/RF/multimercado cadastrados, por valor aplicado e posição atual</div>
   </div>
 
   <!-- RENDA FIXA · CDB -->
-  <div class="panel mb" style="margin-top:16px"><div class="phd"><div class="pt">Renda Fixa · CDB</div><div class="ha"><button class="btn btn-ghost" onclick="abrirFotoImport('ativos')"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportAtivos()">⭳ Importar</button><button class="btn btn-g" onclick="abrirAtivoTipo('RF')">+ Título</button><span class="badge b-n">RF</span></div></div><table><thead><tr><th>Produto</th><th>Inst.</th><th>Taxa</th><th class="tr">Valor</th><th class="tr">Vencimento</th><th></th></tr></thead><tbody id="tb-rf"></tbody></table><div class="pft">Todos os CDBs e títulos de renda fixa cadastrados (exceto fundos)</div></div>
+  <div class="panel mb" style="margin-top:16px"><div class="phd"><div class="pt">Renda Fixa · CDB</div><div class="ha"><button class="btn btn-ghost" onclick="abrirFotoImport('ativos')"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportAtivos()">⭳ Importar</button><button class="btn btn-g" onclick="abrirAtivoTipo('RF')">+ Título</button><span class="badge b-n">RF</span></div></div><table class="tbl-mob-cards"><thead><tr><th>Produto</th><th>Inst.</th><th>Taxa</th><th class="tr">Valor</th><th class="tr">Vencimento</th><th></th></tr></thead><tbody id="tb-rf"></tbody></table><div class="pft">Todos os CDBs e títulos de renda fixa cadastrados (exceto fundos)</div></div>
 
   <!-- SATÉLITE · POSIÇÕES ASSIMÉTRICAS -->
   <div class="panel mb" id="panel-sat" style="margin-top:16px">
@@ -1583,7 +1608,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <div class="ha"><button class="btn btn-g" onclick="openM('m-ativo')">+ Adicionar</button></div>
     </div>
     <div id="sat-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhuma posição satélite. O Comitê recomenda no máximo 5% da carteira — aposta pequena e assimétrica.</div>
-    <table id="sat-tabela"><thead><tr><th>Ticker</th><th>Qtd</th><th>PM</th><th>Atual</th><th class="tr">Posição</th><th class="tr">Resultado</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-sat"></tbody></table>
+    <table id="sat-tabela" class="tbl-mob-cards"><thead><tr><th>Ticker</th><th>Qtd</th><th>PM</th><th>Atual</th><th class="tr">Posição</th><th class="tr">Resultado</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-sat"></tbody></table>
     <div class="pft">Posições satélite (convicção assimétrica), todas cadastradas</div>
   </div>
 
@@ -1598,7 +1623,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <div id="grao-posicao"></div>
       <div id="grao-exposicao" style="margin-top:18px"></div>
       <div id="grao-evol-wrap" style="margin-top:18px"><div class="pt" style="font-size:13px;margin-bottom:10px">Evolução do Estoque &amp; Resultado</div><div class="chart-m"><canvas id="ch-grao-evol"></canvas></div></div>
-      <div style="margin-top:18px"><div class="pt" style="font-size:13px;margin-bottom:10px">Operações</div><div style="overflow-x:auto"><table id="tb-grao-ops"><thead><tr><th>Data</th><th>Produto</th><th>Op.</th><th class="tr">Sacas</th><th class="tr">R$/saca</th><th class="tr">Total</th><th>Contraparte</th><th class="tr">Hedge</th><th></th></tr></thead><tbody id="tb-grao"></tbody></table></div></div>
+      <div style="margin-top:18px"><div class="pt" style="font-size:13px;margin-bottom:10px">Operações</div><div style="overflow-x:auto"><table id="tb-grao-ops" class="tbl-mob-cards"><thead><tr><th>Data</th><th>Produto</th><th>Op.</th><th class="tr">Sacas</th><th class="tr">R$/saca</th><th class="tr">Total</th><th>Contraparte</th><th class="tr">Hedge</th><th></th></tr></thead><tbody id="tb-grao"></tbody></table></div></div>
       <div class="pft">Trading físico + hedge de grãos: todo o histórico de operações (S.graos), sem previstos</div>
     </div>
   </div>
@@ -3543,7 +3568,7 @@ async function atualizarMercadoImoveis(){
   </div>
   <div class="panel">
     <div class="phd"><div class="pt">Histórico Detalhado</div></div>
-    <table><thead><tr><th>Data</th><th>Ativo</th><th>Tipo</th><th>Cotas</th><th class="tr">R$/Cota</th><th class="tr">Total</th><th></th></tr></thead><tbody id="tb-div"></tbody></table>
+    <table class="tbl-mob-cards"><thead><tr><th>Data</th><th>Ativo</th><th>Tipo</th><th>Cotas</th><th class="tr">R$/Cota</th><th class="tr">Total</th><th></th></tr></thead><tbody id="tb-div"></tbody></table>
     <div class="pft">Todo o histórico de proventos, incluindo os ainda a receber (futuro)</div>
   </div>
 </div>
@@ -3586,7 +3611,7 @@ async function atualizarMercadoImoveis(){
       </div>
     </div>
     <div class="sel-bar" id="sel-bar-contas" style="display:none"></div>
-    <table><thead><tr><th class="sel-col" style="display:none"><input type="checkbox" id="sel-all-contas" onclick="selAll('contas',this.checked)"></th><th>Data</th><th>Banco</th><th>Descrição</th><th>Tipo</th><th class="tr">Valor</th><th class="tr">Saldo</th><th></th></tr></thead><tbody id="tb-ext"></tbody></table>
+    <table class="tbl-mob-cards"><thead><tr><th class="sel-col" style="display:none"><input type="checkbox" id="sel-all-contas" onclick="selAll('contas',this.checked)"></th><th>Data</th><th>Banco</th><th>Descrição</th><th>Tipo</th><th class="tr">Valor</th><th class="tr">Saldo</th><th></th></tr></thead><tbody id="tb-ext"></tbody></table>
     <div class="pft">Lançamentos bancários · Realizados ou Previstos conforme aba selecionada acima</div>
   </div>
 </div>
@@ -3615,12 +3640,12 @@ async function atualizarMercadoImoveis(){
       </div>
     </div>
     <div class="sel-bar" id="sel-bar-cartoes" style="display:none"></div>
-    <table><thead><tr><th class="sel-col" style="display:none"><input type="checkbox" id="sel-all-cartoes" onclick="selAll('cartoes',this.checked)"></th><th>Data</th><th>Cartão</th><th>Descrição</th><th>Categoria</th><th class="tr">Valor</th><th class="tr">Parcelas</th><th></th></tr></thead><tbody id="tb-comp"></tbody></table>
+    <table class="tbl-mob-cards"><thead><tr><th class="sel-col" style="display:none"><input type="checkbox" id="sel-all-cartoes" onclick="selAll('cartoes',this.checked)"></th><th>Data</th><th>Cartão</th><th>Descrição</th><th>Categoria</th><th class="tr">Valor</th><th class="tr">Parcelas</th><th></th></tr></thead><tbody id="tb-comp"></tbody></table>
     <div class="pft">Compras no cartão · Realizadas ou Previstas conforme aba selecionada acima</div>
   </div>
   <div class="panel" id="painel-pagfat" style="margin-top:16px;display:none">
     <div class="phd"><div><div class="pt">Pagamentos de Fatura</div><div class="ps">Histórico de pagamentos · editável</div></div></div>
-    <table><thead><tr><th>Data</th><th>Cartão</th><th>Origem</th><th class="tr">Valor Pago</th><th></th></tr></thead><tbody id="tb-pagfat"></tbody></table>
+    <table class="tbl-mob-cards"><thead><tr><th>Data</th><th>Cartão</th><th>Origem</th><th class="tr">Valor Pago</th><th></th></tr></thead><tbody id="tb-pagfat"></tbody></table>
     <div class="pft">Histórico de pagamentos de fatura, todos os cartões (ou o filtrado acima)</div>
   </div>
 </div>
@@ -3640,7 +3665,7 @@ async function atualizarMercadoImoveis(){
   </div>
   <div class="panel">
     <div class="phd"><div class="pt">Todos os Lançamentos</div></div>
-    <table><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Origem</th><th class="tr">Valor</th><th></th></tr></thead><tbody id="tb-gas"></tbody></table>
+    <table class="tbl-mob-cards"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Origem</th><th class="tr">Valor</th><th></th></tr></thead><tbody id="tb-gas"></tbody></table>
     <div class="pft">Gastos avulsos · Realizados ou Previstos conforme aba selecionada acima</div>
   </div>
   <div class="panel">
@@ -3795,7 +3820,7 @@ async function atualizarMercadoImoveis(){
 
   <div class="panel mb">
     <div class="phd"><div class="pt">Lista Completa de Bens</div></div>
-    <table>
+    <table class="tbl-mob-cards">
       <thead><tr>
         <th>Bem</th><th>Categoria</th><th>Localização</th>
         <th>Aquisição</th><th class="tr">Valor Aquisição</th>
@@ -5883,8 +5908,8 @@ function rdash(){
 
   // Posições
   const sorted=[...S.ativos].filter(a=>a.preco).map(a=>({...a,_p:pos(a)})).sort((a,b)=>b._p-a._p).slice(0,6);
-  document.getElementById('top-pos').innerHTML=sorted.map(a=>{const r=rent(a);return`<tr><td><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td><span class="badge ${badg(a.tipo)}">${a.tipo}</span></td><td class="tr mono">${brl(a._p)}</td><td class="tr mono ${cCls(r)}">${pct(r)}</td></tr>`}).join('');
-  document.getElementById('ul-gas').innerHTML=[...S.gastos].slice(0,6).map(g=>`<tr><td>${g.desc}</td><td><span class="badge b-n" style="font-size:9px">${g.cat}</span></td><td class="tr mono cr">${brl(g.valor)}</td></tr>`).join('');
+  document.getElementById('top-pos').innerHTML=sorted.map(a=>{const r=rent(a);return`<tr><td data-label="Ativo"><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td data-label="Tipo"><span class="badge ${badg(a.tipo)}">${a.tipo}</span></td><td class="tr mono" data-label="Posição">${brl(a._p)}</td><td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td></tr>`}).join('');
+  document.getElementById('ul-gas').innerHTML=[...S.gastos].slice(0,6).map(g=>`<tr><td data-label="Descrição">${g.desc}</td><td data-label="Categoria"><span class="badge b-n" style="font-size:9px">${g.cat}</span></td><td class="tr mono cr" data-label="Valor">${brl(g.valor)}</td></tr>`).join('');
 
   // ── Âncora dos gráficos: SALDO FINAL DO PERÍODO ATUAL ──────────────────────────
   // = saldo bancário das contas ativas − faturas de cartão pendentes
@@ -6119,11 +6144,11 @@ function rcar(){
   document.getElementById('c-rnt').textContent=pct(rp);
   document.getElementById('c-rnt').className='kpi-val '+(rp>=0?'cg':'cr');
   document.getElementById('c-num').textContent=S.ativos.length;
-  const rowBR=a=>{const p=a.preco||a.pm,r=rent(a),pv=pos(a),rv=pv-a.qtd*a.pm;return`<tr><td><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono">${a.qtd}</td><td class="mono">${brl(a.pm)}</td><td class="mono">${a.preco?brl(a.preco):'—'}${a.varPct!==undefined?`<br><span class="cm" style="font-size:9px">${pct(a.varPct)} hoje</span>`:''}</td><td class="tr mono">${brl(pv)}</td><td class="tr mono ${cCls(rv)}">${rv>=0?'+':'-'}${brl(Math.abs(rv))}</td><td class="tr mono ${cCls(r)}">${pct(r)}</td><td><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`};
+  const rowBR=a=>{const p=a.preco||a.pm,r=rent(a),pv=pos(a),rv=pv-a.qtd*a.pm;return`<tr><td data-label="Ticker"><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono" data-label="Qtd">${a.qtd}</td><td class="mono" data-label="PM">${brl(a.pm)}</td><td class="mono" data-label="Atual">${a.preco?brl(a.preco):'—'}${a.varPct!==undefined?`<br><span class="cm" style="font-size:9px">${pct(a.varPct)} hoje</span>`:''}</td><td class="tr mono" data-label="Posição">${brl(pv)}</td><td class="tr mono ${cCls(rv)}" data-label="Resultado">${rv>=0?'+':'-'}${brl(Math.abs(rv))}</td><td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td><td class="td-act"><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`};
   document.getElementById('tb-br').innerHTML=S.ativos.filter(a=>a.tipo==='BR').map(rowBR).join('');
-  document.getElementById('tb-us').innerHTML=S.ativos.filter(a=>a.tipo==='US').map(a=>{const p=a.preco||a.pm,r=rent(a),pv=pos(a),rv=pv-a.qtd*a.pm*S.usdBrl;return`<tr><td><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono">${a.qtd}</td><td class="mono">${usd(a.pm)}</td><td class="mono">${a.preco?usd(a.preco):'—'}${a.varPct!==undefined?`<br><span class="cm" style="font-size:9px">${pct(a.varPct)} hoje</span>`:''}</td><td class="tr mono">${brl(pv)}</td><td class="tr mono ${cCls(rv)}">${rv>=0?'+':'-'}${brl(Math.abs(rv))}</td><td class="tr mono ${cCls(r)}">${pct(r)}</td><td><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`}).join('');
-  document.getElementById('tb-fii').innerHTML=S.ativos.filter(a=>a.tipo==='FII').map(a=>{const r=rent(a),dy=a.ticker==='HGLG11'?8.4:13.2;return`<tr><td><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono">${a.qtd}</td><td class="mono">${brl(a.pm)}</td><td class="mono">${a.preco?brl(a.preco):'—'}</td><td class="tr mono cgd">${dy.toFixed(1)}%</td><td class="tr mono ${cCls(r)}">${pct(r)}</td><td><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`}).join('');
-  document.getElementById('tb-rf').innerHTML=S.ativos.filter(a=>a.tipo==='RF'&&!a.fundo).map(a=>`<tr><td><strong>${a.ticker}</strong></td><td class="cm">${a.inst||'—'}</td><td><span class="badge b-g" style="font-size:9px">${a.taxa||'—'}</span></td><td class="tr mono">${brl(a.pm)}</td><td class="tr cm" style="font-size:11px">${a.venc||'—'}</td><td><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`).join('');
+  document.getElementById('tb-us').innerHTML=S.ativos.filter(a=>a.tipo==='US').map(a=>{const p=a.preco||a.pm,r=rent(a),pv=pos(a),rv=pv-a.qtd*a.pm*S.usdBrl;return`<tr><td data-label="Ticker"><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono" data-label="Qtd">${a.qtd}</td><td class="mono" data-label="PM (USD)">${usd(a.pm)}</td><td class="mono" data-label="Atual">${a.preco?usd(a.preco):'—'}${a.varPct!==undefined?`<br><span class="cm" style="font-size:9px">${pct(a.varPct)} hoje</span>`:''}</td><td class="tr mono" data-label="Posição BRL">${brl(pv)}</td><td class="tr mono ${cCls(rv)}" data-label="Resultado">${rv>=0?'+':'-'}${brl(Math.abs(rv))}</td><td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td><td class="td-act"><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`}).join('');
+  document.getElementById('tb-fii').innerHTML=S.ativos.filter(a=>a.tipo==='FII').map(a=>{const r=rent(a),dy=a.ticker==='HGLG11'?8.4:13.2;return`<tr><td data-label="Fundo"><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono" data-label="Qtd">${a.qtd}</td><td class="mono" data-label="PM">${brl(a.pm)}</td><td class="mono" data-label="Atual">${a.preco?brl(a.preco):'—'}</td><td class="tr mono cgd" data-label="DY">${dy.toFixed(1)}%</td><td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td><td class="td-act"><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`}).join('');
+  document.getElementById('tb-rf').innerHTML=S.ativos.filter(a=>a.tipo==='RF'&&!a.fundo).map(a=>`<tr><td data-label="Produto"><strong>${a.ticker}</strong></td><td class="cm" data-label="Inst.">${a.inst||'—'}</td><td data-label="Taxa"><span class="badge b-g" style="font-size:9px">${a.taxa||'—'}</span></td><td class="tr mono" data-label="Valor">${brl(a.pm)}</td><td class="tr cm" data-label="Vencimento" style="font-size:11px">${a.venc||'—'}</td><td class="td-act"><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`).join('');
   const satLista=S.ativos.filter(a=>a.tipo==='SAT');
   const satVazio=document.getElementById('sat-vazio'),satTab=document.getElementById('sat-tabela');
   if(satVazio&&satTab){satVazio.style.display=satLista.length?'none':'block';satTab.style.display=satLista.length?'':'none';}
@@ -6163,8 +6188,8 @@ function _divPorEmpresa(tipoAtivo){
 function _divMonitorHTML(tipoAtivo){
   const linhas=_divPorEmpresa(tipoAtivo);
   if(!linhas.length)return `<div class="empty-hint" style="padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum provento recebido ainda para este mercado. Use <strong>+ Provento</strong> ou lance na tela Dividendos.</div>`;
-  return `<table><thead><tr><th>Empresa</th><th class="tr">Total Recebido</th><th class="tr">Nº Pagtos</th><th>Último Pagamento</th><th class="tr">Valor Último</th><th class="tr">DY 12M</th></tr></thead><tbody>${linhas.map(e=>`
-    <tr><td><strong class="mono">${e.ticker}</strong></td><td class="tr mono cgd"><strong>${brl(e.total)}</strong></td><td class="tr mono">${e.n}</td><td class="mono" style="font-size:11px">${e.ultData?fdt(e.ultData):'—'}</td><td class="tr mono">${brl(e.ultValor)}</td><td class="tr mono">${e.dy!=null?e.dy.toFixed(2)+'%':'—'}</td></tr>`).join('')}</tbody></table>`;
+  return `<table class="tbl-mob-cards"><thead><tr><th>Empresa</th><th class="tr">Total Recebido</th><th class="tr">Nº Pagtos</th><th>Último Pagamento</th><th class="tr">Valor Último</th><th class="tr">DY 12M</th></tr></thead><tbody>${linhas.map(e=>`
+    <tr><td data-label="Empresa"><strong class="mono">${e.ticker}</strong></td><td class="tr mono cgd" data-label="Total Recebido"><strong>${brl(e.total)}</strong></td><td class="tr mono" data-label="Nº Pagtos">${e.n}</td><td class="mono" data-label="Último Pagamento" style="font-size:11px">${e.ultData?fdt(e.ultData):'—'}</td><td class="tr mono" data-label="Valor Último">${brl(e.ultValor)}</td><td class="tr mono" data-label="DY 12M">${e.dy!=null?e.dy.toFixed(2)+'%':'—'}</td></tr>`).join('')}</tbody></table>`;
 }
 function rdivMonitor(){
   const elBr=document.getElementById('div-monitor-br');if(elBr)elBr.innerHTML=_divMonitorHTML('BR');
@@ -6694,12 +6719,12 @@ function rfundos(){
     const aplicado=+a.pm||0, posicao=(+a.preco||+a.pm||0);
     const rend=posicao-aplicado, r=rent(a);
     return `<tr>
-      <td><strong class="mono">${a.ticker||'—'}</strong>${a.nome?`<br><span class="cm" style="font-size:10px">${a.nome}</span>`:''}</td>
-      <td class="tr mono">${brl(aplicado)}</td>
-      <td class="tr mono">${brl(posicao)}</td>
-      <td class="tr mono ${cCls(rend)}">${rend>=0?'+':'-'}${brl(Math.abs(rend))}</td>
-      <td class="tr mono ${cCls(r)}">${pct(r)}</td>
-      <td><button class="btn btn-ed" onclick="editFundoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td>
+      <td data-label="Fundo"><strong class="mono">${a.ticker||'—'}</strong>${a.nome?`<br><span class="cm" style="font-size:10px">${a.nome}</span>`:''}</td>
+      <td class="tr mono" data-label="Aplicado">${brl(aplicado)}</td>
+      <td class="tr mono" data-label="Posição">${brl(posicao)}</td>
+      <td class="tr mono ${cCls(rend)}" data-label="Rendimento">${rend>=0?'+':'-'}${brl(Math.abs(rend))}</td>
+      <td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td>
+      <td class="td-act"><button class="btn btn-ed" onclick="editFundoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td>
     </tr>`;
   }).join('');
   if(kpis){
@@ -6739,15 +6764,15 @@ function raluguel(){
       ? '<span class="badge b-g" style="font-size:9px">Doador</span>'
       : '<span class="badge b-n" style="font-size:9px">Tomador</span>';
     return `<tr>
-      <td><strong class="mono">${a.ticker||'—'}</strong>${a.nome?`<br><span class="cm" style="font-size:10px">${a.nome}</span>`:''}</td>
-      <td>${badgePapel}</td>
-      <td class="tr mono">${a.qtd||0}</td>
-      <td class="tr mono">${brl(a.pm||0)}</td>
-      <td class="tr mono">${a.preco?brl(a.preco):'—'}</td>
-      <td class="tr mono">${brl(pv)}</td>
-      <td class="tr mono ${cCls(r)}">${pct(r)}</td>
-      <td class="tr cm" style="font-size:11px">${a.venc||'—'}</td>
-      <td><button class="btn btn-ed" onclick="editAluguel('${a.id}')">✎</button> <button class="btn btn-d" onclick="rmAluguel('${a.id}')">✕</button></td>
+      <td data-label="Ativo"><strong class="mono">${a.ticker||'—'}</strong>${a.nome?`<br><span class="cm" style="font-size:10px">${a.nome}</span>`:''}</td>
+      <td data-label="Papel">${badgePapel}</td>
+      <td class="tr mono" data-label="Qtd">${a.qtd||0}</td>
+      <td class="tr mono" data-label="Preço médio">${brl(a.pm||0)}</td>
+      <td class="tr mono" data-label="Preço ação">${a.preco?brl(a.preco):'—'}</td>
+      <td class="tr mono" data-label="Posição">${brl(pv)}</td>
+      <td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td>
+      <td class="tr cm" data-label="Vencimento" style="font-size:11px">${a.venc||'—'}</td>
+      <td class="td-act"><button class="btn btn-ed" onclick="editAluguel('${a.id}')">✎</button> <button class="btn btn-d" onclick="rmAluguel('${a.id}')">✕</button></td>
     </tr>`;
   }).join('');
   // KPIs: total como Doador (renda) e como Tomador (obrigação)
@@ -6783,9 +6808,9 @@ function rgraos(){
     document.getElementById('grao-posicao').innerHTML=`<div style="text-align:center;padding:26px 20px;color:var(--txt3);font-size:12.5px;line-height:1.6">Nenhuma operação de grãos ainda.<br><span style="font-size:11.5px">Use <strong>+ Operação</strong> para registrar originação, compra ou venda.</span></div>`;
   } else {
     const cot=p=>{const c=cotGrao(p);return c!=null?c.toFixed(2)+' ¢/bu ('+GRAO_SYM[p]+')':'—';};
-    document.getElementById('grao-posicao').innerHTML=`<table><thead><tr><th>Produto</th><th class="tr">Estoque (sacas)</th><th class="tr">PM entrada</th><th class="tr">Valor estoque</th><th class="tr">Realizado</th><th class="tr">CBOT ref.</th></tr></thead><tbody>${prods.map(p=>{
+    document.getElementById('grao-posicao').innerHTML=`<table class="tbl-mob-cards"><thead><tr><th>Produto</th><th class="tr">Estoque (sacas)</th><th class="tr">PM entrada</th><th class="tr">Valor estoque</th><th class="tr">Realizado</th><th class="tr">CBOT ref.</th></tr></thead><tbody>${prods.map(p=>{
       const r=R[p];
-      return `<tr><td><span style="display:inline-flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:2px;background:${GRAO_COR[p]};display:inline-block"></span><strong>${GRAO_LABEL[p]}</strong></span></td><td class="tr mono">${r.estoque.toLocaleString('pt-BR')}</td><td class="tr mono">${brl(r.pm)}</td><td class="tr mono">${brl(r.estoque*r.pm)}</td><td class="tr mono ${r.realizado>=0?'cg':'cr'}">${r.realizado>=0?'+':''}${brl(r.realizado)}</td><td class="tr mono cm" style="font-size:10.5px">${cot(p)}</td></tr>`;
+      return `<tr><td data-label="Produto"><span style="display:inline-flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:2px;background:${GRAO_COR[p]};display:inline-block"></span><strong>${GRAO_LABEL[p]}</strong></span></td><td class="tr mono" data-label="Estoque (sacas)">${r.estoque.toLocaleString('pt-BR')}</td><td class="tr mono" data-label="PM entrada">${brl(r.pm)}</td><td class="tr mono" data-label="Valor estoque">${brl(r.estoque*r.pm)}</td><td class="tr mono ${r.realizado>=0?'cg':'cr'}" data-label="Realizado">${r.realizado>=0?'+':''}${brl(r.realizado)}</td><td class="tr mono cm" data-label="CBOT ref." style="font-size:10.5px">${cot(p)}</td></tr>`;
     }).join('')}</tbody></table>`;
   }
   // Operações
@@ -6796,7 +6821,7 @@ function rgraos(){
     const total=g.qtd*g.precoSaca;
     const hm=hedgeMtM(g);
     const hedgeCell=g.hedge&&g.hedge.contratos?`<span class="mono ${hm>=0?'cg':'cr'}" style="font-size:10.5px">${g.hedge.lado==='vendido'?'▼':'▲'}${g.hedge.contratos}c · ${hm>=0?'+':''}${brl(hm)}</span>`:'<span class="cm" style="font-size:10.5px">—</span>';
-    return `<tr${(g.data||'')<_hojeISO()?' class="lanc-ant"':''}><td class="cm mono" style="font-size:11px">${fdt(g.data)}</td><td><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:${GRAO_COR[g.produto]};display:inline-block"></span>${GRAO_LABEL[g.produto]}</span></td><td><span class="badge ${tipoBadge[g.tipo]}" style="font-size:8.5px">${tipoLabel[g.tipo]}</span></td><td class="tr mono">${g.qtd.toLocaleString('pt-BR')}</td><td class="tr mono">${brl(g.precoSaca)}</td><td class="tr mono">${brl(total)}${g.lancId?' <span class="fc-badge" style="color:var(--blu)">$</span>':''}</td><td class="cm" style="font-size:11px">${g.contraparte||'—'}</td><td class="tr">${hedgeCell}</td><td><button class="btn btn-ed" onclick="editGrao(${g.id})">✎</button> <button class="btn btn-d" onclick="rmGrao(${g.id})">✕</button></td></tr>`;
+    return `<tr${(g.data||'')<_hojeISO()?' class="lanc-ant"':''}><td class="cm mono" data-label="Data" style="font-size:11px">${fdt(g.data)}</td><td data-label="Produto"><span style="display:inline-flex;align-items:center;gap:6px"><span style="width:8px;height:8px;border-radius:2px;background:${GRAO_COR[g.produto]};display:inline-block"></span>${GRAO_LABEL[g.produto]}</span></td><td data-label="Op."><span class="badge ${tipoBadge[g.tipo]}" style="font-size:8.5px">${tipoLabel[g.tipo]}</span></td><td class="tr mono" data-label="Sacas">${g.qtd.toLocaleString('pt-BR')}</td><td class="tr mono" data-label="R$/saca">${brl(g.precoSaca)}</td><td class="tr mono" data-label="Total">${brl(total)}${g.lancId?' <span class="fc-badge" style="color:var(--blu)">$</span>':''}</td><td class="cm" data-label="Contraparte" style="font-size:11px">${g.contraparte||'—'}</td><td class="tr" data-label="Hedge">${hedgeCell}</td><td class="td-act"><button class="btn btn-ed" onclick="editGrao(${g.id})">✎</button> <button class="btn btn-d" onclick="rmGrao(${g.id})">✕</button></td></tr>`;
   }).join(''):`<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--txt3);font-size:12px">Nenhuma operação registrada</td></tr>`;
 
   // ── VISÃO 1: Exposição líquida (físico vs. hedge) ──
@@ -6811,17 +6836,17 @@ function rgraos(){
       const stExp=e.exposicaoLiq;
       const status=cob>=95?{t:'Protegido',c:'cg'}:cob>=40?{t:'Parcial',c:'cgd'}:{t:'Exposto',c:'cr'};
       return `<tr>
-        <td><span style="display:inline-flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:2px;background:${GRAO_COR[e.produto]};display:inline-block"></span><strong>${GRAO_LABEL[e.produto]}</strong></span></td>
-        <td class="tr mono">${Math.round(e.fisico).toLocaleString('pt-BR')}</td>
-        <td class="tr mono">${e.hedgeVendidoSacas>0?'▼'+Math.round(e.hedgeVendidoSacas).toLocaleString('pt-BR'):'—'}</td>
-        <td class="tr mono ${stExp>0?'':stExp<0?'cr':''}">${Math.round(stExp).toLocaleString('pt-BR')}</td>
-        <td style="min-width:120px"><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:7px;background:var(--bg2);border-radius:4px;overflow:hidden"><div style="height:100%;width:${cob}%;background:${cob>=95?'var(--grn)':cob>=40?'var(--gld)':'var(--red)'};border-radius:4px"></div></div><span class="mono" style="font-size:10.5px;color:var(--txt2)">${cob.toFixed(0)}%</span></div></td>
-        <td class="tr"><span class="badge ${status.c==='cg'?'b-g':status.c==='cgd'?'b-gd':'b-r'}" style="font-size:8.5px">${status.t}</span></td>
+        <td data-label="Produto"><span style="display:inline-flex;align-items:center;gap:7px"><span style="width:9px;height:9px;border-radius:2px;background:${GRAO_COR[e.produto]};display:inline-block"></span><strong>${GRAO_LABEL[e.produto]}</strong></span></td>
+        <td class="tr mono" data-label="Físico (sacas)">${Math.round(e.fisico).toLocaleString('pt-BR')}</td>
+        <td class="tr mono" data-label="Hedge vendido">${e.hedgeVendidoSacas>0?'▼'+Math.round(e.hedgeVendidoSacas).toLocaleString('pt-BR'):'—'}</td>
+        <td class="tr mono ${stExp>0?'':stExp<0?'cr':''}" data-label="Exposição líq.">${Math.round(stExp).toLocaleString('pt-BR')}</td>
+        <td data-label="Cobertura" style="min-width:120px"><div style="display:flex;align-items:center;gap:8px"><div style="flex:1;height:7px;background:var(--bg2);border-radius:4px;overflow:hidden"><div style="height:100%;width:${cob}%;background:${cob>=95?'var(--grn)':cob>=40?'var(--gld)':'var(--red)'};border-radius:4px"></div></div><span class="mono" style="font-size:10.5px;color:var(--txt2)">${cob.toFixed(0)}%</span></div></td>
+        <td class="tr" data-label="Status"><span class="badge ${status.c==='cg'?'b-g':status.c==='cgd'?'b-gd':'b-r'}" style="font-size:8.5px">${status.t}</span></td>
       </tr>`;
     };
     expWrap.innerHTML=`<div class="pt" style="font-size:13px;margin-bottom:4px">Exposição Líquida · Físico vs. Hedge</div>
       <div class="ps" style="margin-bottom:10px">Sacas físicas em estoque protegidas por venda futura (hedge). Cobertura = proteção ÷ físico.</div>
-      <div style="overflow-x:auto"><table><thead><tr><th>Produto</th><th class="tr">Físico (sacas)</th><th class="tr">Hedge vendido</th><th class="tr">Exposição líq.</th><th>Cobertura</th><th class="tr">Status</th></tr></thead><tbody>${exp.map(barra).join('')}</tbody></table></div>`;
+      <div style="overflow-x:auto"><table class="tbl-mob-cards"><thead><tr><th>Produto</th><th class="tr">Físico (sacas)</th><th class="tr">Hedge vendido</th><th class="tr">Exposição líq.</th><th>Cobertura</th><th class="tr">Status</th></tr></thead><tbody>${exp.map(barra).join('')}</tbody></table></div>`;
   }
 
   // ── VISÃO 2: Evolução do estoque & resultado acumulado ──
@@ -7025,16 +7050,16 @@ function rcotSinaisConsolidado(){
     const r=_riscoDiaCot(l.dp);
     const up=l.dp>=0;
     return `<tr>
-      <td><strong class="mono">${l.sym}</strong>${l.nome?`<br><span class="cm" style="font-size:10px">${l.nome}</span>`:''}</td>
-      <td class="cm" style="font-size:11.5px">${l.cat}</td>
-      <td class="mono">${l.preco!=null?l.pf+l.preco.toFixed(2):'—'}</td>
-      <td class="tr mono ${up?'cg':'cr'}">${up?'+':''}${(l.dp||0).toFixed(2)}%</td>
-      <td class="tr ${sinalCls[l.sinal]||'cm'}" style="font-weight:600">${sinalTxt[l.sinal]||'— sem análise'}</td>
-      <td class="tr ${r.cls}">${r.txt}</td>
-      <td style="max-width:240px;white-space:normal;line-height:1.4;font-size:11px;color:var(--txt3)">${l.comentario}</td>
+      <td data-label="Ativo"><strong class="mono">${l.sym}</strong>${l.nome?`<br><span class="cm" style="font-size:10px">${l.nome}</span>`:''}</td>
+      <td class="cm" data-label="Categoria" style="font-size:11.5px">${l.cat}</td>
+      <td class="mono" data-label="Preço">${l.preco!=null?l.pf+l.preco.toFixed(2):'—'}</td>
+      <td class="tr mono ${up?'cg':'cr'}" data-label="Var. dia">${up?'+':''}${(l.dp||0).toFixed(2)}%</td>
+      <td class="tr ${sinalCls[l.sinal]||'cm'}" data-label="Sinal" style="font-weight:600">${sinalTxt[l.sinal]||'— sem análise'}</td>
+      <td class="tr ${r.cls}" data-label="Risco do dia">${r.txt}</td>
+      <td data-label="Comentário (lastro)" style="max-width:240px;white-space:normal;line-height:1.4;font-size:11px;color:var(--txt3)">${l.comentario}</td>
     </tr>`;
   }).join('');
-  el.innerHTML=`${toggleBtn}${resumo}<div style="overflow-x:auto"><table>
+  el.innerHTML=`${toggleBtn}${resumo}<div style="overflow-x:auto"><table class="tbl-mob-cards">
     <thead><tr><th style="text-align:left">Ativo</th><th style="text-align:left">Categoria</th><th style="text-align:left">Preço</th><th class="tr">Var. dia</th><th class="tr">Sinal</th><th class="tr">Risco do dia</th><th style="text-align:left">Comentário (lastro)</th></tr></thead>
     <tbody>${linhasHtml}</tbody>
   </table></div>`;
@@ -7167,7 +7192,7 @@ function rdiv(){
   document.getElementById('tb-div').innerHTML=[...S.dividendos].sort((a,b)=>b.data.localeCompare(a.data)).map((d,i)=>{
     const futuro=(d.data||'')>hojeISO;
     const dataCell=`${fdt(d.data)}${futuro?' <span class="badge b-n" style="font-size:8px">a receber</span>':''}`;
-    return `<tr${(d.data||'')<_hojeISO()?' class="lanc-ant"':''}><td class="cm mono" style="font-size:11px">${dataCell}</td><td><strong class="mono">${d.ativo}</strong></td><td><span class="badge b-gd" style="font-size:9px">${d.tipo}</span></td><td class="mono">${d.qtd||'—'}</td><td class="tr mono">${d.valorcota?brl(d.valorcota):'—'}</td><td class="tr mono ${futuro?'cb':'cgd'}"><strong>${brl(d.total)}</strong></td><td><button class="btn btn-ed" onclick="editDividendo(${i})">✎</button> <button class="btn btn-d" onclick="rmDividendo(${i})">✕</button></td></tr>`;
+    return `<tr${(d.data||'')<_hojeISO()?' class="lanc-ant"':''}><td class="cm mono" data-label="Data" style="font-size:11px">${dataCell}</td><td data-label="Ativo"><strong class="mono">${d.ativo}</strong></td><td data-label="Tipo"><span class="badge b-gd" style="font-size:9px">${d.tipo}</span></td><td class="mono" data-label="Cotas">${d.qtd||'—'}</td><td class="tr mono" data-label="R$/Cota">${d.valorcota?brl(d.valorcota):'—'}</td><td class="tr mono ${futuro?'cb':'cgd'}" data-label="Total"><strong>${brl(d.total)}</strong></td><td class="td-act"><button class="btn btn-ed" onclick="editDividendo(${i})">✎</button> <button class="btn btn-d" onclick="rmDividendo(${i})">✕</button></td></tr>`;
   }).join('');
 }
 
@@ -7338,7 +7363,7 @@ function rcontas(){
     // primeiro para então buscar seu banco/nome. Chamar BG(l.banco) direto
     // (como antes) nunca reconhecia o valor e sempre caía em "Outro Banco".
     const _ctB=S.contas.find(c=>c.id===l.banco);
-    const m=BG(_ctB?_ctB.banco:l.banco),t=ti[l.tipo]||{cl:'',lb:l.tipo,sy:''};const _ant=(l.data||'')<_hojeISO();const _pv=l.forecast&&_ant;const _cls=_pv?'prev-venc':(_ant?'lanc-ant':'');return`<tr${_cls?` class="${_cls}"`:''}${l.forecast&&!_ant?' style="opacity:.92"':''}>${_selModeContas?`<td class="sel-col"><input type="checkbox" class="sel-chk" ${_selLanc.has(l.id)?'checked':''} onclick="selToggle('contas',${l.id},this.checked)"></td>`:''}<td class="cm mono" style="font-size:11px">${fdt(l.data)}</td><td><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:12px">${_ctB?.nome||m.nome}</span></div></td><td style="font-size:12px">${l.desc}${l.forecast?' <span class="fc-badge">previsto</span>':''}</td><td><span class="badge b-n" style="font-size:9px">${t.lb}</span></td><td class="tr mono ${t.cl}">${t.sy}${brl(l.valor)}</td><td class="tr mono cm" style="font-size:11px">${l.forecast?'—':brl(_sMap[l.id]!=null?_sMap[l.id]:0)}</td><td><button class="btn btn-ed" onclick="editLanc(${l.id})">✎</button> <button class="btn btn-d" onclick="rmLanc(${l.id})">✕</button></td></tr>`}).join('').concat(_tblMaisHTML('contas',ext.length,_extPag.length,_selModeContas?8:7)):`<tr><td colspan="${_selModeContas?8:7}" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prev?'Nenhum lançamento previsto':'Nenhum lançamento'}</td></tr>`;
+    const m=BG(_ctB?_ctB.banco:l.banco),t=ti[l.tipo]||{cl:'',lb:l.tipo,sy:''};const _ant=(l.data||'')<_hojeISO();const _pv=l.forecast&&_ant;const _cls=_pv?'prev-venc':(_ant?'lanc-ant':'');return`<tr${_cls?` class="${_cls}"`:''}${l.forecast&&!_ant?' style="opacity:.92"':''}>${_selModeContas?`<td class="sel-col"><input type="checkbox" class="sel-chk" ${_selLanc.has(l.id)?'checked':''} onclick="selToggle('contas',${l.id},this.checked)"></td>`:''}<td class="cm mono" data-label="Data" style="font-size:11px">${fdt(l.data)}</td><td data-label="Banco"><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:12px">${_ctB?.nome||m.nome}</span></div></td><td data-label="Descrição" style="font-size:12px">${l.desc}${l.forecast?' <span class="fc-badge">previsto</span>':''}</td><td data-label="Tipo"><span class="badge b-n" style="font-size:9px">${t.lb}</span></td><td class="tr mono ${t.cl}" data-label="Valor">${t.sy}${brl(l.valor)}</td><td class="tr mono cm" data-label="Saldo" style="font-size:11px">${l.forecast?'—':brl(_sMap[l.id]!=null?_sMap[l.id]:0)}</td><td class="td-act"><button class="btn btn-ed" onclick="editLanc(${l.id})">✎</button> <button class="btn btn-d" onclick="rmLanc(${l.id})">✕</button></td></tr>`}).join('').concat(_tblMaisHTML('contas',ext.length,_extPag.length,_selModeContas?8:7)):`<tr><td colspan="${_selModeContas?8:7}" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prev?'Nenhum lançamento previsto':'Nenhum lançamento'}</td></tr>`;
   // Aviso de previstos vencidos (apenas na aba Previstos)
   {
     const tabela=document.getElementById('tb-ext').closest('table');
@@ -7503,7 +7528,7 @@ function rcartoes(){
   const comp=[...S.compras].filter(cp=>(!fc||cp.cartao===fc)&&(!fcc||cp.cat===fcc)&&(_prevC?cp.forecast:!cp.forecast)).sort((a,b)=>b.data.localeCompare(a.data));
   const _compPag=comp.slice(0,_tblLim.cartoes);
   _injetarFcTabs('cartoes','tb-comp');
-  document.getElementById('tb-comp').innerHTML=comp.length?_compPag.map(cp=>{const ct=S.cartoes.find(c=>c.id===cp.cartao),m=ct?BG(ct.banco):BG('outro');const _ant=(cp.data||'')<_hojeISO();return`<tr${_ant?' class="lanc-ant"':''}${cp.forecast&&!_ant?' style="opacity:.92"':''}>${_selModeCartoes?`<td class="sel-col"><input type="checkbox" class="sel-chk" ${_selComp.has(cp.id)?'checked':''} onclick="selToggle('cartoes',${cp.id},this.checked)"></td>`:''}<td class="cm mono" style="font-size:11px">${fdt(cp.data)}</td><td><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:11px">${ct?.nome||'—'}</span></div></td><td>${cp.desc}${cp.forecast?' <span class="fc-badge">previsto</span>':''}</td><td><span class="badge b-n" style="font-size:9px">${cp.cat}</span></td><td class="tr mono cr">${brl(cp.valor)}</td><td class="tr" style="font-size:11px;color:var(--txt3)">${cp.parcelas>1?cp.parcelas+'x de '+brl(cp.valor/cp.parcelas):'À vista'}</td><td><button class="btn btn-ed" onclick="editCompra(${cp.id})">✎</button> <button class="btn btn-d" onclick="rmCompra(${cp.id})">✕</button></td></tr>`}).join('').concat(_tblMaisHTML('cartoes',comp.length,_compPag.length,_selModeCartoes?8:7)):`<tr><td colspan="${_selModeCartoes?8:7}" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prevC?'Nenhuma compra prevista':'Nenhuma compra'}</td></tr>`;
+  document.getElementById('tb-comp').innerHTML=comp.length?_compPag.map(cp=>{const ct=S.cartoes.find(c=>c.id===cp.cartao),m=ct?BG(ct.banco):BG('outro');const _ant=(cp.data||'')<_hojeISO();return`<tr${_ant?' class="lanc-ant"':''}${cp.forecast&&!_ant?' style="opacity:.92"':''}>${_selModeCartoes?`<td class="sel-col"><input type="checkbox" class="sel-chk" ${_selComp.has(cp.id)?'checked':''} onclick="selToggle('cartoes',${cp.id},this.checked)"></td>`:''}<td class="cm mono" data-label="Data" style="font-size:11px">${fdt(cp.data)}</td><td data-label="Cartão"><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:11px">${ct?.nome||'—'}</span></div></td><td data-label="Descrição">${cp.desc}${cp.forecast?' <span class="fc-badge">previsto</span>':''}</td><td data-label="Categoria"><span class="badge b-n" style="font-size:9px">${cp.cat}</span></td><td class="tr mono cr" data-label="Valor">${brl(cp.valor)}</td><td class="tr" data-label="Parcelas" style="font-size:11px;color:var(--txt3)">${cp.parcelas>1?cp.parcelas+'x de '+brl(cp.valor/cp.parcelas):'À vista'}</td><td class="td-act"><button class="btn btn-ed" onclick="editCompra(${cp.id})">✎</button> <button class="btn btn-d" onclick="rmCompra(${cp.id})">✕</button></td></tr>`}).join('').concat(_tblMaisHTML('cartoes',comp.length,_compPag.length,_selModeCartoes?8:7)):`<tr><td colspan="${_selModeCartoes?8:7}" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prevC?'Nenhuma compra prevista':'Nenhuma compra'}</td></tr>`;
   // Respeita o filtro de cartão selecionado (fc) — antes somava todos os cartões
   // juntos mesmo com um cartão específico escolhido no filtro acima.
   // Mês de referência só das compras REAIS (não-forecast) pro gráfico "Gastos por
@@ -7528,7 +7553,7 @@ function rcartoes(){
       const ct=S.cartoes.find(c=>c.id===p.cartaoId),m=ct?BG(ct.banco):BG('outro');
       const conta=p.contaId?S.contas.find(c=>c.id===p.contaId):null;
       const origem=conta?conta.nome:'Externo (sem conta)';
-      return`<tr${(p.data||'')<_hojeISO()?' class="lanc-ant"':''}><td class="cm mono" style="font-size:11px">${fdt(p.data)}</td><td><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:11px">${ct?.nome||'—'}</span></div></td><td style="font-size:11px;color:var(--txt2)">${origem}</td><td class="tr mono cg">${brl(p.valor)}</td><td><button class="btn btn-ed" onclick="editarPagamento(${p.id})">✎</button> <button class="btn btn-d" onclick="rmPagamento(${p.id})">✕</button></td></tr>`;
+      return`<tr${(p.data||'')<_hojeISO()?' class="lanc-ant"':''}><td class="cm mono" data-label="Data" style="font-size:11px">${fdt(p.data)}</td><td data-label="Cartão"><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:11px">${ct?.nome||'—'}</span></div></td><td data-label="Origem" style="font-size:11px;color:var(--txt2)">${origem}</td><td class="tr mono cg" data-label="Valor Pago">${brl(p.valor)}</td><td class="td-act"><button class="btn btn-ed" onclick="editarPagamento(${p.id})">✎</button> <button class="btn btn-d" onclick="rmPagamento(${p.id})">✕</button></td></tr>`;
     }).join('');
   }
   const cs=Object.entries(bc).sort((a,b)=>b[1]-a[1]);
@@ -7882,9 +7907,9 @@ function rgas(){
   if(_prevG){ _provisorios().forEach(p=>_visG.push([p,-1])); _visG.sort((a,b)=>b[0].data.localeCompare(a[0].data)); }  // provisórios automáticos (Bens + Orçamento)
   const _gasPag=_visG.slice(0,_tblLim.gastos);
   document.getElementById('tb-gas').innerHTML=_visG.length?_gasPag.map(([g,i])=>{
-    if(g.provisorio){const _og=g._pOrig==='fin'?{ab:'FIN',c:'var(--blu)',bg:'rgba(42,78,140,.12)',sec:'bens',nm:'Bens Patrimoniais'}:g._pOrig==='seg'?{ab:'SEG',c:'#6B7280',bg:'rgba(107,114,128,.14)',sec:'bens',nm:'Bens Patrimoniais'}:{ab:'ORÇ',c:'var(--gld)',bg:'rgba(122,96,32,.12)',sec:'orcamento',nm:'Orçamento'};const _cr=g.tipo==='credito';return `<tr class="provisorio"><td class="cm mono" style="font-size:11px">${fdt(g.data)}</td><td>${g.desc} <span class="badge b-gd" style="font-size:8.5px">provisório ⟳</span></td><td><span class="badge b-n" style="font-size:9px">${g._pCat||'—'}</span></td><td><span class="badge" style="background:${_og.bg};color:${_og.c};font-size:8.5px;font-weight:600">${_og.ab} · ${_og.nm}</span></td><td class="tr mono ${_cr?'cg':'cr'}">${_cr?'+':'-'}${brl(g.valor)}</td><td><button class="btn btn-ed" onclick="goTo('${_og.sec}')" title="Gerenciar origem">⧉</button></td></tr>`;}
+    if(g.provisorio){const _og=g._pOrig==='fin'?{ab:'FIN',c:'var(--blu)',bg:'rgba(42,78,140,.12)',sec:'bens',nm:'Bens Patrimoniais'}:g._pOrig==='seg'?{ab:'SEG',c:'#6B7280',bg:'rgba(107,114,128,.14)',sec:'bens',nm:'Bens Patrimoniais'}:{ab:'ORÇ',c:'var(--gld)',bg:'rgba(122,96,32,.12)',sec:'orcamento',nm:'Orçamento'};const _cr=g.tipo==='credito';return `<tr class="provisorio"><td class="cm mono" data-label="Data" style="font-size:11px">${fdt(g.data)}</td><td data-label="Descrição">${g.desc} <span class="badge b-gd" style="font-size:8.5px">provisório ⟳</span></td><td data-label="Categoria"><span class="badge b-n" style="font-size:9px">${g._pCat||'—'}</span></td><td data-label="Origem"><span class="badge" style="background:${_og.bg};color:${_og.c};font-size:8.5px;font-weight:600">${_og.ab} · ${_og.nm}</span></td><td class="tr mono ${_cr?'cg':'cr'}" data-label="Valor">${_cr?'+':'-'}${brl(g.valor)}</td><td class="td-act"><button class="btn btn-ed" onclick="goTo('${_og.sec}')" title="Gerenciar origem">⧉</button></td></tr>`;}
     const formaBadge=g.forma==='cartao'?'<span class="badge b-b" style="font-size:8.5px">💳 '+(g.origemNome||'Cartão')+'</span>':g.forma==='conta'?'<span class="badge b-g" style="font-size:8.5px">🏦 '+(g.origemNome||'Conta')+'</span>':'<span class="badge b-n" style="font-size:8.5px">Dinheiro</span>';
-    return `<tr${(g.data||'')<_hojeISO()?' class="lanc-ant"':''}${g.forecast&&!((g.data||'')<_hojeISO())?' style="opacity:.92"':''}><td class="cm mono" style="font-size:11px">${fdt(g.data)}</td><td>${g.desc}${g.forecast?' <span class="fc-badge">previsto</span>':''}</td><td><span class="badge b-n" style="font-size:9px">${g.cat}</span></td><td>${formaBadge}</td><td class="tr mono cr">${brl(g.valor)}</td><td><button class="btn btn-ed" onclick="editGasto(${i})">✎</button> <button class="btn btn-d" onclick="rmGasto(${i})">✕</button></td></tr>`;
+    return `<tr${(g.data||'')<_hojeISO()?' class="lanc-ant"':''}${g.forecast&&!((g.data||'')<_hojeISO())?' style="opacity:.92"':''}><td class="cm mono" data-label="Data" style="font-size:11px">${fdt(g.data)}</td><td data-label="Descrição">${g.desc}${g.forecast?' <span class="fc-badge">previsto</span>':''}</td><td data-label="Categoria"><span class="badge b-n" style="font-size:9px">${g.cat}</span></td><td data-label="Origem">${formaBadge}</td><td class="tr mono cr" data-label="Valor">${brl(g.valor)}</td><td class="td-act"><button class="btn btn-ed" onclick="editGasto(${i})">✎</button> <button class="btn btn-d" onclick="rmGasto(${i})">✕</button></td></tr>`;
   }).join('').concat(_tblMaisHTML('gastos',_visG.length,_gasPag.length,6)):`<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prevG?'Nenhum gasto previsto':'Nenhum gasto'}</td></tr>`;
   renderGerenciarCategorias();
 }
@@ -9883,14 +9908,14 @@ function rbens(){
   document.getElementById('tb-bens').innerHTML=S.bens.map((b,i)=>{
     const vr=b.vlAt-b.vlAq,vrp=(vr/b.vlAq*100);const up=vr>=0;
     return`<tr>
-      <td><strong>${b.nome}</strong><br><span class="cm" style="font-size:10px;font-family:var(--mono)">${b.detalhe}</span></td>
-      <td><span class="badge ${BENS_BADGE[b.cat]}" style="font-size:9px">${BENS_LABEL[b.cat]}</span></td>
-      <td style="font-size:11px;color:var(--txt3)">📍 ${b.loc}</td>
-      <td class="cm" style="font-size:11px;font-family:var(--mono)">${fdt(b.dtAq)}</td>
-      <td class="tr mono">${brl(b.vlAq)}</td>
-      <td class="tr" style="font-family:var(--disp);font-size:14px;font-weight:600">${brl(b.vlAt)}</td>
-      <td class="tr mono ${up?'cg':'cr'}">${up?'+':''}${vrp.toFixed(1)}%<br><span style="font-size:10px">${up?'+':''}${brl(vr)}</span></td>
-      <td><button class="btn btn-ed" onclick="editarBem(${i})">✎</button> <button class="btn btn-d" onclick="rmBem(${b.id})">✕</button></td>
+      <td data-label="Bem"><strong>${b.nome}</strong><br><span class="cm" style="font-size:10px;font-family:var(--mono)">${b.detalhe}</span></td>
+      <td data-label="Categoria"><span class="badge ${BENS_BADGE[b.cat]}" style="font-size:9px">${BENS_LABEL[b.cat]}</span></td>
+      <td data-label="Localização" style="font-size:11px;color:var(--txt3)">📍 ${b.loc}</td>
+      <td class="cm" data-label="Aquisição" style="font-size:11px;font-family:var(--mono)">${fdt(b.dtAq)}</td>
+      <td class="tr mono" data-label="Valor Aquisição">${brl(b.vlAq)}</td>
+      <td class="tr" data-label="Valor Atual" style="font-family:var(--disp);font-size:14px;font-weight:600">${brl(b.vlAt)}</td>
+      <td class="tr mono ${up?'cg':'cr'}" data-label="Variação">${up?'+':''}${vrp.toFixed(1)}%<br><span style="font-size:10px">${up?'+':''}${brl(vr)}</span></td>
+      <td class="td-act"><button class="btn btn-ed" onclick="editarBem(${i})">✎</button> <button class="btn btn-d" onclick="rmBem(${b.id})">✕</button></td>
     </tr>`;
   }).join('');
 }
@@ -14067,17 +14092,17 @@ function rsinais(){
   const sevCor={critico:'var(--red)',atencao:'var(--gld)',controlado:'var(--grn)'};
   const sevBg={critico:'var(--red-lt)',atencao:'var(--gld-dim)',controlado:'var(--grn-dim)'};
   document.getElementById('matriz-riscos').innerHTML=`
-    <div style="overflow-x:auto"><table style="width:100%;font-size:12px">
+    <div style="overflow-x:auto"><table class="tbl-mob-cards" style="width:100%;font-size:12px">
       <thead><tr>
         <th style="text-align:left">Origem</th><th style="text-align:left">Risco</th>
         <th>Prob.</th><th>Impacto</th><th style="text-align:left">Mitigação</th>
       </tr></thead><tbody>
       ${riscos.map(r=>`<tr>
-        <td><span style="font-size:9px;padding:2px 7px;border-radius:10px;background:${r.origem==='Interno'?'var(--blu-dim)':'var(--surf2)'};color:${r.origem==='Interno'?'var(--blu)':'var(--txt2)'}">${r.origem}</span></td>
-        <td style="font-weight:500"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${sevCor[r.sev]};margin-right:6px"></span>${r.risco}</td>
-        <td class="tc-center" style="text-align:center"><span style="font-size:10px;color:var(--txt2)">${r.prob}</span></td>
-        <td class="tc-center" style="text-align:center"><span style="font-size:10px;color:var(--txt2)">${r.impacto}</span></td>
-        <td style="font-size:11px;color:var(--txt3)">${r.mit}</td>
+        <td data-label="Origem"><span style="font-size:9px;padding:2px 7px;border-radius:10px;background:${r.origem==='Interno'?'var(--blu-dim)':'var(--surf2)'};color:${r.origem==='Interno'?'var(--blu)':'var(--txt2)'}">${r.origem}</span></td>
+        <td data-label="Risco" style="font-weight:500"><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${sevCor[r.sev]};margin-right:6px"></span>${r.risco}</td>
+        <td class="tc-center" data-label="Prob." style="text-align:center"><span style="font-size:10px;color:var(--txt2)">${r.prob}</span></td>
+        <td class="tc-center" data-label="Impacto" style="text-align:center"><span style="font-size:10px;color:var(--txt2)">${r.impacto}</span></td>
+        <td data-label="Mitigação" style="font-size:11px;color:var(--txt3)">${r.mit}</td>
       </tr>`).join('')}
       </tbody></table></div><div class="pft">Riscos internos e externos identificados a partir da fotografia atual do patrimônio</div>`;
 
