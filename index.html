@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 54 -->
+<!-- APP_VERSION: 55 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1299,6 +1299,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <button class="nav-item" onclick="goTo('assistente-adv')" style="color:var(--gld)"><span class="ni"><svg class="svi"><use href="#ic-agent-cfo"/></svg></span><span class="nav-label"> Assistente CFO</span></button>
     <div class="nav-group">Investimentos</div>
     <button class="nav-item" onclick="goTo('cotacoes')"><span class="ni"><svg class="svi"><use href="#ic-cotacoes"/></svg></span><span class="nav-label"> Cotações ao Vivo</span></button>
+    <button class="nav-item" onclick="goTo('graos')"><span class="ni"><svg class="svi"><use href="#ic-silo"/></svg></span><span class="nav-label"> Painel de Grãos</span></button>
     <button class="nav-item" onclick="goTo('carteira')"><span class="ni"><svg class="svi"><use href="#ic-chart"/></svg></span><span class="nav-label"> Carteira</span></button>
     <button class="nav-item" onclick="goTo('dividendos')"><span class="ni"><svg class="svi"><use href="#ic-moeda"/></svg></span><span class="nav-label"> Dividendos</span></button>
     <button class="nav-item" onclick="goTo('alocacao')"><span class="ni"><svg class="svi"><use href="#ic-alocacao"/></svg></span><span class="nav-label"> Alocação</span></button>
@@ -1659,6 +1660,599 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="pft">Análises geradas por IA (mesma chave do Assistente Estrategista); podem conter imprecisões — use como apoio, não como recomendação de investimento</div>
   </div>
 </div>
+
+<!-- PAINEL DE GRÃOS -->
+<style>
+#page-graos {
+  --pg-bg:#FAF9F7; --pg-surface:#FFFFFF; --pg-surface-2:#F3F1EE; --pg-border:#E8E4DF; --pg-border-subtle:#F0EDE8;
+  --pg-accent:#D97757; --pg-accent-dim:rgba(217,119,87,.22); --pg-accent-glow:rgba(217,119,87,.09);
+  --pg-ink:#1A1310; --pg-ink-2:#4A433C; --pg-ink-3:#9C8F85; --pg-muted:#9C8F85;
+  --pg-up:#1E7D45; --pg-down:#C0392B; --pg-flat:#9C8F85;
+  --pg-soy:#C96A44; --pg-soy-l:rgba(217,119,87,.10); --pg-corn:#B07D1A; --pg-corn-l:rgba(217,158,80,.12); --pg-blue:#2B6CB0;
+  background:var(--pg-bg); color:var(--pg-ink); font-family:'Inter',-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  font-size:13.5px; line-height:1.55; -webkit-font-smoothing:antialiased; padding:20px 24px 40px;
+}
+#page-graos, #page-graos *, #page-graos *::before, #page-graos *::after { box-sizing:border-box; }
+#page-graos h1 { font-size:20px; font-weight:500; margin:0 0 2px; letter-spacing:-.01em; }
+#page-graos h2 { font-size:11px; font-weight:600; letter-spacing:.10em; text-transform:uppercase; color:var(--pg-ink-3); margin:32px 0 12px; padding-bottom:8px; border-bottom:1px solid var(--pg-border-subtle); display:flex; align-items:center; gap:10px; }
+#page-graos h2 .n { width:20px; height:20px; border:1px solid var(--pg-accent-dim); border-radius:50%; display:inline-flex; align-items:center; justify-content:center; font-size:10px; font-weight:600; color:var(--pg-accent); flex:0 0 auto; }
+#page-graos .sub { color:var(--pg-ink-3); font-size:12px; margin-bottom:5px; }
+#page-graos .wrap { max-width:1180px; margin:0 auto; }
+#page-graos .grid { display:grid; gap:10px; }
+#page-graos .kpis { grid-template-columns:repeat(auto-fit,minmax(170px,1fr)); }
+#page-graos .two { grid-template-columns:1fr 1fr; }
+#page-graos .three { grid-template-columns:1fr 1fr 1fr; }
+@media(max-width:820px){ #page-graos .two, #page-graos .three { grid-template-columns:1fr; } }
+#page-graos .hero { position:relative; overflow:hidden; border:1px solid #E8E4DF; border-radius:16px; background:linear-gradient(135deg,#FDF8F4 0%,#FAF5EF 55%,#F7EFE6 100%); padding:26px 28px; margin-bottom:20px; box-shadow:0 1px 3px rgba(26,19,16,.06),0 4px 16px rgba(26,19,16,.04); }
+#page-graos .hero::before { content:''; position:absolute; left:0; top:0; bottom:0; width:3px; background:linear-gradient(180deg,transparent 0%,var(--pg-accent) 30%,var(--pg-accent) 70%,transparent 100%); border-radius:4px 0 0 4px; }
+#page-graos .hero .content { position:relative; z-index:2; max-width:68%; }
+#page-graos .hero h1 { color:var(--pg-ink); font-weight:400; font-size:21px; letter-spacing:-.02em; }
+#page-graos .hero h1 span { color:var(--pg-accent); font-weight:500; }
+#page-graos .hero .sub { color:var(--pg-ink-3); margin-bottom:4px; font-size:12.5px; }
+#page-graos .hero .sub .hl { color:var(--pg-ink-2); }
+#page-graos .hero-art { position:absolute; right:-4px; bottom:-2px; height:108%; width:auto; pointer-events:none; opacity:.45; }
+@media(max-width:700px){ #page-graos .hero .content { max-width:100% } #page-graos .hero-art { opacity:.18 } }
+#page-graos .card { background:var(--pg-surface); border:1px solid var(--pg-border-subtle); border-radius:12px; padding:14px 16px; box-shadow:0 1px 3px rgba(26,19,16,.04); transition:border-color .15s,box-shadow .15s; }
+#page-graos .card:hover { border-color:var(--pg-border); box-shadow:0 2px 8px rgba(26,19,16,.07); }
+#page-graos .kpi .lab { font-size:10.5px; color:var(--pg-ink-3); text-transform:uppercase; letter-spacing:.07em; font-weight:500; }
+#page-graos .kpi .val { font-size:22px; font-weight:300; margin:4px 0 2px; color:var(--pg-ink); letter-spacing:-.02em; }
+#page-graos .kpi .meta { font-size:11.5px; color:var(--pg-ink-3); }
+#page-graos .tag { display:inline-block; font-size:10px; font-weight:500; padding:1px 6px; border-radius:4px; vertical-align:middle; }
+#page-graos .t-soy { background:var(--pg-soy-l); color:var(--pg-soy); }
+#page-graos .t-corn { background:var(--pg-corn-l); color:var(--pg-corn); }
+#page-graos .up { color:var(--pg-up); }
+#page-graos .down { color:var(--pg-down); }
+#page-graos .flat { color:var(--pg-flat); }
+#page-graos table { width:100%; border-collapse:collapse; font-size:12.5px; }
+#page-graos th, #page-graos td { text-align:right; padding:7px 10px; border-bottom:1px solid var(--pg-border-subtle); }
+#page-graos th:first-child, #page-graos td:first-child { text-align:left; }
+#page-graos thead th { background:#F7F5F2; color:var(--pg-ink-3); font-size:10px; font-weight:600; text-transform:uppercase; letter-spacing:.07em; border-bottom:1px solid var(--pg-border); padding-top:0; }
+#page-graos tbody tr:hover { background:var(--pg-surface-2); }
+#page-graos tfoot td { font-weight:600; border-top:1px solid var(--pg-border); border-bottom:none; color:var(--pg-ink); background:#F7F5F2; font-size:12px; }
+#page-graos .chartbox { position:relative; height:260px; }
+#page-graos input.px { width:76px; text-align:right; background:#F7F5F2; border:1px solid var(--pg-border); border-radius:6px; padding:4px 7px; font-size:12.5px; font-family:inherit; color:var(--pg-ink); transition:border-color .15s; }
+#page-graos input.px:focus { outline:none; border-color:var(--pg-accent); box-shadow:0 0 0 2px var(--pg-accent-glow); }
+#page-graos input.txt { background:#F7F5F2; border:1px solid var(--pg-border); border-radius:6px; padding:4px 7px; font-size:12.5px; font-family:inherit; color:var(--pg-ink); width:158px; }
+#page-graos select.sel { background:#F7F5F2; border:1px solid var(--pg-border); border-radius:6px; padding:4px 7px; font-size:12.5px; font-family:inherit; color:var(--pg-ink); cursor:pointer; }
+#page-graos .signal { border-left:3px solid var(--pg-border); padding:11px 14px; margin:8px 0; background:var(--pg-surface); border-radius:0 10px 10px 0; border:1px solid var(--pg-border-subtle); border-left-width:3px; box-shadow:0 1px 3px rgba(26,19,16,.04); }
+#page-graos .signal.buy { border-left-color:var(--pg-up); }
+#page-graos .signal.sell { border-left-color:var(--pg-down); }
+#page-graos .signal.hold { border-left-color:var(--pg-corn); }
+#page-graos .signal .h { font-weight:500; font-size:13px; margin-bottom:3px; color:var(--pg-ink); }
+#page-graos .signal .b { font-size:12.5px; color:var(--pg-ink-2); line-height:1.55; }
+#page-graos .pill { font-size:9.5px; font-weight:600; padding:2px 8px; border-radius:4px; margin-left:6px; letter-spacing:.04em; text-transform:uppercase; }
+#page-graos .pill.buy { background:rgba(30,125,69,.10); color:var(--pg-up); }
+#page-graos .pill.sell { background:rgba(192,57,43,.10); color:var(--pg-down); }
+#page-graos .pill.hold { background:rgba(176,125,26,.12); color:var(--pg-corn); }
+#page-graos .note { font-size:11.5px; color:var(--pg-ink-3); background:#F7F5F2; border:1px solid var(--pg-border-subtle); border-radius:8px; padding:10px 13px; margin-top:9px; line-height:1.55; }
+#page-graos .warn { background:rgba(217,119,87,.06); border-color:rgba(217,119,87,.22); color:var(--pg-ink-2); }
+#page-graos .src { font-size:11px; color:var(--pg-ink-3); }
+#page-graos .src a { color:var(--pg-blue); text-decoration:none; }
+#page-graos .src a:hover { text-decoration:underline; }
+#page-graos .foot { margin-top:28px; font-size:11px; color:var(--pg-ink-3); border-top:1px solid var(--pg-border-subtle); padding-top:14px; }
+#page-graos .legend { display:flex; gap:16px; font-size:12px; color:var(--pg-ink-3); margin:4px 0 8px; flex-wrap:wrap; }
+#page-graos .dot { display:inline-block; width:8px; height:8px; border-radius:50%; margin-right:5px; vertical-align:middle; }
+#page-graos .hl { font-weight:500; color:var(--pg-ink); }
+#page-graos .calc { font-size:11.5px; color:var(--pg-ink-3); margin-top:6px; }
+#page-graos .btn { font-size:12px; font-family:inherit; background:var(--pg-surface); border:1px solid var(--pg-border); border-radius:7px; padding:5px 12px; cursor:pointer; color:var(--pg-ink-2); font-weight:500; transition:background .15s,border-color .15s,color .15s; }
+#page-graos .btn:hover { background:var(--pg-surface-2); border-color:var(--pg-accent-dim); color:var(--pg-accent); }
+#page-graos .toolbar { display:flex; gap:8px; align-items:center; flex-wrap:wrap; margin:4px 0 10px; }
+#page-graos .stamp { font-size:11.5px; color:var(--pg-ink-3); }
+#page-graos .verde { color:var(--pg-up); font-weight:500; }
+#page-graos .verm { color:var(--pg-down); font-weight:500; }
+#page-graos .badge { font-size:9px; padding:1px 6px; border-radius:4px; background:var(--pg-surface-2); color:var(--pg-ink-3); margin-left:5px; letter-spacing:.04em; font-weight:500; }
+#page-graos .badge.live { background:rgba(30,125,69,.10); color:var(--pg-up); }
+#page-graos .accent-block { border-left:2px solid var(--pg-accent); padding-left:12px; margin:8px 0; }
+#page-graos .sec-label { font-size:10px; font-weight:600; letter-spacing:.09em; text-transform:uppercase; color:var(--pg-accent); margin-bottom:8px; display:block; }
+#page-graos .exec-card { background:var(--pg-surface); border:1px solid var(--pg-border-subtle); border-radius:12px; padding:14px 16px; }
+#page-graos .exec-card .lab { font-size:10.5px; color:var(--pg-ink-3); text-transform:uppercase; letter-spacing:.07em; font-weight:500; }
+#page-graos .exec-card .val { font-size:20px; font-weight:300; margin:3px 0 1px; color:var(--pg-ink); letter-spacing:-.02em; }
+#page-graos .exec-card .meta { font-size:11.5px; color:var(--pg-ink-3); }
+</style>
+<div class="page" id="page-graos">
+  <div class="wrap">
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="content">
+        <h1>Painel de Comercialização de Grãos · <span>Soja, Milho &amp; Trigo</span></h1>
+        <div class="sub" style="margin-top:6px">Decisão de <span class="hl">comprar · vender · fixar · trocar</span> — Balcão PR · Relação de troca · B3 · CBOT · Safras</div>
+        <div class="sub" style="margin-top:4px;font-size:11.5px">Preços: <span class="hl">18–20/jun/2026</span> · USD/BRL <span class="hl" id="fxhdr">5,17</span> · <span style="color:var(--pg-ink-3)">AgRural · NA · Reuters · 20/jun</span></div>
+      </div>
+      <svg class="hero-art" viewBox="0 0 470 182" xmlns="http://www.w3.org/2000/svg" fill="none">
+        <g stroke="#D4C9BE" stroke-opacity=".35" stroke-width="1">
+          <line x1="60" y1="152" x2="470" y2="152"/>
+          <line x1="60" y1="166" x2="470" y2="166" stroke-dasharray="2 5"/>
+        </g>
+        <g stroke="#2E8B57" stroke-opacity=".5" stroke-width="1" stroke-dasharray="2 3">
+          <line x1="232" y1="60" x2="300" y2="40"/>
+          <line x1="300" y1="86" x2="300" y2="40"/>
+        </g>
+        <circle cx="300" cy="40" r="3.2" fill="#F7EFE6" stroke="#C96A44" stroke-width="1.2"/>
+        <g stroke="#C96A44" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity=".92">
+          <path d="M208 152 V80 Q208 58 232 58 Q256 58 256 80 V152"/>
+          <ellipse cx="232" cy="152" rx="24" ry="6"/>
+          <line x1="219" y1="82" x2="219" y2="152"/><line x1="232" y1="78" x2="232" y2="152"/><line x1="245" y1="82" x2="245" y2="152"/>
+          <line x1="232" y1="58" x2="232" y2="50"/>
+          <path d="M266 152 V98 Q266 82 282 82 Q298 82 298 98 V152"/>
+          <ellipse cx="282" cy="152" rx="16" ry="5"/>
+          <line x1="274" y1="100" x2="274" y2="152"/><line x1="290" y1="100" x2="290" y2="152"/>
+          <circle cx="232" cy="58" r="2.3"/><circle cx="282" cy="82" r="2.3"/>
+        </g>
+        <g stroke="#C96A44" stroke-width="1.2" stroke-linecap="round" opacity=".95">
+          <line x1="328" y1="152" x2="328" y2="96"/>
+          <path d="M328 98 l-7 -4 M328 98 l7 -4 M328 92 l-7 -4 M328 92 l7 -4 M328 86 l-7 -4 M328 86 l7 -4 M328 80 l-7 -4 M328 80 l7 -4"/>
+          <line x1="328" y1="80" x2="328" y2="73"/>
+          <line x1="342" y1="152" x2="342" y2="104"/>
+          <path d="M342 106 l-6 -3 M342 106 l6 -3 M342 101 l-6 -3 M342 101 l6 -3 M342 96 l-6 -3 M342 96 l6 -3"/>
+          <line x1="342" y1="96" x2="342" y2="90"/>
+        </g>
+        <g stroke="#2E8B57" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity=".95">
+          <line x1="382" y1="152" x2="382" y2="96"/>
+          <path d="M382 126 Q364 120 358 132"/>
+          <path d="M382 116 Q400 110 406 122"/>
+          <path d="M382 104 Q374 100 374 90 Q374 80 382 78 Q390 80 390 90 Q390 100 382 104"/>
+          <line x1="377" y1="88" x2="387" y2="88"/><line x1="377" y1="94" x2="387" y2="94"/>
+        </g>
+        <g stroke="#2E8B57" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round" opacity=".95">
+          <line x1="430" y1="152" x2="430" y2="104"/>
+          <ellipse cx="421" cy="100" rx="8" ry="4" transform="rotate(-28 421 100)"/>
+          <ellipse cx="439" cy="100" rx="8" ry="4" transform="rotate(28 439 100)"/>
+          <ellipse cx="430" cy="92" rx="8" ry="4.5"/>
+          <path d="M430 126 q9 -1 11 7 q-9 1 -11 -7"/>
+          <circle cx="433" cy="129" r="1.5"/><circle cx="437" cy="131" r="1.5"/>
+        </g>
+      </svg>
+    </div>
+
+    <!-- RESUMO EXECUTIVO -->
+    <h2 style="margin-top:6px">
+      <span class="n" style="border-color:var(--pg-accent);color:var(--pg-accent)">★</span>
+      Resumo Executivo
+      <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--pg-muted);font-size:11px;margin-left:auto">base 18–20/jun/2026</span>
+    </h2>
+    <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:10px">
+      <div class="card exec-soja" style="border-left:2px solid var(--pg-soy)">
+        <div class="kpi"><div class="lab">Soja — balcão PR</div><div class="val">R$ 122–128</div><div class="meta">Alta semanal +1,6%; rumores China EUA sustentam → <b>vender em repiques</b></div></div>
+      </div>
+      <div class="card" style="border-left:2px solid var(--pg-corn)">
+        <div class="kpi"><div class="lab">Milho — balcão PR</div><div class="val">R$ 57–65</div><div class="meta">Mínima do ciclo; carrego B3 +15% → <b>segurar / fixar Jan–Mar/27</b></div></div>
+      </div>
+      <div class="card" style="border-left:2px solid var(--pg-accent)">
+        <div class="kpi"><div class="lab">Melhor praça hoje</div><div class="val">Castrolanda/Cocamar</div><div class="meta">Soja R$ 128 (Castrolanda) · R$ 126 (Cocamar) · Milho R$ 65 (Cocamar)</div></div>
+      </div>
+      <div class="card" style="border-left:2px solid var(--pg-corn)">
+        <div class="kpi"><div class="lab">Troca soja × KCl</div><div class="val">~23 → 28 sc/t</div><div class="meta">Relação piorando → <b>travar fertilizante agora</b></div></div>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:6px">
+      <div class="sub" class="sec-label">Leitura do mercado</div>
+      <p style="margin:6px 0 12px;font-size:13px;line-height:1.55">
+        A soja ganhou força na semana do dia 17/jun — <b>+1,6% na praça de Maringá/PR e +2,3% em Paranaguá</b> (AgRural 18/jun) —, sustentada por câmbio em R$ 5,17 e pela confirmação de compras chinesas de soja dos EUA (USDA: 372 kt vendidas em 17/jun, Reuters). Interior do PR (Cascavel/Campo Mourão) opera na faixa R$ 123–124/sc; porto de Paranaguá subiu para R$ 134/sc. CBOT Nov/26 a US$ 11,49/bu continua com <b>teto limitado</b> por safra global recorde (~425 mi t). O <b>milho está na mínima do ciclo</b> — balcão Oeste do PR R$ 57–58/sc, colheita da safrinha ainda pesando —, mas a curva da B3 mostra <b>carrego forte</b> (Jul/26 R$65,25 → Mar/27 R$75,05, +15%): o mercado paga para armazenar.
+      </p>
+      <div class="sub" class="sec-label">Ações sugeridas</div>
+      <ul style="margin:7px 0 0;padding-left:18px;font-size:13px;line-height:1.6">
+        <li><b>Milho:</b> não vender no fundo; segurar com armazenagem ou fixar vencimentos Jan–Mar/27 na B3.</li>
+        <li><b>Soja:</b> vender em repiques de Chicago + dólar; usar a tabela de cooperativas para direcionar a melhor praça (spread de até ~R$ 16,50/sc na soja e ~R$ 19/sc no milho).</li>
+        <li><b>Insumos:</b> travar fertilizante enquanto a troca está ~23 sc/t (tende a piorar para ~28 sc/t até julho).</li>
+        <li><b>Câmbio:</b> monitorar o dólar — abaixo de R$ 5,00 derruba o preço em reais mesmo sem Chicago cair.</li>
+      </ul>
+      <div class="calc" style="margin-top:8px">Snapshot dos preços públicos de 18–20/jun/2026; os números das faixas refletem a carga inicial do painel (não recalculam com suas edições).</div>
+    </div>
+
+    <!-- 1. BALCÃO + TROCA POR COOPERATIVA -->
+    <h2><span class="n">1</span> Balcão e relação de troca — cooperativas agroindustriais do PR</h2>
+    <div class="toolbar">
+      <span class="stamp">Preço dos fertilizantes (R$ por tonelada):</span>
+      <label class="stamp">Cloreto de potássio (KCl) <input class="px" id="inKCl" value="2900"></label>
+      <label class="stamp">MAP (fósforo) <input class="px" id="inMAP" value="4200"></label>
+      <label class="stamp">Ureia (nitrogênio) <input class="px" id="inUreia" value="2600"></label>
+      <button class="btn" onclick="pgRecalcTroca()">recalcular</button>
+    </div>
+    <div class="card" style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>Cooperativa</th>
+            <th>Região / Base</th>
+            <th>Soja R$/sc</th>
+            <th>Milho R$/sc</th>
+            <th>Sacas de soja p/ 1 t de KCl</th>
+            <th>Sacas de soja p/ 1 t de MAP</th>
+            <th>Sacas de milho p/ 1 t de Ureia</th>
+            <th>Atualizado</th>
+          </tr>
+        </thead>
+        <tbody id="coops"></tbody>
+      </table>
+      <div class="note warn">
+        ⚠️ <strong>Origem dos preços (18/jun/2026):</strong> <strong>Copagril e C.Vale</strong> = AgRural Cascavel/Oeste PR (R$ 123/sc soja · R$ 57/sc milho). <strong>Coamo</strong> = AgRural Campo Mourão. <strong>Castrolanda</strong> = AgRural Ponta Grossa. <strong>Cocamar</strong> = NA Maringá ref. <strong>Coopertradição</strong> = AgRural Francisco Beltrão/Guarapuava ref. <strong>Cotrijal</strong> = AgRural Erechim/RS ref. <strong>Cravil</strong> = NA Rio do Sul/SC ref. <strong>Comigo</strong> = AgRural Rio Verde/GO ref. <strong>Integrada</strong> = NA Londrina ref. <strong>Copacol e Lar</strong> = Oeste PR ref AgRural. Preços com "ref" são da praça da região — confirme no app do associado. Quanto <em>menor</em> a sc/t da troca, melhor para você.
+      </div>
+    </div>
+
+    <!-- 2. COMPARATIVO -->
+    <h2><span class="n">2</span> Comparativo de preços entre cooperativas</h2>
+    <div class="legend">
+      <span><span class="dot" style="background:#C96A44"></span>Soja</span>
+      <span><span class="dot" style="background:#B07D1A"></span>Milho</span>
+    </div>
+    <div class="grid two" style="margin-top:4px">
+      <div class="card">
+        <div class="sub">Por cooperativa — soja e milho lado a lado (R$/sc)</div>
+        <div class="chartbox" style="height:330px"><canvas id="cmpCoop"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="sub">Por região — preço médio das cooperativas (R$/sc)</div>
+        <div class="chartbox" style="height:330px"><canvas id="cmpReg"></canvas></div>
+      </div>
+    </div>
+    <div class="card" style="margin-top:12px">
+      <table>
+        <thead>
+          <tr><th>Cultura</th><th>Maior</th><th>Menor</th><th>Spread (R$/sc)</th><th>Em 1.000 sc</th></tr>
+        </thead>
+        <tbody id="spread"></tbody>
+      </table>
+      <div class="calc">Spread = diferença entre quem mais paga e quem menos paga. Mostra quanto você ganha escolhendo o melhor destino.</div>
+    </div>
+
+    <!-- 3. FUTUROS / FIXAÇÃO -->
+    <h2><span class="n">3</span> Contratos futuros &amp; curva de fixação</h2>
+    <div class="grid two">
+      <div class="card">
+        <div class="sub">Curva de fixação (referência B3 que as cooperativas espelham)</div>
+        <table>
+          <thead><tr><th>Vencimento</th><th>Soja US$/sc</th><th>Soja R$/sc*</th><th>Milho R$/sc</th></tr></thead>
+          <tbody id="futCoop"></tbody>
+        </table>
+        <div class="calc">*Soja convertida pelo câmbio. Prêmio porto Paranaguá soja: Jun +0,50 / Jul +0,70 / Ago +1,00 / Set +1,15 US$/bu. As cooperativas ofertam fixação espelhando esses vencimentos ± prêmio de balcão.</div>
+      </div>
+      <div class="card">
+        <div class="sub">Como ler a relação de troca</div>
+        <div class="calc">A coluna "sc/t" da seção 1 = quantas sacas do seu grão você entrega por 1 tonelada do insumo (preço insumo ÷ preço da saca daquela cooperativa).</div>
+        <table style="margin-top:8px">
+          <thead><tr><th>Faixa (soja×KCl)</th><th>Leitura</th></tr></thead>
+          <tbody>
+            <tr><td>≤ 22 sc/t</td><td class="up">favorável — bom p/ travar insumo</td></tr>
+            <tr><td>23–27 sc/t</td><td class="flat">neutra</td></tr>
+            <tr><td>≥ 28 sc/t</td><td class="down">cara — poder de compra baixo</td></tr>
+          </tbody>
+        </table>
+        <div class="calc">Referência 2026: KCl ~23 sc/t (mar) com tendência de piora p/ ~28 sc/t (jul). Editar os preços dos insumos na seção 1 muda todas as cooperativas.</div>
+      </div>
+    </div>
+
+    <!-- 4. MERCADO / CURVAS -->
+    <h2><span class="n">4</span> Resumo de mercado e curvas de futuros</h2>
+    <div class="grid kpis">
+      <div class="card kpi"><div class="lab">Soja PR <span class="tag t-soy">CEPEA</span></div><div class="val">R$ 126,00</div><div class="meta">18/06 · <span class="up">▲ +1,7%</span></div></div>
+      <div class="card kpi"><div class="lab">Soja Paranaguá <span class="tag t-soy">porto</span></div><div class="val">R$ 134,00</div><div class="meta">18/06 AgRural</div></div>
+      <div class="card kpi"><div class="lab">Milho <span class="tag t-corn">Indicador</span></div><div class="val">R$ 58,00</div><div class="meta">18/06 · mín. do ciclo</div></div>
+      <div class="card kpi"><div class="lab">Soja CBOT <span class="tag t-soy">Nov/26</span></div><div class="val">US$ 11,49</div><div class="meta">/bushel · 17/jun Reuters <span class="up">▲</span></div></div>
+      <div class="card kpi"><div class="lab">Milho CBOT <span class="tag t-corn">Dez/26</span></div><div class="val">US$ 4,45</div><div class="meta">/bushel · 9/jun</div></div>
+      <div class="card kpi"><div class="lab">Soja B3 <span class="tag t-soy">Nov/26</span></div><div class="val">US$ 25,40</div><div class="meta">/sc 60kg ref</div></div>
+    </div>
+    <div class="legend" style="margin-top:14px">
+      <span><span class="dot" style="background:#B07D1A"></span>Milho CBOT (US$/bushel)</span>
+      <span><span class="dot" style="background:#C96A44"></span>Soja CBOT (US$/bushel)</span>
+    </div>
+    <div class="grid two">
+      <div class="card"><div class="sub">Milho CBOT — US$/bushel</div><div class="chartbox"><canvas id="cMilhoCbot"></canvas></div></div>
+      <div class="card"><div class="sub">Soja CBOT — US$/bushel</div><div class="chartbox"><canvas id="cSojaCbot"></canvas></div></div>
+    </div>
+
+    <!-- 5. SINAIS -->
+    <h2><span class="n">5</span> Sinais de decisão</h2>
+    <div class="grid two">
+      <div>
+        <div class="signal hold">
+          <div class="h">Milho — segurar / fixar longos <span class="pill hold">SEGURAR</span></div>
+          <div class="b">Spot na mínima do ciclo; balcão Oeste do PR R$ 57/sc (AgRural 18/06, pico safrinha). Carrego B3 Jul/26 R$65,25 → Mar/27 R$75,05 (<span class="up">+15%</span>): o mercado paga para armazenar. Não vender no fundo — fixar Jan–Mar/27 ou guardar com armazenagem.</div>
+        </div>
+        <div class="signal sell">
+          <div class="h">Soja — vender em altas <span class="pill sell">VENDER EM ALTAS</span></div>
+          <div class="b">Balcão das coops PR R$ 122–128/sc; porto Paranaguá R$ 134 (AgRural 18/jun). CBOT Nov/26 US$ 11,49 + câmbio R$ 5,17 sustentam. Alta de +1,6% na semana (rumores China + clima EUA), mas teto por safra recorde. Aproveitar repiques para travar parcelas.</div>
+        </div>
+        <div class="signal buy">
+          <div class="h">Troca de insumos <span class="pill buy">ATENÇÃO</span></div>
+          <div class="b">Relação piorando (KCl ~23→28 sc/t até jul). Veja na seção 1 qual cooperativa dá a melhor troca: como o preço do grão varia entre elas, a mesma tonelada de KCl custa menos sacas onde o grão é mais valorizado.</div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="sub">Câmbio &amp; paridade soja</div>
+        <div class="calc">Câmbio: <input class="px" id="fxin" value="5.17"> R$/US$</div>
+        <table><tbody>
+          <tr><td>Soja CBOT Nov/26 (US$/bu)</td><td>11,49 <span style="font-size:10px;color:var(--pg-muted)">Reuters 17/jun</span></td></tr>
+          <tr><td>Paridade bruta (R$/sc)</td><td class="hl" id="parsoja">—</td></tr>
+          <tr><td>CEPEA-PR observado</td><td class="hl">R$ 126,00</td></tr>
+          <tr><td>Base PR vs paridade</td><td id="baseGap">—</td></tr>
+        </tbody></table>
+        <div class="calc">Paridade ≈ CBOT(US$/bu) ÷ 0,367 × câmbio (bruta). A diferença p/ o físico é base/logística até o porto.</div>
+      </div>
+    </div>
+
+    <!-- 6. SAFRAS -->
+    <h2><span class="n">6</span> Previsão de safra 2025/26</h2>
+    <div class="grid two">
+      <div class="card">
+        <div class="sub">Brasil — CONAB (9º levantamento, jun/26)</div>
+        <table>
+          <thead><tr><th>Cultura</th><th>mi t</th><th>vs 24/25</th></tr></thead>
+          <tbody>
+            <tr><td>Soja <span class="tag t-soy">recorde</span></td><td>180,25</td><td class="up">+8,8</td></tr>
+            <tr><td>Milho (3 safras)</td><td>140,46</td><td class="up">alta</td></tr>
+            <tr><td class="hl">Total grãos</td><td class="hl">358,64</td><td class="up">+1,8%</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="card">
+        <div class="sub">EUA (USDA 2026/27) &amp; Mundo 25/26</div>
+        <table>
+          <thead><tr><th>Item</th><th>Soja</th><th>Milho</th></tr></thead>
+          <tbody>
+            <tr><td>EUA produção</td><td>4,435 bi bu</td><td>16,0 bi bu</td></tr>
+            <tr><td>Argentina (mi t)</td><td>~48,5</td><td>~52,0</td></tr>
+            <tr><td>Mundo (mi t)</td><td>~425,8 rec.</td><td>~1.283</td></tr>
+          </tbody>
+        </table>
+        <div class="calc">Oferta global de soja recorde = teto estrutural. Milho EUA −6% dá suporte relativo.</div>
+      </div>
+    </div>
+
+    <h2><span class="n">7</span> Fontes</h2>
+    <div class="src">
+      <a href="https://agrural.com.br/precossojaemilho/" target="_blank">AgRural — Preços físicos</a> ·
+      <a href="https://www.copagril.com.br/historico-de-precos/2026/6" target="_blank">Copagril</a> ·
+      <a href="https://www.cvale.com.br/site/preco-do-dia" target="_blank">C.Vale</a> ·
+      <a href="https://www.noticiasagricolas.com.br/cotacoes/soja" target="_blank">Notícias Agrícolas (soja)</a> ·
+      <a href="https://www.noticiasagricolas.com.br/cotacoes/milho" target="_blank">Milho</a> ·
+      <a href="https://www.graodireto.com.br/cotacoes/" target="_blank">Grão Direto</a> ·
+      <a href="https://www.cepea.org.br/br/indicador/soja.aspx" target="_blank">CEPEA</a> ·
+      <a href="https://www.conab.gov.br" target="_blank">CONAB</a> ·
+      <a href="https://www.usda.gov/oce/commodity/wasde" target="_blank">USDA</a> ·
+      <a href="https://www.scotconsultoria.com.br/noticias/cartas/60168/carta-insumos-relacao-de-troca-soja-x-fertilizantes.htm" target="_blank">Relação de troca (Scot)</a>
+    </div>
+    <div class="foot">Apoio à decisão — não é recomendação de compra/venda. Confirme o balcão no canal do associado antes de fixar. Preços de C.Vale/Copacol/Lar/Integrada carregam só via app — campos editáveis.</div>
+
+  </div>
+</div>
+<script>
+// ===== Painel de Grãos — dados públicos (Soja, Milho & Trigo) =====
+const pgFutSojaB3=[{m:'Set/26',v:25.22},{m:'Nov/26',v:25.40},{m:'Mai/27',v:26.15}];
+const pgFutMilhoB3=[{m:'Jul/26',v:65.25},{m:'Set/26',v:67.58},{m:'Jan/27',v:73.51},{m:'Mar/27',v:75.05}];
+const pgFutMilhoCbot=[{m:'Jul/26',v:4.1900},{m:'Set/26',v:4.2700},{m:'Dez/26',v:4.4500},{m:'Mar/27',v:4.5900}];
+const pgFutSojaCbot=[{m:'Jul/26',v:11.32},{m:'Ago/26',v:11.37},{m:'Set/26',v:11.40},{m:'Nov/26',v:11.4925}];
+
+function pgFxv(){return parseFloat((document.getElementById('fxin')||{}).value?.replace(',','.'))||5.17;}
+function pgFmt(n,d=2){return (isNaN(n)?0:n).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});}
+function pgBrl(n){return 'R$ '+pgFmt(n);}
+function pgNum(id){return parseFloat((document.getElementById(id)||{}).value?.replace(',','.'))||0;}
+
+const pgCoopsDefault=[
+  {nome:'Copagril', reg:'M. C. Rondon/PR', soja:123.00, milho:57.00, dt:'18/06 AgRural', live:true},
+  {nome:'Coagru', reg:'Ubiratã/PR', soja:123.00, milho:58.00, dt:'18/06 NA ref', live:true},
+  {nome:'Coopertradição', reg:'Pato Branco/PR', soja:124.00, milho:58.00, dt:'18/06 AgRural ref', live:true},
+  {nome:'Coamo', reg:'Campo Mourão/PR', soja:124.00, milho:58.00, dt:'18/06 AgRural', live:true},
+  {nome:'Cocamar', reg:'Maringá/PR', soja:126.00, milho:65.00, dt:'18/06 NA ref', live:true},
+  {nome:'Castrolanda', reg:'Castro/PR', soja:128.00, milho:60.00, dt:'18/06 AgRural ref', live:true},
+  {nome:'Comigo', reg:'Rio Verde/GO', soja:116.00, milho:55.00, dt:'18/06 AgRural ref', live:true},
+  {nome:'Cotrijal', reg:'Não-Me-Toque/RS', soja:125.00, milho:60.00, dt:'18/06 AgRural ref', live:true},
+  {nome:'Cravil', reg:'Rio do Sul/SC', soja:122.00, milho:61.00, dt:'18/06 NA ref', live:true},
+  {nome:'C.Vale', reg:'Assis Chat./Brasilândia/Palotina', soja:123.00, milho:57.00, dt:'18/06 AgRural ref', live:true},
+  {nome:'Copacol', reg:'Cafelândia/PR', soja:123.00, milho:57.00, dt:'18/06 AgRural ref', live:true},
+  {nome:'Lar', reg:'Medianeira/PR', soja:123.00, milho:58.00, dt:'18/06 AgRural ref', live:true},
+  {nome:'Integrada', reg:'Londrina/PR', soja:125.00, milho:63.00, dt:'18/06 NA ref', live:true},
+];
+let pgCoops = JSON.parse(JSON.stringify(pgCoopsDefault));
+
+const pgRegiao={
+  'C.Vale':'Oeste PR','Copagril':'Oeste PR','Copacol':'Oeste PR','Lar':'Oeste PR','Coagru':'Oeste PR',
+  'Coamo':'Centro PR','Cocamar':'Norte PR','Integrada':'Norte PR','Castrolanda':'Campos Gerais',
+  'Coopertradição':'Sudoeste PR','Comigo':'Fora PR (GO)','Cotrijal':'Fora PR (RS)','Cravil':'Fora PR (SC)'
+};
+
+function pgPorRegiao(){
+  const map={};
+  pgCoops.forEach(c=>{
+    const r=pgRegiao[c.nome]||'Outras';
+    map[r]=map[r]||{soja:[],milho:[]};
+    if(c.soja>0)map[r].soja.push(c.soja);
+    if(c.milho>0)map[r].milho.push(c.milho);
+  });
+  const labels=Object.keys(map), avg=a=>a.length?a.reduce((x,y)=>x+y,0)/a.length:null;
+  return {labels, soja:labels.map(l=>avg(map[l].soja)), milho:labels.map(l=>avg(map[l].milho))};
+}
+
+function pgTrocaLeitura(sc){
+  return sc<=0?['—','']:sc<=22?['',' up']:sc<=27?['',' flat']:['',' down'];
+}
+
+function pgRenderCoops(){
+  const tb=document.getElementById('coops'); if(!tb)return; tb.innerHTML='';
+  pgCoops.forEach((c,i)=>{
+    tb.innerHTML+=`<tr>
+      <td class="hl">${c.nome}${c.live?'<span class="badge live">público</span>':'<span class="badge">app</span>'}</td>
+      <td>${c.reg}</td>
+      <td><input class="px" data-k="soja" data-i="${i}" value="${c.soja?c.soja.toFixed(2):''}" placeholder="—"></td>
+      <td><input class="px" data-k="milho" data-i="${i}" value="${c.milho?c.milho.toFixed(2):''}" placeholder="—"></td>
+      <td class="tKCl"></td><td class="tMAP"></td><td class="tUr"></td>
+      <td style="font-size:10.5px;color:var(--pg-muted)">${c.dt}</td>
+    </tr>`;
+  });
+  tb.querySelectorAll('input.px').forEach(inp=>inp.addEventListener('input',e=>{
+    const i=+e.target.dataset.i, k=e.target.dataset.k, v=parseFloat(e.target.value.replace(',','.'));
+    pgCoops[i][k]=isNaN(v)?0:v;
+    pgRecalcTroca(); pgRenderCompare();
+  }));
+  pgRecalcTroca();
+}
+
+function pgRecalcTroca(){
+  const kcl=pgNum('inKCl'), mapv=pgNum('inMAP'), ur=pgNum('inUreia');
+  const rows=document.querySelectorAll('#coops tr');
+  pgCoops.forEach((c,i)=>{
+    const row=rows[i]; if(!row)return;
+    const tKCl=c.soja>0?kcl/c.soja:0, tMAP=c.soja>0?mapv/c.soja:0, tUr=c.milho>0?ur/c.milho:0;
+    const k=row.querySelector('.tKCl');
+    k.className='tKCl'+pgTrocaLeitura(tKCl)[1];
+    k.textContent=tKCl?pgFmt(tKCl,1)+' sc':'—';
+    row.querySelector('.tMAP').textContent=tMAP?pgFmt(tMAP,1)+' sc':'—';
+    row.querySelector('.tUr').textContent=tUr?pgFmt(tUr,1)+' sc':'—';
+  });
+}
+
+let pgChCoop, pgChReg, pgChMilho, pgChSoja;
+
+const pgValorMulti={
+  id:'pgValorMulti',
+  afterDatasetsDraw(chart){
+    const ctx=chart.ctx;
+    chart.data.datasets.forEach((ds,di)=>{
+      const meta=chart.getDatasetMeta(di); if(meta.hidden)return;
+      ctx.save();
+      ctx.font='700 10px -apple-system,Segoe UI,Roboto,sans-serif';
+      ctx.textAlign='center'; ctx.textBaseline='bottom'; ctx.fillStyle=ds.borderColor;
+      meta.data.forEach((pt,i)=>{ if(ds.data[i]!=null) ctx.fillText(pgFmt(ds.data[i],0), pt.x, pt.y-6); });
+      ctx.restore();
+    });
+  }
+};
+
+function pgDrawMulti(id,labels,datasets,prev){
+  const el=document.getElementById(id); if(!el)return prev;
+  if(prev)prev.destroy();
+  return new Chart(el,{
+    type:'line',
+    data:{
+      labels,
+      datasets:datasets.map(d=>({
+        label:d.name, data:d.data,
+        borderColor:d.color, backgroundColor:d.color+'14',
+        fill:false, tension:.3, spanGaps:true,
+        pointRadius:5, pointHoverRadius:7,
+        pointBackgroundColor:d.color, pointBorderColor:'#fff', pointBorderWidth:1
+      }))
+    },
+    options:{
+      responsive:true, maintainAspectRatio:false, layout:{padding:{top:22}},
+      plugins:{
+        legend:{display:true,position:'top',labels:{font:{size:11},boxWidth:12,usePointStyle:true,color:'#4A433C'}},
+        tooltip:{callbacks:{label:c=>c.dataset.label+': R$ '+pgFmt(c.parsed.y)}}
+      },
+      scales:{
+        y:{ticks:{font:{size:10},color:'#9C8F85'},grid:{color:'#E8E4DF'},grace:'10%'},
+        x:{ticks:{font:{size:9},maxRotation:45,minRotation:30,color:'#9C8F85'},grid:{color:'#E8E4DF'}}
+      }
+    },
+    plugins:[pgValorMulti]
+  });
+}
+
+function pgRenderCompare(){
+  const sj=pgCoops.filter(c=>c.soja>0).sort((a,b)=>b.soja-a.soja);
+  const mi=pgCoops.filter(c=>c.milho>0).sort((a,b)=>b.milho-a.milho);
+
+  pgChCoop=pgDrawMulti('cmpCoop',pgCoops.map(c=>c.nome),[
+    {name:'Soja',color:'#C96A44',data:pgCoops.map(c=>c.soja>0?c.soja:null)},
+    {name:'Milho',color:'#B07D1A',data:pgCoops.map(c=>c.milho>0?c.milho:null)}
+  ],pgChCoop);
+
+  const reg=pgPorRegiao();
+  pgChReg=pgDrawMulti('cmpReg',reg.labels,[
+    {name:'Soja (média)',color:'#C96A44',data:reg.soja},
+    {name:'Milho (média)',color:'#B07D1A',data:reg.milho}
+  ],pgChReg);
+
+  const sp=document.getElementById('spread'); if(!sp)return; sp.innerHTML='';
+  [['Soja',sj,c=>c.soja],['Milho',mi,c=>c.milho]].forEach(([nome,rows,f])=>{
+    if(!rows.length){sp.innerHTML+=`<tr><td>${nome}</td><td colspan="4" style="color:var(--pg-muted)">sem dados</td></tr>`;return;}
+    const mx=rows[0], mn=rows[rows.length-1], spread=f(mx)-f(mn);
+    sp.innerHTML+=`<tr>
+      <td class="hl">${nome}</td>
+      <td><span class="up">${pgFmt(f(mx))}</span> <span style="font-size:11px;color:var(--pg-muted)">${mx.nome}</span></td>
+      <td><span class="down">${pgFmt(f(mn))}</span> <span style="font-size:11px;color:var(--pg-muted)">${mn.nome}</span></td>
+      <td class="hl">${pgFmt(spread)}</td>
+      <td>${pgBrl(spread*1000)}</td>
+    </tr>`;
+  });
+}
+
+function pgRenderFutCoop(){
+  const tb=document.getElementById('futCoop'); if(!tb)return; tb.innerHTML='';
+  const m={};
+  pgFutSojaB3.forEach(s=>m[s.m]={soja:s.v});
+  pgFutMilhoB3.forEach(x=>{m[x.m]=m[x.m]||{}; m[x.m].milho=x.v;});
+  Object.keys(m).forEach(k=>{
+    const s=m[k].soja, mi=m[k].milho;
+    tb.innerHTML+=`<tr>
+      <td>${k}</td>
+      <td>${s?pgFmt(s):'—'}</td>
+      <td>${s?pgFmt(s*pgFxv()):'—'}</td>
+      <td>${mi?pgFmt(mi):'—'}</td>
+    </tr>`;
+  });
+}
+
+function pgUpdFx(){
+  const f=pgFxv();
+  const hdr=document.getElementById('fxhdr'); if(hdr)hdr.textContent=pgFmt(f);
+  const par=11.4925/0.367*f;
+  const pel=document.getElementById('parsoja'); if(pel)pel.textContent='~R$ '+par.toFixed(0);
+  const gap=126.00-par, el=document.getElementById('baseGap');
+  if(el){ el.textContent=(gap>=0?'+':'')+pgFmt(gap)+' R$/sc'; el.className=gap>=0?'up':'down'; }
+  pgRenderFutCoop();
+}
+
+const pgValorNoPonto={
+  id:'pgValorNoPonto',
+  afterDatasetsDraw(chart){
+    const ctx=chart.ctx, meta=chart.getDatasetMeta(0), data=chart.data.datasets[0].data;
+    const mx=Math.max(...data), mn=Math.min(...data);
+    ctx.save();
+    ctx.font='700 11px -apple-system,Segoe UI,Roboto,sans-serif';
+    ctx.textAlign='center'; ctx.textBaseline='bottom';
+    meta.data.forEach((pt,i)=>{
+      ctx.fillStyle = data[i]===mx?'#1E7D45' : data[i]===mn?'#C0392B' : '#6B5E56';
+      ctx.fillText(pgFmt(data[i],0), pt.x, pt.y-8);
+    });
+    ctx.restore();
+  }
+};
+
+function pgLineChart(id,labels,data,color,u,prev){
+  const el=document.getElementById(id); if(!el)return prev;
+  if(prev)prev.destroy();
+  return new Chart(el,{
+    type:'line',
+    data:{ labels, datasets:[{ data, borderColor:color, backgroundColor:color+'22', fill:true, tension:.25, pointRadius:4, pointBackgroundColor:color }] },
+    options:{
+      responsive:true, maintainAspectRatio:false, layout:{padding:{top:20}},
+      plugins:{ legend:{display:false}, tooltip:{callbacks:{label:c=>u+' '+c.parsed.y}} },
+      scales:{
+        y:{ticks:{font:{size:11},color:'#9C8F85'},grid:{color:'#E8E4DF'}},
+        x:{ticks:{font:{size:11},color:'#9C8F85'},grid:{color:'#E8E4DF'}}
+      }
+    },
+    plugins:[pgValorNoPonto]
+  });
+}
+
+let _pgInit=false;
+function rgraosmkt(){
+  if(!_pgInit){
+    ['inKCl','inMAP','inUreia'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('input',pgRecalcTroca); });
+    const fxel=document.getElementById('fxin'); if(fxel) fxel.addEventListener('input',pgUpdFx);
+    _pgInit=true;
+  }
+  pgRenderCoops();
+  pgRenderCompare();
+  pgRenderFutCoop();
+  pgUpdFx();
+  pgChMilho=pgLineChart('cMilhoCbot',pgFutMilhoCbot.map(x=>x.m),pgFutMilhoCbot.map(x=>x.v),'#B07D1A','US$',pgChMilho);
+  pgChSoja=pgLineChart('cSojaCbot',pgFutSojaCbot.map(x=>x.m),pgFutSojaCbot.map(x=>x.v),'#C96A44','US$',pgChSoja);
+}
+</script>
 
 <!-- DIVIDENDOS -->
 <div class="page" id="page-dividendos">
@@ -3385,7 +3979,7 @@ const gridOpts=(cb=v=>v)=>({x:{grid:{color:'rgba(74,122,86,.08)'},ticks:{color:C
 
 // ─── PAGE TITLES for mobile header
 const PAGE_TITLES = {
-  dashboard:'Dashboard', carteira:'Carteira', cotacoes:'Cotações',
+  dashboard:'Dashboard', carteira:'Carteira', cotacoes:'Cotações', graos:'Painel de Grãos',
   dividendos:'Dividendos', alocacao:'Alocação', contas:'Contas',
   cartoes:'Cartões', bens:'Patrimônio', objetivos:'Objetivos',
   gastos:'Extrato', orcamento:'Orçamento', sinais:'Sinais & Riscos',
@@ -3575,7 +4169,7 @@ function closeMobNav(){
   document.body.style.overflow = '';
 }
 
-const fns={dashboard:rdash,carteira:rcar,cotacoes:rcot,dividendos:rdiv,alocacao:raloc,contas:rcontas,cartoes:rcartoes,gastos:rgas,orcamento:rorc,bens:rbens,objetivos:robjetivos,sinais:rsinais,briefing:rbriefing,assistente:rassistente,'assistente-mid':rassistenteMid,'assistente-adv':rassistenteAdv};
+const fns={dashboard:rdash,carteira:rcar,cotacoes:rcot,graos:rgraosmkt,dividendos:rdiv,alocacao:raloc,contas:rcontas,cartoes:rcartoes,gastos:rgas,orcamento:rorc,bens:rbens,objetivos:robjetivos,sinais:rsinais,briefing:rbriefing,assistente:rassistente,'assistente-mid':rassistenteMid,'assistente-adv':rassistenteAdv};
 function render(p){fns[p]?.(); if(typeof _reaplicarBuscaSecao==='function') setTimeout(()=>_reaplicarBuscaSecao(p),0);}
 
 // ─── FUNÇÕES DERIVADAS CENTRAIS (Síntese I — coerência entre domínios)
