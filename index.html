@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 57 -->
+<!-- APP_VERSION: 58 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1084,6 +1084,11 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <path d="M3 20l4-8 4 5 3-6 7 9H3Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
       <circle cx="17" cy="6" r="2" fill="none" stroke="currentColor" stroke-width="1.1"/>
     </symbol>
+    <symbol id="ic-imovel" viewBox="0 0 24 24">
+      <path d="M4 11l8-7 8 7" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+      <path d="M6 10v9h12v-9" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+      <path d="M10 19v-5h4v5" fill="none" stroke="currentColor" stroke-width="1.1"/>
+    </symbol>
     <!-- Alvo / objetivo -->
     <symbol id="ic-alvo" viewBox="0 0 24 24">
       <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.2"/>
@@ -1300,6 +1305,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="nav-group">Investimentos</div>
     <button class="nav-item" onclick="goTo('cotacoes')"><span class="ni"><svg class="svi"><use href="#ic-cotacoes"/></svg></span><span class="nav-label"> Mercado de Ações</span></button>
     <button class="nav-item" onclick="goTo('graos')"><span class="ni"><svg class="svi"><use href="#ic-silo"/></svg></span><span class="nav-label"> Mercado de Grãos</span></button>
+    <button class="nav-item" onclick="goTo('imoveis')"><span class="ni"><svg class="svi"><use href="#ic-imovel"/></svg></span><span class="nav-label"> Mercado de Imóveis</span></button>
     <button class="nav-item" onclick="goTo('carteira')"><span class="ni"><svg class="svi"><use href="#ic-chart"/></svg></span><span class="nav-label"> Carteira</span></button>
     <button class="nav-item" onclick="goTo('dividendos')"><span class="ni"><svg class="svi"><use href="#ic-moeda"/></svg></span><span class="nav-label"> Dividendos</span></button>
     <button class="nav-item" onclick="goTo('alocacao')"><span class="ni"><svg class="svi"><use href="#ic-alocacao"/></svg></span><span class="nav-label"> Alocação</span></button>
@@ -2263,6 +2269,1070 @@ function atualizarMercadoGraos(){
   rgraosmkt();
   toast('↻ Mercado de Grãos atualizado');
 }
+</script>
+
+<!-- MERCADO DE IMÓVEIS -->
+<style>
+#page-imoveis {
+  --im-bg:#F4F1EA; --im-s1:#FDFCFA; --im-s2:#F0EDE6; --im-s3:#E8E4DC; --im-s4:#DDD9D0; --im-ln:#E4E0D8; --im-ln2:#D4CFC6; --im-ln3:#C4BEB4; --im-d1:#8A847C; --im-d2:#5A5450; --im-d3:#3A3530; --im-d4:#201E1A; --im-d5:#100E0B; --im-ac:#CC785C; --im-ac2:rgba(204,120,92,.11); --im-ac3:rgba(204,120,92,.055); --im-bl:#5A7FAF; --im-bl2:rgba(90,127,175,.09); --im-am:#B87840; --im-am2:rgba(184,120,64,.09); --im-re:#C04840; --im-re2:rgba(192,72,64,.09); --im-pu:#8060A8; --im-pu2:rgba(128,96,168,.09); --im-gr:#4A8060; --im-gr2:rgba(74,128,96,.10); --im-r:6px; --im-r2:10px; --im-r3:16px;
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:var(--im-bg); color:var(--im-d5); font-size:13px; line-height:1.6;
+  position:relative; padding:20px 24px 40px;
+}
+@keyframes im-pulse{0%,100%{opacity:1}50%{opacity:.25}}
+#page-imoveis, #page-imoveis *, #page-imoveis *::before, #page-imoveis *::after{box-sizing:border-box;}
+
+
+/* ── AMBIENT BACKGROUND ── */
+
+#page-imoveis::before{
+  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(ellipse 60% 40% at 15% 20%,rgba(204,120,92,.04) 0%,transparent 70%),
+    radial-gradient(ellipse 50% 35% at 85% 75%,rgba(90,127,175,.03) 0%,transparent 70%);
+}
+#page-imoveis::after{
+  content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+  background-image:
+    linear-gradient(var(--im-ln) .5px,transparent .5px),
+    linear-gradient(90deg,var(--im-ln) .5px,transparent .5px);
+  background-size:40px 40px;opacity:.22;
+}
+#page-imoveis .shell{position:relative;z-index:1;max-width:1100px;margin:0 auto;padding:0 22px 100px}
+
+
+/* ══ HEADER ══ */
+
+#page-imoveis header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:24px 0 22px;margin-bottom:30px;
+  border-bottom:.5px solid var(--im-ln2);
+}
+#page-imoveis .hl{display:flex;align-items:center;gap:16px}
+#page-imoveis .logo-mark{width:40px;height:40px;position:relative}
+#page-imoveis .brand-name{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;font-size:15px;font-weight:500;letter-spacing:.06em;color:var(--im-d5)}
+#page-imoveis .brand-sub{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:var(--im-d2);letter-spacing:.12em;margin-top:1px}
+#page-imoveis .status{display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:var(--im-d3);border:.5px solid var(--im-ln2);border-radius:4px;padding:4px 10px}
+#page-imoveis .pulse-dot{width:5px;height:5px;border-radius:50%;background:var(--im-ac);animation:im-pulse 2.4s ease-in-out infinite}
+
+
+
+/* ══ NAV ══ */
+
+#page-imoveis .nav{display:flex;gap:3px;margin-bottom:26px;background:var(--im-s2);border:.5px solid var(--im-ln);border-radius:var(--im-r2);padding:4px}
+#page-imoveis .nb{
+  flex:1;display:flex;align-items:center;justify-content:center;gap:7px;
+  padding:8px 10px;font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;letter-spacing:.05em;
+  border:.5px solid transparent;border-radius:var(--im-r);cursor:pointer;
+  background:transparent;color:var(--im-d3);transition:all .18s;white-space:nowrap;
+}
+#page-imoveis .nb svg{width:12px;height:12px;flex-shrink:0;opacity:.6}
+#page-imoveis .nb:hover{color:var(--im-d5);background:var(--im-s2)}
+#page-imoveis .nb.on{background:var(--im-s1);color:var(--im-ac);border-color:var(--im-ac);border-color:rgba(204,120,92,.4)}
+#page-imoveis .nb.on svg{opacity:1}
+#page-imoveis .pn{display:none}
+#page-imoveis .pn.on{display:block}
+
+
+/* ══ SECTION HEADER ══ */
+
+#page-imoveis .sh{
+  display:flex;align-items:center;gap:10px;
+  margin:24px 0 14px;
+  font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:var(--im-d2);letter-spacing:.13em;text-transform:uppercase;
+}
+#page-imoveis .sh::after{content:'';flex:1;height:.5px;background:linear-gradient(90deg,rgba(204,120,92,.3),transparent)}
+#page-imoveis .sh-ico{width:15px;height:15px;flex-shrink:0}
+
+
+/* ══ CONTROLS ══ */
+
+#page-imoveis .cg{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:16px}
+#page-imoveis .cg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:16px}
+#page-imoveis .cc{background:var(--im-s1);border:.5px solid var(--im-ln);border-radius:var(--im-r2);padding:12px 14px;transition:border-color .2s}
+#page-imoveis .cc:focus-within{border-color:var(--im-ln3)}
+#page-imoveis .cl{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:var(--im-d2);margin-bottom:7px;letter-spacing:.04em}
+#page-imoveis .cr{display:flex;align-items:center;gap:10px}
+#page-imoveis .cr input[type=range]{flex:1;-webkit-appearance:none;height:1.5px;background:var(--im-ln2);border-radius:1px;outline:none;cursor:pointer}
+#page-imoveis .cr input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:13px;height:13px;border-radius:50%;background:var(--im-ac);cursor:pointer;transition:box-shadow .2s}
+#page-imoveis .cr input[type=range]::-webkit-slider-thumb:hover{box-shadow:0 0 0 5px var(--im-ac3)}
+#page-imoveis .cv{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--im-ac);min-width:78px;text-align:right}
+
+
+/* ══ METRICS ══ */
+
+#page-imoveis .mg{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:18px}
+#page-imoveis .mg2{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:18px}
+#page-imoveis .mc{background:var(--im-s1);border:.5px solid var(--im-ln);border-radius:var(--im-r2);padding:14px;position:relative;overflow:hidden}
+#page-imoveis .mc::before{content:'';position:absolute;top:0;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,var(--im-ac),transparent);opacity:.35}
+#page-imoveis .ml{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:var(--im-d2);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px}
+#page-imoveis .mv{font-size:19px;font-weight:400;color:var(--im-d5);letter-spacing:-.02em;line-height:1.2}
+#page-imoveis .ms{font-size:10px;color:var(--im-d3);margin-top:4px}
+
+
+/* ══ CHARTS ══ */
+
+#page-imoveis .ch{position:relative;width:100%;margin-bottom:18px}
+#page-imoveis .lg{display:flex;gap:18px;margin-bottom:10px;flex-wrap:wrap}
+#page-imoveis .li{display:flex;align-items:center;gap:7px;font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:var(--im-d3)}
+#page-imoveis .ld{width:22px;height:1.5px;border-radius:1px;flex-shrink:0}
+
+
+/* ══ CARDS ══ */
+
+#page-imoveis .gc2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+#page-imoveis .gc3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+#page-imoveis .card{background:var(--im-s1);border:.5px solid var(--im-ln);border-radius:var(--im-r2);padding:16px;transition:box-shadow .2s}
+#page-imoveis .card.hl{border-color:var(--im-ac);box-shadow:0 0 24px rgba(204,120,92,.04)}
+#page-imoveis .card-h{font-size:12px;font-weight:600;color:var(--im-d5);margin-bottom:10px;display:flex;align-items:center;gap:8px}
+#page-imoveis .badge{display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;letter-spacing:.05em;padding:3px 8px;border-radius:3px;margin-bottom:9px}
+#page-imoveis .crow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:.5px solid var(--im-ln);font-size:11.5px}
+#page-imoveis .crow:last-child{border:none}
+#page-imoveis .clb{color:var(--im-d3)}
+#page-imoveis .cvl{color:var(--im-d4);font-weight:500}
+#page-imoveis .cvl.g{color:var(--im-ac)}
+#page-imoveis .cvl.r{color:var(--im-re)}
+#page-imoveis .cvl.a{color:var(--im-am)}
+#page-imoveis .vbox{border-left:1.5px solid var(--im-ac);background:linear-gradient(90deg,var(--im-ac3),transparent);border-radius:0 var(--im-r) var(--im-r) 0;padding:13px 16px;font-size:11px;color:var(--im-d4);line-height:1.8;margin-bottom:16px}
+#page-imoveis .vbox strong{color:var(--im-ac)}
+#page-imoveis .rg3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+#page-imoveis .rc{background:var(--im-s1);border:.5px solid var(--im-ln);border-radius:var(--im-r2);padding:14px}
+#page-imoveis .rc.best{border-color:var(--im-ac);box-shadow:0 0 20px rgba(0,94,75,.07)}
+#page-imoveis .rx{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:24px;font-weight:400;margin-bottom:2px}
+#page-imoveis .al5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+#page-imoveis .ac-c{background:var(--im-s1);border:.5px solid var(--im-ln);border-radius:var(--im-r2);padding:12px}
+#page-imoveis .ap{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:20px;font-weight:400;margin-bottom:3px}
+#page-imoveis .an{font-size:11px;font-weight:600;color:var(--im-d5);margin-bottom:3px}
+#page-imoveis .ad{font-size:10px;color:var(--im-d3);line-height:1.4}
+#page-imoveis .tl5{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:16px}
+#page-imoveis .tc{background:var(--im-s1);border:.5px solid var(--im-ln);border-radius:var(--im-r);padding:10px 11px}
+#page-imoveis .tbl{border-radius:var(--im-r2);overflow:hidden;border:.5px solid var(--im-ln);margin-bottom:16px}
+#page-imoveis .tbl table{width:100%;border-collapse:collapse;font-size:11px}
+#page-imoveis .tbl th{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;letter-spacing:.06em;color:var(--im-d2);text-align:left;padding:9px 11px;border-bottom:.5px solid var(--im-ln2);background:var(--im-s2)}
+#page-imoveis .tbl td{padding:8px 11px;border-bottom:.5px solid var(--im-ln);color:var(--im-d4);font-size:11.5px}
+#page-imoveis .tbl tr:last-child td{border:none}
+#page-imoveis .obs{border-left:1.5px solid var(--im-pu);background:var(--im-pu2);border-radius:0 var(--im-r) var(--im-r) 0;padding:12px 15px;font-size:11px;color:var(--im-d4);line-height:1.8;margin-bottom:16px}
+
+
+/* ══ ILLUSTRATION PANELS ══ */
+
+#page-imoveis .hero{
+  background:var(--im-s1);border:.5px solid var(--im-ln);border-radius:var(--im-r2);
+  padding:18px 20px;margin-bottom:18px;
+  display:flex;align-items:center;gap:22px;
+}
+#page-imoveis .hero-svg{flex-shrink:0}
+#page-imoveis .hero-body{flex:1}
+#page-imoveis .hero-tag{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:var(--im-d2);letter-spacing:.12em;margin-bottom:6px}
+#page-imoveis .hero-desc{font-size:12px;color:var(--im-d4);line-height:1.75;max-width:400px}
+#page-imoveis .hero-desc span{color:var(--im-ac)}
+
+
+/* ══ SIGNALS & RISKS ══ */
+
+#page-imoveis .sr-layout{display:grid;grid-template-columns:260px 1fr;gap:18px;margin-bottom:22px;align-items:start}
+#page-imoveis .radar-box{background:var(--im-s1);border:.5px solid var(--im-ln);border-radius:var(--im-r2);padding:16px}
+#page-imoveis .radar-tag{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:var(--im-d2);letter-spacing:.1em;margin-bottom:12px}
+#page-imoveis .sig-stack{display:flex;flex-direction:column;gap:7px}
+#page-imoveis .sc{display:flex;gap:11px;align-items:flex-start;background:var(--im-s1);border:.5px solid var(--im-ln);border-radius:var(--im-r);padding:11px 13px;position:relative;overflow:hidden;cursor:default;transition:border-color .18s}
+#page-imoveis .sc:hover{border-color:var(--im-ln3)}
+#page-imoveis .sc::before{content:'';position:absolute;left:0;top:0;bottom:0;width:1.5px}
+#page-imoveis .sc.pos::before{background:var(--im-ac)}
+#page-imoveis .sc.warn::before{background:var(--im-am)}
+#page-imoveis .sc.neg::before{background:var(--im-re)}
+#page-imoveis .sc.dis::before{background:var(--im-pu)}
+#page-imoveis .si{width:28px;height:28px;border-radius:6px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+#page-imoveis .si svg{width:14px;height:14px}
+#page-imoveis .sb{flex:1;min-width:0}
+#page-imoveis .slb{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:8px;color:var(--im-d2);letter-spacing:.07em;text-transform:uppercase;margin-bottom:2px}
+#page-imoveis .sti{font-size:11px;font-weight:600;color:var(--im-d5);margin-bottom:2px;line-height:1.3}
+#page-imoveis .sde{font-size:10px;color:var(--im-d3);line-height:1.5}
+#page-imoveis .stags{display:flex;gap:5px;margin-top:5px;flex-wrap:wrap}
+#page-imoveis .stag{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:8px;padding:2px 6px;border-radius:3px}
+
+
+/* Matrix */
+
+#page-imoveis .mx-wrap{background:var(--im-s2);border:.5px solid var(--im-ln);border-radius:var(--im-r2);padding:16px;margin-bottom:16px}
+#page-imoveis .mx-inner{display:flex;gap:20px;align-items:flex-start}
+#page-imoveis .mx-grid{display:grid;grid-template-columns:16px repeat(5,1fr);grid-template-rows:repeat(5,1fr) 16px;gap:3px;width:280px;flex-shrink:0}
+#page-imoveis .mx-ylabel, #page-imoveis .mx-xlabel{display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:7px;color:var(--im-d2)}
+#page-imoveis .mx-cell{border-radius:3px;min-height:40px;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:2px;padding:2px}
+#page-imoveis .rd{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:7px;text-align:center;line-height:1.2;max-width:100%}
+
+
+/* Disruption */
+
+#page-imoveis .dis-banner{background:linear-gradient(135deg,rgba(90,64,160,.09),rgba(255,95,95,.04));border:.5px solid var(--im-pu);border-radius:var(--im-r2);padding:20px;margin-bottom:16px;position:relative;overflow:hidden}
+#page-imoveis .dis-top{display:flex;align-items:flex-start;gap:18px;margin-bottom:14px}
+#page-imoveis .dis-title{font-size:13px;font-weight:500;color:var(--im-d5);margin-bottom:5px;display:flex;align-items:center;gap:9px}
+#page-imoveis .dis-sub{font-size:11px;color:var(--im-d4);line-height:1.8}
+#page-imoveis .dis-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+#page-imoveis .dis-col strong{font-size:11px;color:var(--im-d4);display:block;margin-bottom:6px}
+#page-imoveis .dis-col ul{font-size:10px;color:var(--im-d3);line-height:2;list-style:none;padding:0}
+#page-imoveis .dis-col ul li::before{content:'→ ';color:var(--im-pu);font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+#page-imoveis .trans-wrap{background:var(--im-s2);border-radius:var(--im-r);padding:14px;border:.5px solid var(--im-ln2);margin-top:14px}
+#page-imoveis .trans-label{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:var(--im-d1);letter-spacing:.1em;margin-bottom:10px}
+#page-imoveis .trans-steps{display:flex;gap:0;border-radius:var(--im-r);overflow:hidden}
+#page-imoveis .tstep{flex:1;padding:10px 8px;text-align:center;font-size:9px;line-height:1.5;color:var(--im-d3);border-right:.5px solid var(--im-ln)}
+#page-imoveis .tstep:last-child{border:none}
+#page-imoveis .tstep .yr{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:8px;color:var(--im-d1);margin-bottom:2px}
+#page-imoveis .tstep .nm{font-weight:600;color:var(--im-d5);font-size:10px;margin-bottom:2px}
+#page-imoveis .tstep .de{font-size:9px;color:var(--im-d3)}
+
+
+/* New model bars */
+
+#page-imoveis .model-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+#page-imoveis .model-card{background:var(--im-s1);border:.5px solid var(--im-ln);border-radius:var(--im-r2);padding:14px}
+#page-imoveis .model-card.tr{border-color:var(--im-am)}
+#page-imoveis .model-card.tg{border-color:var(--im-ac);box-shadow:0 0 18px rgba(0,94,75,.07)}
+#page-imoveis .mc-hd{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;font-weight:500;letter-spacing:.07em;margin-bottom:12px}
+#page-imoveis .bar-row{margin-bottom:7px}
+#page-imoveis .bar-lbl{display:flex;justify-content:space-between;font-size:10px;color:var(--im-d3);margin-bottom:3px}
+#page-imoveis .bar-lbl span:last-child{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace}
+#page-imoveis .bar-track{height:3px;background:var(--im-ln);border-radius:2px;overflow:hidden}
+#page-imoveis .bar-fill{height:100%;border-radius:2px}
+
+
+/* Cat grid */
+
+#page-imoveis .cat-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+#page-imoveis .cat-head{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;letter-spacing:.09em;margin-bottom:10px}
+#page-imoveis .cat-list{display:flex;flex-direction:column;gap:7px}
+#page-imoveis .cat-item{background:var(--im-s1);border:.5px solid var(--im-ln);border-radius:var(--im-r);padding:10px 12px}
+#page-imoveis .cat-item.pos{border-left:1.5px solid var(--im-ac)}
+#page-imoveis .cat-item.neg{border-left:1.5px solid var(--im-re)}
+#page-imoveis .cat-item.warn{border-left:1.5px solid var(--im-am)}
+#page-imoveis .cat-item.dis{border-left:1.5px solid var(--im-pu)}
+#page-imoveis .cat-t{font-size:11px;font-weight:600;color:var(--im-d5);margin-bottom:2px}
+#page-imoveis .cat-d{font-size:10px;color:var(--im-d3);line-height:1.5}
+
+
+/* Holding */
+
+#page-imoveis .sc3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
+#page-imoveis button.sp{font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;letter-spacing:.04em;padding:7px 14px;cursor:pointer;background:var(--im-s1);color:var(--im-d2);border:.5px solid var(--im-ln2);border-radius:var(--im-r);transition:all .15s}
+#page-imoveis button.sp:hover{background:var(--im-s2);color:var(--im-ac);border-color:var(--im-ac)}
+#page-imoveis .btn-row{display:flex;gap:8px;margin:14px 0;flex-wrap:wrap}
+#page-imoveis ::-webkit-scrollbar{width:4px}
+#page-imoveis ::-webkit-scrollbar-track{background:var(--im-bg)}
+#page-imoveis ::-webkit-scrollbar-thumb{background:var(--im-ln2);border-radius:2px}
+
+
+
+@media(max-width:740px){#page-imoveis .sr-layout, #page-imoveis .dis-cols, #page-imoveis .cat-grid, #page-imoveis .gc2, #page-imoveis .cg3, #page-imoveis .gc3, #page-imoveis .mg, #page-imoveis .mg2, #page-imoveis .rg3, #page-imoveis .al5, #page-imoveis .tl5, #page-imoveis .sc3, #page-imoveis .trans-steps, #page-imoveis .model-grid{grid-template-columns:1fr 1fr}
+#page-imoveis .al5, #page-imoveis .tl5{grid-template-columns:repeat(3,1fr)}
+#page-imoveis .sr-layout{grid-template-columns:1fr}
+
+
+}
+
+
+@media(max-width:440px){#page-imoveis .cg3, #page-imoveis .gc3, #page-imoveis .rg3, #page-imoveis .sc3, #page-imoveis .model-grid{grid-template-columns:1fr}
+}
+
+
+</style>
+<div class="page" id="page-imoveis">
+  <div class="ph"><svg class="ph-scene"><use href="#scene-header"/></svg><svg class="ph-watermark"><use href="#ic-imovel"/></svg><div><div class="ph-eye">Mercados</div><div class="ph-title">Mercado de Imóveis</div><div class="ph-sub">Carteira · Financiamento · PF vs PJ · Holding · Sinais &amp; Riscos</div></div><button class="btn btn-g" onclick="atualizarMercadoImoveis()">↻ Atualizar Tudo</button></div>
+  <div class="shell">
+
+<!-- ══ NAV ══ -->
+<div class="nav">
+  <button class="nb on" onclick="imSw(0)">
+    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M1 5l5-4 5 4v6H8V8H4v3H1z"/></svg>CARTEIRA
+  </button>
+  <button class="nb" onclick="imSw(1)">
+    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2"><rect x="1" y="2" width="10" height="8" rx=".8"/><path d="M4 2v8M8 2v8M1 6h10"/></svg>FINANCIAMENTO
+  </button>
+  <button class="nb" onclick="imSw(2)">
+    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2"><path d="M2 10l3-6 2.5 4L9 5l2 5"/></svg>PF vs PJ
+  </button>
+  <button class="nb" onclick="imSw(3)">
+    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="6" cy="4" r="2.2"/><path d="M1 11c0-2.2 2.2-4 5-4s5 1.8 5 4"/></svg>HOLDING
+  </button>
+  <button class="nb" onclick="imSw(4)">
+    <svg viewBox="0 0 12 12" fill="none" stroke="currentColor" stroke-width="1.2"><circle cx="6" cy="6" r="4.5"/><circle cx="6" cy="6" r="2.2"/><circle cx="6" cy="6" r=".8" fill="currentColor"/></svg>SINAIS &amp; RISCOS
+  </button>
+</div>
+
+<!-- ════════════════════════════════
+  P0 · CARTEIRA
+════════════════════════════════ -->
+<div class="pn on" id="im-p0">
+
+  <!-- HERO ILLUSTRATION: Portfolio accumulation -->
+  <div class="hero">
+    <svg class="hero-svg" width="220" height="100" viewBox="0 0 220 100" fill="none">
+      <defs>
+        <linearGradient id="im-lg_port" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#007a62" stop-opacity=".22"/>
+          <stop offset="100%" stop-color="#007a62" stop-opacity="0"/>
+        </linearGradient>
+        <linearGradient id="im-lg_rent" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stop-color="#c47a00" stop-opacity=".15"/>
+          <stop offset="100%" stop-color="#c47a00" stop-opacity="0"/>
+        </linearGradient>
+      </defs>
+      <!-- axes -->
+      <line x1="18" y1="88" x2="210" y2="88" stroke="#c0bcb4" stroke-width=".5"/>
+      <line x1="18" y1="88" x2="18" y2="6" stroke="#c0bcb4" stroke-width=".5"/>
+      <!-- year ticks -->
+      <line x1="62" y1="88" x2="62" y2="91" stroke="#9e9a92" stroke-width=".5"/>
+      <line x1="106" y1="88" x2="106" y2="91" stroke="#9e9a92" stroke-width=".5"/>
+      <line x1="150" y1="88" x2="150" y2="91" stroke="#9e9a92" stroke-width=".5"/>
+      <line x1="194" y1="88" x2="194" y2="91" stroke="#9e9a92" stroke-width=".5"/>
+      <text x="62" y="97" font-family="JetBrains Mono" font-size="7" fill="#6b6660" text-anchor="middle">a1</text>
+      <text x="106" y="97" font-family="JetBrains Mono" font-size="7" fill="#6b6660" text-anchor="middle">a2</text>
+      <text x="150" y="97" font-family="JetBrains Mono" font-size="7" fill="#6b6660" text-anchor="middle">a3</text>
+      <text x="194" y="97" font-family="JetBrains Mono" font-size="7" fill="#6b6660" text-anchor="middle">a5</text>
+      <!-- renda area -->
+      <path d="M18 86 Q62 83 106 78 Q150 72 194 65 L194 88 L18 88Z" fill="url(#lg_rent)"/>
+      <path d="M18 86 Q62 83 106 78 Q150 72 194 65" stroke="#B87840" stroke-width="1" fill="none" stroke-dasharray="3 3"/>
+      <!-- patrimônio area -->
+      <path d="M18 82 Q62 72 106 58 Q150 40 194 18 L194 88 L18 88Z" fill="url(#lg_port)"/>
+      <path d="M18 82 Q62 72 106 58 Q150 40 194 18" stroke="#005e4b" stroke-width="1.5" fill="none"/>
+      <!-- dots at milestones -->
+      <circle cx="62" cy="72" r="2.5" fill="#005e4b" opacity=".8"/>
+      <circle cx="106" cy="58" r="2.5" fill="#005e4b" opacity=".8"/>
+      <circle cx="150" cy="40" r="2.5" fill="#005e4b" opacity=".8"/>
+      <circle cx="194" cy="18" r="2.5" fill="#005e4b"/>
+      <!-- building icons at milestones: 1st building -->
+      <rect x="55" y="60" width="4" height="6" rx=".5" fill="none" stroke="#005e4b" stroke-width=".5" opacity=".5"/>
+      <rect x="57" y="57" width="3" height="9" rx=".5" fill="none" stroke="#005e4b" stroke-width=".5" opacity=".5"/>
+      <!-- 2nd building -->
+      <rect x="100" y="47" width="4" height="7" rx=".5" fill="none" stroke="#005e4b" stroke-width=".5" opacity=".6"/>
+      <rect x="102" y="44" width="3" height="10" rx=".5" fill="none" stroke="#005e4b" stroke-width=".5" opacity=".6"/>
+      <!-- 3rd building -->
+      <rect x="144" y="29" width="4" height="8" rx=".5" fill="none" stroke="#005e4b" stroke-width=".5" opacity=".7"/>
+      <rect x="146" y="26" width="3" height="11" rx=".5" fill="none" stroke="#005e4b" stroke-width=".5" opacity=".7"/>
+      <!-- aportado dashed line -->
+      <path d="M18 85 Q80 82 140 78 Q170 76 194 74" stroke="#5a40a0" stroke-width="1" fill="none" stroke-dasharray="4 3" opacity=".7"/>
+      <!-- legend -->
+      <line x1="18" y1="8" x2="32" y2="8" stroke="#005e4b" stroke-width="1.5"/>
+      <text x="35" y="11" font-family="JetBrains Mono" font-size="7" fill="#44403a">patrimônio</text>
+      <line x1="18" y1="18" x2="32" y2="18" stroke="#5a40a0" stroke-width="1" stroke-dasharray="4 3"/>
+      <text x="35" y="21" font-family="JetBrains Mono" font-size="7" fill="#44403a">aportado</text>
+      <line x1="18" y1="28" x2="32" y2="28" stroke="#B87840" stroke-width="1" stroke-dasharray="3 3"/>
+      <text x="35" y="31" font-family="JetBrains Mono" font-size="7" fill="#44403a">renda aluguel</text>
+    </svg>
+    <div class="hero-body">
+      <div class="hero-tag">// MODELO DE ACUMULAÇÃO PATRIMONIAL</div>
+      <div class="hero-desc">Aportes mensais acumulam em <span>reserva líquida</span> e são convertidos em imóvel a cada <span>R$ 60k acumulados</span>. O patrimônio cresce por valorização composta + reinvestimento de aluguéis ao longo de 60 meses.</div>
+    </div>
+  </div>
+
+  <div class="cg">
+    <div class="cc"><div class="cl">// aporte_mensal</div><div class="cr"><input type="range" id="im-s_ap" min="2000" max="30000" step="500" value="8000"><span class="cv" id="im-v_ap">R$ 8.000</span></div></div>
+    <div class="cc"><div class="cl">// capital_inicial</div><div class="cr"><input type="range" id="im-s_ci" min="0" max="300000" step="5000" value="80000"><span class="cv" id="im-v_ci">R$ 80.000</span></div></div>
+    <div class="cc"><div class="cl">// valorização_anual</div><div class="cr"><input type="range" id="im-s_va" min="3" max="12" step="0.5" value="6"><span class="cv" id="im-v_va">6,0%</span></div></div>
+    <div class="cc"><div class="cl">// cap_rate_aluguel</div><div class="cr"><input type="range" id="im-s_ra" min="3" max="8" step="0.25" value="5"><span class="cv" id="im-v_ra">5,0%</span></div></div>
+  </div>
+  <div class="mg" id="im-m1"></div>
+  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><path d="M1 12l4-6.5 3 4L11 4l3 8"/></svg>evolução · 60 meses</div>
+  <div class="lg">
+    <span class="li"><span class="ld" style="background:var(--ac)"></span>patrimônio imobiliário</span>
+    <span class="li"><span class="ld" style="background:var(--pu);opacity:.8"></span>total aportado</span>
+    <span class="li"><span class="ld" style="background:var(--am);opacity:.8"></span>renda acumulada</span>
+  </div>
+  <div class="ch" style="height:250px"><canvas id="im-c1" role="img" aria-label="Evolução patrimonial 60 meses"></canvas></div>
+  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><circle cx="7.5" cy="7.5" r="5.5"/><path d="M7.5 4v3.5l3 1.5"/></svg>alocação por segmento</div>
+  <div class="al5" id="im-al1"></div>
+  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><path d="M1 14h13M3 14V7M7.5 14V3M12 14V9"/></svg>marcos estratégicos</div>
+  <div class="tl5" id="im-tl1"></div>
+</div>
+
+<!-- ════════════════════════════════
+  P1 · FINANCIAMENTO
+════════════════════════════════ -->
+<div class="pn" id="im-p1">
+
+  <div class="hero">
+    <svg class="hero-svg" width="220" height="100" viewBox="0 0 220 100" fill="none">
+      <!-- LEFT: À vista — house directly owned -->
+      <text x="52" y="9" font-family="JetBrains Mono" font-size="7" fill="#6b6660" text-anchor="middle">à vista</text>
+      <polygon points="52,18 28,36 76,36" stroke="#005e4b" stroke-width=".8" fill="rgba(204,120,92,.04)"/>
+      <rect x="34" y="36" width="36" height="28" rx="1" stroke="#005e4b" stroke-width=".8" fill="rgba(204,120,92,.04)"/>
+      <rect x="43" y="46" width="8" height="18" rx="1" fill="none" stroke="#9e9a92" stroke-width=".5"/>
+      <rect x="55" y="44" width="10" height="11" rx="1" fill="none" stroke="#9e9a92" stroke-width=".5"/>
+      <!-- ownership = solid line to person -->
+      <line x1="52" y1="64" x2="52" y2="78" stroke="#005e4b" stroke-width=".8"/>
+      <circle cx="52" cy="82" r="4" stroke="#005e4b" stroke-width=".8" fill="none"/>
+      <path d="M47 94c0-3 2.5-5 5-5s5 2 5 5" stroke="#005e4b" stroke-width=".8" fill="none"/>
+      <!-- rent flow -->
+      <path d="M76 50 Q90 50 90 60" stroke="#005e4b" stroke-width=".8" fill="none" marker-end="url(#ah)"/>
+      <text x="94" y="63" font-family="JetBrains Mono" font-size="7" fill="#005e4b">alug.</text>
+      <!-- DIVIDER -->
+      <line x1="112" y1="8" x2="112" y2="95" stroke="#c0bcb4" stroke-width=".5" stroke-dasharray="3 3"/>
+      <!-- RIGHT: Financiado -->
+      <text x="165" y="9" font-family="JetBrains Mono" font-size="7" fill="#6b6660" text-anchor="middle">financiado</text>
+      <polygon points="165,18 141,36 189,36" stroke="#1050a0" stroke-width=".8" fill="rgba(16,80,160,.09)"/>
+      <rect x="147" y="36" width="36" height="28" rx="1" stroke="#1050a0" stroke-width=".8" fill="rgba(16,80,160,.09)"/>
+      <!-- bank line -->
+      <line x1="165" y1="64" x2="165" y2="75" stroke="#c0bcb4" stroke-width=".5"/>
+      <rect x="150" y="75" width="30" height="14" rx="2" stroke="#9e9a92" stroke-width=".5" fill="rgba(240,237,232,.8)"/>
+      <text x="165" y="85" font-family="JetBrains Mono" font-size="7" fill="#6b6660" text-anchor="middle">banco</text>
+      <!-- installment arrow -->
+      <path d="M150 82 Q130 82 130 72" stroke="#a52d22" stroke-width=".8" fill="none" marker-end="url(#ah_r)"/>
+      <text x="108" y="75" font-family="JetBrains Mono" font-size="7" fill="#a52d22">prest.</text>
+      <!-- rent flow -->
+      <path d="M189 50 Q202 50 202 60" stroke="#1050a0" stroke-width=".8" fill="none" marker-end="url(#ah_b)"/>
+      <text x="206" y="63" font-family="JetBrains Mono" font-size="7" fill="#1050a0">alug.</text>
+      <defs>
+        <marker id="im-ah" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="4" markerHeight="4" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#005e4b" stroke-width="1.2"/></marker>
+        <marker id="im-ah_r" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="4" markerHeight="4" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#a52d22" stroke-width="1.2"/></marker>
+        <marker id="im-ah_b" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="4" markerHeight="4" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#1050a0" stroke-width="1.2"/></marker>
+      </defs>
+    </svg>
+    <div class="hero-body">
+      <div class="hero-tag">// ANÁLISE DE ALAVANCAGEM</div>
+      <div class="hero-desc">Compara o patrimônio líquido em <span>10 anos</span> entre compra à vista e financiada. Capital não utilizado na entrada é projetado em renda fixa <span>~9,4% líq.</span> para comparação justa de oportunidade.</div>
+    </div>
+  </div>
+
+  <div class="cg3">
+    <div class="cc"><div class="cl">// valor_imóvel</div><div class="cr"><input type="range" id="im-s_vi" min="100000" max="800000" step="10000" value="350000"><span class="cv" id="im-v_vi">R$ 350k</span></div></div>
+    <div class="cc"><div class="cl">// entrada_%</div><div class="cr"><input type="range" id="im-s_en" min="20" max="80" step="5" value="30"><span class="cv" id="im-v_en">30%</span></div></div>
+    <div class="cc"><div class="cl">// taxa_a.a.</div><div class="cr"><input type="range" id="im-s_tf" min="8" max="15" step="0.25" value="10.5"><span class="cv" id="im-v_tf">10,5%</span></div></div>
+    <div class="cc"><div class="cl">// prazo_anos</div><div class="cr"><input type="range" id="im-s_pf" min="5" max="30" step="5" value="20"><span class="cv" id="im-v_pf">20a</span></div></div>
+    <div class="cc"><div class="cl">// valorização_aa</div><div class="cr"><input type="range" id="im-s_vf" min="3" max="12" step="0.5" value="6"><span class="cv" id="im-v_vf">6,0%</span></div></div>
+    <div class="cc"><div class="cl">// cap_rate</div><div class="cr"><input type="range" id="im-s_cf" min="3" max="8" step="0.25" value="5"><span class="cv" id="im-v_cf">5,0%</span></div></div>
+  </div>
+  <div class="gc2" id="im-gc2"></div>
+  <div class="vbox" id="im-vbox"></div>
+  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><path d="M1 12l4-6.5 3 4L11 4l3 8"/></svg>patrimônio líquido · 10 anos</div>
+  <div class="lg">
+    <span class="li"><span class="ld" style="background:var(--ac)"></span>à vista</span>
+    <span class="li"><span class="ld" style="background:var(--bl)"></span>financiado (PL)</span>
+    <span class="li"><span class="ld" style="background:var(--am);opacity:.8"></span>capital em RF</span>
+  </div>
+  <div class="ch" style="height:240px"><canvas id="im-c2" role="img" aria-label="Patrimônio à vista vs financiado"></canvas></div>
+</div>
+
+<!-- ════════════════════════════════
+  P2 · TRIBUTAÇÃO
+════════════════════════════════ -->
+<div class="pn" id="im-p2">
+
+  <div class="hero">
+    <svg class="hero-svg" width="220" height="100" viewBox="0 0 220 100" fill="none">
+      <!-- Balance scale illustration -->
+      <!-- pole -->
+      <line x1="110" y1="12" x2="110" y2="88" stroke="#c0bcb4" stroke-width="1"/>
+      <rect x="104" y="84" width="12" height="4" rx="1" fill="#332e29"/>
+      <!-- fulcrum pivot -->
+      <circle cx="110" cy="12" r="3" stroke="#9e9a92" stroke-width=".8" fill="var(--s1)"/>
+      <!-- beam (tilted: PF heavier, lower left) -->
+      <line x1="40" y1="30" x2="180" y2="22" stroke="#aeaaa2" stroke-width=".8"/>
+      <!-- LEFT pan: PF -->
+      <line x1="40" y1="30" x2="40" y2="58" stroke="#aeaaa2" stroke-width=".5"/>
+      <ellipse cx="40" cy="61" rx="25" ry="6" stroke="#a52d22" stroke-width=".8" fill="rgba(165,45,34,.10)"/>
+      <text x="40" y="59" font-family="JetBrains Mono" font-size="8" fill="#a52d22" text-anchor="middle">PF</text>
+      <text x="40" y="69" font-family="JetBrains Mono" font-size="7" fill="#a52d22" text-anchor="middle">27,5%</text>
+      <!-- coins stacked on left pan -->
+      <ellipse cx="40" cy="54" rx="8" ry="2.5" fill="rgba(255,95,95,.15)" stroke="#a52d22" stroke-width=".4"/>
+      <ellipse cx="40" cy="51" rx="8" ry="2.5" fill="rgba(255,95,95,.12)" stroke="#a52d22" stroke-width=".4"/>
+      <ellipse cx="40" cy="48" rx="8" ry="2.5" fill="rgba(165,45,34,.12)" stroke="#a52d22" stroke-width=".4"/>
+      <!-- RIGHT pan: PJ — lighter, higher -->
+      <line x1="180" y1="22" x2="180" y2="45" stroke="#aeaaa2" stroke-width=".5"/>
+      <ellipse cx="180" cy="48" rx="25" ry="6" stroke="#005e4b" stroke-width=".8" fill="rgba(0,94,75,.07)"/>
+      <text x="180" y="46" font-family="JetBrains Mono" font-size="8" fill="#005e4b" text-anchor="middle">PJ</text>
+      <text x="180" y="56" font-family="JetBrains Mono" font-size="7" fill="#005e4b" text-anchor="middle">11,3%</text>
+      <!-- fewer coins on right -->
+      <ellipse cx="180" cy="43" rx="5" ry="1.8" fill="rgba(204,120,92,.15)" stroke="#005e4b" stroke-width=".4"/>
+      <!-- savings arrow -->
+      <path d="M110 70 Q140 70 148 58" stroke="#005e4b" stroke-width=".8" fill="none" stroke-dasharray="3 2" marker-end="url(#ah_ac)"/>
+      <text x="138" y="79" font-family="JetBrains Mono" font-size="7" fill="#005e4b">economia</text>
+      <defs><marker id="im-ah_ac" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="4" markerHeight="4" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#005e4b" stroke-width="1.2"/></marker></defs>
+    </svg>
+    <div class="hero-body">
+      <div class="hero-tag">// OTIMIZAÇÃO TRIBUTÁRIA</div>
+      <div class="hero-desc">Com outras rendas tributáveis elevadas, o aluguel é tributado em <span style="color:var(--re)">27,5%</span> na PF. Via Holding Lucro Presumido, cai para <span>~11,3%</span> — diferença que vira novo imóvel a cada 4–5 anos.</div>
+    </div>
+  </div>
+
+  <div class="cg3">
+    <div class="cc"><div class="cl">// aluguel/mês</div><div class="cr"><input type="range" id="im-s_rm" min="1000" max="30000" step="500" value="6000"><span class="cv" id="im-v_rm">R$ 6k</span></div></div>
+    <div class="cc"><div class="cl">// outras_rendas_PF</div><div class="cr"><input type="range" id="im-s_or" min="0" max="60000" step="1000" value="20000"><span class="cv" id="im-v_or">R$ 20k</span></div></div>
+    <div class="cc"><div class="cl">// deduções_%</div><div class="cr"><input type="range" id="im-s_dd" min="10" max="40" step="5" value="20"><span class="cv" id="im-v_dd">20%</span></div></div>
+  </div>
+  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><rect x="1.5" y="2.5" width="12" height="10" rx="1"/><path d="M5 2.5v10M10 2.5v10M1.5 7.5h12"/></svg>regimes tributários</div>
+  <div class="rg3" id="im-rg3"></div>
+  <div class="tbl"><table id="im-tt"></table></div>
+  <div class="ch" style="height:178px"><canvas id="im-c3" role="img" aria-label="Carga tributária por regime"></canvas></div>
+  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><path d="M2 13l3-8 4 6 2-4 2 6"/></svg>ganho de capital na venda · R$ 200k de lucro</div>
+  <div class="gc2" id="im-gc_venda"></div>
+  <div class="obs" id="im-obs3"></div>
+</div>
+
+<!-- ════════════════════════════════
+  P3 · HOLDING
+════════════════════════════════ -->
+<div class="pn" id="im-p3">
+
+  <div class="hero">
+    <svg class="hero-svg" width="220" height="100" viewBox="0 0 220 100" fill="none">
+      <!-- Org chart with shield motif -->
+      <!-- PJ shield at top -->
+      <path d="M110 8 L124 14 L124 30 Q124 40 110 46 Q96 40 96 30 L96 14 Z" stroke="#005e4b" stroke-width=".8" fill="rgba(0,94,75,.07)"/>
+      <text x="110" y="24" font-family="JetBrains Mono" font-size="7" fill="#005e4b" text-anchor="middle">HOLDING</text>
+      <text x="110" y="33" font-family="JetBrains Mono" font-size="6" fill="#44403a" text-anchor="middle">PJ LP</text>
+      <!-- lines -->
+      <line x1="110" y1="46" x2="110" y2="55" stroke="#c0bcb4" stroke-width=".5"/>
+      <line x1="36" y1="55" x2="184" y2="55" stroke="#c0bcb4" stroke-width=".5"/>
+      <line x1="36" y1="55" x2="36" y2="65" stroke="#c0bcb4" stroke-width=".5"/>
+      <line x1="110" y1="55" x2="110" y2="65" stroke="#c0bcb4" stroke-width=".5"/>
+      <line x1="184" y1="55" x2="184" y2="65" stroke="#c0bcb4" stroke-width=".5"/>
+      <!-- Socio circles -->
+      <circle cx="36" cy="73" r="10" stroke="#005e4b" stroke-width=".6" fill="rgba(0,94,75,.07)"/>
+      <text x="36" y="71" font-family="JetBrains Mono" font-size="6" fill="#005e4b" text-anchor="middle">C.B</text>
+      <text x="36" y="78" font-family="JetBrains Mono" font-size="6" fill="#44403a" text-anchor="middle">50%</text>
+      <circle cx="110" cy="73" r="10" stroke="#005e4b" stroke-width=".6" fill="rgba(0,94,75,.07)"/>
+      <text x="110" y="71" font-family="JetBrains Mono" font-size="6" fill="#005e4b" text-anchor="middle">S.P</text>
+      <text x="110" y="78" font-family="JetBrains Mono" font-size="6" fill="#44403a" text-anchor="middle">30%</text>
+      <circle cx="184" cy="73" r="10" stroke="#9e9a92" stroke-width=".6" fill="rgba(234,230,224,.5)"/>
+      <text x="184" y="71" font-family="JetBrains Mono" font-size="6" fill="#44403a" text-anchor="middle">filhos</text>
+      <text x="184" y="78" font-family="JetBrains Mono" font-size="6" fill="#6b6660" text-anchor="middle">20%</text>
+      <!-- assets below: 3 small buildings -->
+      <line x1="110" y1="46" x2="36" y2="55" stroke="#c0bcb4" stroke-width=".3" stroke-dasharray="2 2"/>
+      <rect x="30" y="86" width="6" height="10" rx=".5" fill="none" stroke="#9e9a92" stroke-width=".4"/>
+      <rect x="32" y="83" width="4" height="13" rx=".5" fill="none" stroke="#9e9a92" stroke-width=".4"/>
+      <rect x="78" y="86" width="6" height="10" rx=".5" fill="none" stroke="#9e9a92" stroke-width=".4"/>
+      <rect x="80" y="84" width="4" height="12" rx=".5" fill="none" stroke="#9e9a92" stroke-width=".4"/>
+      <rect x="126" y="87" width="6" height="9" rx=".5" fill="none" stroke="#9e9a92" stroke-width=".4"/>
+      <!-- dividend arrow -->
+      <path d="M36 83 Q36 96 55 96 Q80 96 80 92" stroke="#005e4b" stroke-width=".5" fill="none" stroke-dasharray="2 2" marker-end="url(#ah_sm)"/>
+      <text x="58" y="100" font-family="JetBrains Mono" font-size="6" fill="#005e4b">dividendos isentos</text>
+      <defs><marker id="im-ah_sm" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="3" markerHeight="3" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#005e4b" stroke-width="1.2"/></marker></defs>
+    </svg>
+    <div class="hero-body">
+      <div class="hero-tag">// ESTRUTURA SOCIETÁRIA</div>
+      <div class="hero-desc">Holding PJ Lucro Presumido centraliza imóveis com <span>proteção patrimonial</span>, tributação otimizada e <span>sucessão via cotas</span> — eliminando inventário e separando o patrimônio da Vivenda Decor e eTribais.</div>
+    </div>
+  </div>
+
+  <div class="sc3">
+    <div class="card hl">
+      <span class="badge" style="background:var(--ac2);color:var(--ac);border:.5px solid rgba(204,120,92,.2)">MAJORITÁRIO · 50%</span>
+      <div class="card-h">Carlito Baessa</div>
+      <div style="font-size:10px;color:var(--d3);line-height:1.85">Administrador da PJ<br>Integraliza capital + imóveis<br>Usufruto vitalício das cotas<br>Assina contratos e escrituras</div>
+    </div>
+    <div class="card hl">
+      <span class="badge" style="background:var(--ac2);color:var(--ac);border:.5px solid rgba(204,120,92,.2)">SÓCIA · 30%</span>
+      <div class="card-h">Silvana Piveta</div>
+      <div style="font-size:10px;color:var(--d3);line-height:1.85">Integraliza capital inicial<br>Cotas com cláusulas protetivas<br>Usufruto vitalício compartilhado<br>Dividendos proporcionais às cotas</div>
+    </div>
+    <div class="card">
+      <span class="badge" style="background:rgba(58,79,114,.15);color:var(--d2);border:.5px solid var(--ln2)">HERDEIROS · 20%</span>
+      <div class="card-h">Lívia + Mateus</div>
+      <div style="font-size:10px;color:var(--d3);line-height:1.85">Doação progressiva em vida<br>Inalienáveis + incomunicáveis<br>Impenhoráveis por dívidas<br>Sem voto pleno até maturidade</div>
+    </div>
+  </div>
+  <div class="gc2">
+    <div class="card hl"><div class="card-h">Proteção patrimonial</div><div style="font-size:10px;color:var(--d3);line-height:1.85">Imóveis blindados de dívidas pessoais dos sócios. Cláusulas de inalienabilidade, impenhorabilidade e incomunicabilidade nas cotas protegem contra penhora judicial e disputas matrimoniais.</div></div>
+    <div class="card hl"><div class="card-h">Sucessão sem inventário</div><div style="font-size:10px;color:var(--d3);line-height:1.85">Doação progressiva de cotas elimina inventário (2–5 anos, 8–15% do patrimônio). Um ato notarial vs processo judicial. Controle mantido via usufruto vitalício dos pais durante toda a vida.</div></div>
+    <div class="card"><div class="card-h">Tributação ~11,3%</div><div style="font-size:10px;color:var(--d3);line-height:1.85">Aluguel a ~11,3% na PJ vs até 27,5% PF. Ganho de capital na venda: 6,73% PJ vs 22,5% PF. Dividendos distribuídos aos sócios atualmente isentos de IR.</div></div>
+    <div class="card"><div class="card-h">Gestão centralizada</div><div style="font-size:10px;color:var(--d3);line-height:1.85">CNPJ único para todos os imóveis. Separação total da Vivenda Decor e eTribais. Facilita controle de caixa, auditoria, contratos de aluguel e governança familiar.</div></div>
+  </div>
+  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><path d="M1 12l4-6.5 3 4L11 4l3 8"/></svg>economia tributária · 5 anos</div>
+  <div class="cg">
+    <div class="cc"><div class="cl">// receita_anual</div><div class="cr"><input type="range" id="im-s_ha" min="10000" max="200000" step="5000" value="72000"><span class="cv" id="im-v_ha">R$ 72k</span></div></div>
+    <div class="cc"><div class="cl">// crescimento_aa</div><div class="cr"><input type="range" id="im-s_hg" min="3" max="10" step="0.5" value="5"><span class="cv" id="im-v_hg">5,0%</span></div></div>
+  </div>
+  <div class="mg2" id="im-mh"></div>
+  <div class="lg">
+    <span class="li"><span class="ld" style="background:#9e9a92"></span>tributo PF</span>
+    <span class="li"><span class="ld" style="background:var(--ac)"></span>tributo PJ</span>
+    <span class="li"><span class="ld" style="background:var(--pu);opacity:.8"></span>economia acumulada</span>
+  </div>
+  <div class="ch" style="height:210px"><canvas id="im-c4" role="img" aria-label="Economia tributária 5 anos"></canvas></div>
+  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><path d="M1 14h13M3 14V7l4.5-3.5L12 7v7"/></svg>roteiro de abertura</div>
+  <div class="tl5" id="im-roteiro"></div>
+  <div class="obs">
+    <strong style="color:var(--pu)">Reforma 2026:</strong> Tributação de dividendos a 10–15% em proposta. A holding mantém vantagem: diferencial de aluguel (11,3% vs 27,5%) e ganho de capital (6,73% vs 22,5%) persistem. Consulte contador especializado. ITCMD Paraná: 4% sobre doação de cotas.
+  </div>
+</div>
+
+<!-- ════════════════════════════════
+  P4 · SINAIS & RISCOS
+════════════════════════════════ -->
+<div class="pn" id="im-p4">
+
+  <!-- HERO: radar + disruption concept -->
+  <div class="hero" style="align-items:flex-start">
+    <svg class="hero-svg" width="220" height="100" viewBox="0 0 220 100" fill="none">
+      <!-- radar rings -->
+      <circle cx="80" cy="52" r="44" stroke="#c0bcb4" stroke-width=".5"/>
+      <circle cx="80" cy="52" r="33" stroke="#c0bcb4" stroke-width=".5"/>
+      <circle cx="80" cy="52" r="22" stroke="#c0bcb4" stroke-width=".5"/>
+      <circle cx="80" cy="52" r="11" stroke="#c0bcb4" stroke-width=".5"/>
+      <!-- radar cross -->
+      <line x1="80" y1="8" x2="80" y2="96" stroke="#c0bcb4" stroke-width=".4"/>
+      <line x1="36" y1="52" x2="124" y2="52" stroke="#c0bcb4" stroke-width=".4"/>
+      <line x1="48" y1="20" x2="112" y2="84" stroke="#c0bcb4" stroke-width=".3"/>
+      <line x1="112" y1="20" x2="48" y2="84" stroke="#c0bcb4" stroke-width=".3"/>
+      <!-- radar sweep (filled polygon of signals) -->
+      <polygon points="80,52 80,20 108,30 116,52 100,72 72,76 50,62 44,40 66,24" stroke="#005e4b" stroke-width="1" fill="rgba(0,94,75,.09)"/>
+      <!-- signal dots -->
+      <circle cx="80" cy="20" r="2.5" fill="#005e4b"/>
+      <circle cx="108" cy="30" r="2.5" fill="#a06200"/>
+      <circle cx="116" cy="52" r="2.5" fill="#a52d22"/>
+      <circle cx="100" cy="72" r="2.5" fill="#5a40a0"/>
+      <circle cx="72" cy="76" r="2.5" fill="#a52d22"/>
+      <circle cx="50" cy="62" r="2.5" fill="#a06200"/>
+      <circle cx="44" cy="40" r="2.5" fill="#005e4b"/>
+      <circle cx="66" cy="24" r="2.5" fill="#135e38"/>
+      <!-- center -->
+      <circle cx="80" cy="52" r="2" fill="#005e4b"/>
+      <!-- right: disruption lightning + transition -->
+      <path d="M158 8 L148 38 L162 38 L144 72" stroke="#5a40a0" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+      <text x="170" y="18" font-family="JetBrains Mono" font-size="6.5" fill="#5a40a0">reforma</text>
+      <text x="170" y="28" font-family="JetBrains Mono" font-size="6.5" fill="#5a40a0">tributária</text>
+      <text x="170" y="48" font-family="JetBrains Mono" font-size="6.5" fill="#5a40a0">+</text>
+      <text x="170" y="58" font-family="JetBrains Mono" font-size="6.5" fill="#5a40a0">tokenização</text>
+      <text x="170" y="68" font-family="JetBrains Mono" font-size="6.5" fill="#5a40a0">RWA</text>
+      <!-- transition arrow -->
+      <path d="M148 76 Q148 88 165 92" stroke="#005e4b" stroke-width=".8" fill="none" marker-end="url(#ah_ac2)"/>
+      <text x="155" y="98" font-family="JetBrains Mono" font-size="6" fill="#005e4b">modelo híbrido</text>
+      <defs><marker id="im-ah_ac2" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="4" markerHeight="4" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#005e4b" stroke-width="1.2"/></marker></defs>
+    </svg>
+    <div class="hero-body">
+      <div class="hero-tag">// INTELIGÊNCIA DE SINAIS</div>
+      <div class="hero-desc">Monitoramento de <span>8 vetores</span> externos e internos com radar de intensidade. Dois cenários de disrupção estrutural identificados com <span>modelo de transição</span> e plano de adaptação em 5 fases para 2026–2030.</div>
+    </div>
+  </div>
+
+  <!-- RADAR + SIGNALS -->
+  <div class="sr-layout">
+    <div class="radar-box">
+      <div class="radar-tag">// RADAR · SINAIS FRACOS</div>
+      <canvas id="im-radarC" width="228" height="228" role="img" aria-label="Radar de 8 vetores de risco e oportunidade"></canvas>
+      <div style="margin-top:12px;display:flex;flex-direction:column;gap:5px">
+        <div style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:8px;color:var(--d1)"><span style="width:18px;height:1.5px;background:var(--ac);display:inline-block"></span>intensidade atual</div>
+        <div style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:8px;color:var(--d1)"><span style="width:18px;height:1px;background:var(--ln3);display:inline-block"></span>nível de referência</div>
+      </div>
+    </div>
+    <div>
+      <div class="sh" style="margin-top:0"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><circle cx="7.5" cy="7.5" r="5.5"/><circle cx="7.5" cy="7.5" r="2.8"/><circle cx="7.5" cy="7.5" r=".8" fill="currentColor"/></svg>sinais identificados</div>
+      <div class="sig-stack" id="im-sig-list"></div>
+    </div>
+  </div>
+
+  <!-- RISK MATRIX -->
+  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><rect x="1.5" y="1.5" width="12" height="12" rx="1"/><path d="M5.5 1.5v12M9.5 1.5v12M1.5 5.5h12M1.5 9.5h12"/></svg>matriz de risco · probabilidade × impacto</div>
+  <div class="mx-wrap">
+    <div class="mx-inner">
+      <div id="im-mx-wrap"></div>
+      <div style="padding-left:6px;flex:1">
+        <div style="font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:var(--d1);letter-spacing:.1em;margin-bottom:10px">LEGENDA</div>
+        <div style="font-size:10px;color:var(--d2);line-height:2">
+          <span style="color:var(--d4)">Eixo X →</span> Probabilidade (1–5)<br>
+          <span style="color:var(--d4)">Eixo Y ↑</span> Impacto no modelo (1–5)<br><br>
+          <span style="color:var(--re)">■</span> Zona crítica → monitoramento semanal<br>
+          <span style="color:var(--am)">■</span> Zona de alerta → revisão trimestral<br>
+          <span style="color:var(--ac)">■</span> Zona de atenção → radar anual
+        </div>
+        <div style="margin-top:14px;border-top:.5px solid var(--ln);padding-top:12px" id="im-risk-leg"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DISRUPTION -->
+  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width="1"><path d="M7.5 1L14 13H1L7.5 1z"/><path d="M7.5 6.5v3M7.5 11v.5"/></svg>zona de disrupção · probabilidade alta em 7–10 anos</div>
+  <div class="dis-banner">
+    <div class="dis-top">
+      <!-- mini disruption diagram -->
+      <svg width="120" height="80" viewBox="0 0 120 80" fill="none" style="flex-shrink:0">
+        <!-- current: solid building -->
+        <rect x="4" y="30" width="22" height="46" rx="1.5" stroke="#9e9a92" stroke-width=".6" fill="rgba(234,230,224,.6)"/>
+        <rect x="8" y="20" width="14" height="56" rx="1" stroke="#6b6660" stroke-width=".6" fill="none"/>
+        <text x="15" y="12" font-family="JetBrains Mono" font-size="6" fill="#6b6660" text-anchor="middle">HOJE</text>
+        <!-- lightning: disruption -->
+        <path d="M46 6L38 34L50 34L35 74" stroke="#5a40a0" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <!-- new model: hybrid -->
+        <rect x="58" y="38" width="16" height="38" rx="1" stroke="#005e4b" stroke-width=".6" fill="rgba(204,120,92,.04)"/>
+        <circle cx="84" cy="30" r="12" stroke="#1050a0" stroke-width=".6" fill="rgba(16,80,160,.09)"/>
+        <circle cx="104" cy="45" r="9" stroke="#5a40a0" stroke-width=".6" fill="rgba(90,64,160,.10)"/>
+        <text x="74" y="78" font-family="JetBrains Mono" font-size="6" fill="#005e4b" text-anchor="middle">HÍBRIDO</text>
+        <!-- arrow -->
+        <path d="M28 52 L52 52" stroke="#9e9a92" stroke-width=".5" stroke-dasharray="2.5 2.5" marker-end="url(#d_arr)"/>
+        <defs><marker id="im-d_arr" viewBox="0 0 8 8" refX="6" refY="4" markerWidth="3" markerHeight="3" orient="auto"><path d="M1 1L7 4L1 7" fill="none" stroke="#9e9a92" stroke-width="1.2"/></marker></defs>
+      </svg>
+      <div style="flex:1">
+        <div class="dis-title">
+          <svg width="13" height="13" viewBox="0 0 15 15" fill="none" stroke="var(--pu)" stroke-width="1.2"><path d="M7.5 1L14 13H1L7.5 1z"/><path d="M7.5 6v3M7.5 11v.5"/></svg>
+          Reforma tributária ampla + tokenização RWA
+        </div>
+        <div class="dis-sub">Dois vetores simultâneos ameaçam a vantagem da Holding PJ LP: <strong style="color:var(--d4)">(1)</strong> tributação de dividendos a 20–27,5% elimina a isenção atual; <strong style="color:var(--d4)">(2)</strong> plataformas RWA (Liqi, Vórtx, Habitus) oferecem liquidez em 48h, eliminando a iliquidez que justifica a estrutura atual.</div>
+      </div>
+    </div>
+    <div class="dis-cols">
+      <div class="dis-col">
+        <strong>Impactos negativos no modelo atual</strong>
+        <ul>
+          <li>Vantagem tributária da holding reduzida ou eliminada</li>
+          <li>Custo PJ sem retorno tributário suficiente</li>
+          <li>Liquidez imobiliária deixa de ser exclusiva</li>
+          <li>Fundos RWA com rendimento similar e liquidez diária</li>
+          <li>Concorrência de capital entre físico e tokenizado</li>
+        </ul>
+      </div>
+      <div class="dis-col">
+        <strong>Modelo alternativo recomendado</strong>
+        <ul>
+          <li>Imóvel físico: 100% → 50–60% da carteira</li>
+          <li>Tokens RWA regulamentados: 20–30%</li>
+          <li>FIIs de tijolo com liquidez diária: 15–20%</li>
+          <li>Holding com foco em sucessão, não tributação</li>
+          <li>Diversificar para galpões logísticos e lajes AAA</li>
+        </ul>
+      </div>
+    </div>
+    <div class="trans-wrap">
+      <div class="trans-label">// PLANO DE TRANSIÇÃO · SE O RISCO SE MATERIALIZAR</div>
+      <div class="trans-steps" id="im-trans-steps"></div>
+    </div>
+  </div>
+
+  <!-- NEW MODEL ALLOCATION -->
+  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><circle cx="7.5" cy="7.5" r="5.5"/><path d="M7.5 2v5.5l4 2.5"/></svg>modelo alternativo · alocação pós-disrupção</div>
+  <div class="model-grid" id="im-model-grid"></div>
+
+  <!-- CATALYSTS + RISKS -->
+  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><line x1="7.5" y1="1" x2="7.5" y2="14"/><line x1="1" y1="7.5" x2="14" y2="7.5"/></svg>catalisadores e vetores de risco</div>
+  <div class="cat-grid">
+    <div>
+      <div class="cat-head" style="color:var(--ac)">// CATALISADORES POSITIVOS</div>
+      <div class="cat-list" id="im-cat-pos"></div>
+    </div>
+    <div>
+      <div class="cat-head" style="color:var(--re)">// VETORES DE RISCO</div>
+      <div class="cat-list" id="im-cat-neg"></div>
+    </div>
+  </div>
+
+</div><!-- /p4 -->
+</div><!-- /shell -->
+</div>
+<script>
+
+/* ─── UTILS ─── */
+const imCh={};
+const imFK=v=>{const a=Math.abs(v);if(a>=1e6)return'R$ '+(v/1e6).toFixed(2).replace('.',',')+'M';if(a>=1000)return'R$ '+Math.round(v/1000)+'k';return'R$ '+Math.round(v).toLocaleString('pt-BR')};
+const imFP=v=>v.toFixed(1).replace('.',',')+' %';
+const imG=id=>document.getElementById(id);
+
+function imSw(i){
+  document.querySelectorAll('.nb').forEach((b,j)=>b.classList.toggle('on',i===j));
+  document.querySelectorAll('.pn').forEach((p,j)=>p.classList.toggle('on',i===j));
+  if(i===4)setTimeout(()=>{imDrawRadar();imBuildMatrix();},80);
+}
+
+const imCO=(fmt)=>({
+  responsive:true,maintainAspectRatio:false,
+  plugins:{legend:{display:false},tooltip:{
+    backgroundColor:'#1c1a17',borderColor:'#cec9c0',borderWidth:.5,
+    titleColor:'#0a0806',bodyColor:'#44403a',
+    titleFont:{family:"'JetBrains Mono',monospace",size:10},
+    bodyFont:{family:"'JetBrains Mono',monospace",size:10},
+    callbacks:{label:c=>c.dataset.label+': '+fmt(c.parsed.y)}
+  }},
+  scales:{
+    x:{ticks:{font:{family:"'JetBrains Mono',monospace",size:9},color:'#6b6660',autoSkip:true,maxRotation:45},grid:{color:'rgba(0,0,0,.06)'}},
+    y:{ticks:{font:{family:"'JetBrains Mono',monospace",size:9},color:'#6b6660',callback:v=>fmt(v)},grid:{color:'rgba(0,0,0,.06)'}}
+  }
+});
+
+function imMk(id,key,cfg){
+  const el=imG(id);if(!el)return;
+  if(imCh[key])imCh[key].destroy();
+  imCh[key]=new Chart(el.getContext('2d'),cfg);
+}
+
+/* ─── P0: CARTEIRA ─── */
+function imP0(){
+  const ap=+imG('im-s_ap').value,ci=+imG('im-s_ci').value,va=+imG('im-s_va').value/100,ra=+imG('im-s_ra').value/100;
+  imG('im-v_ap').textContent=imFK(ap);imG('im-v_ci').textContent=imFK(ci);imG('im-v_va').textContent=imFP(va*100);imG('im-v_ra').textContent=imFP(ra*100);
+  const tm=Math.pow(1+va,1/12)-1,am=ra/12;
+  let pi=ci,tot=ci,renda=0,res=0;
+  const labs=[],sp=[],sa=[],sr=[];
+  for(let m=1;m<=60;m++){
+    res+=ap;tot+=ap;
+    if(res>=60000&&m%24===0){pi+=res;res=0;}
+    pi*=(1+tm);renda+=pi*am;
+    if(m%6===0||m===1||m===60){labs.push('M'+m);sp.push(Math.round(pi+res));sa.push(Math.round(tot));sr.push(Math.round(renda));}
+  }
+  const pf=pi+res,gc=pf-tot,rt=((pf+renda)/tot-1)*100,rmf=pi*am;
+  imG('im-m1').innerHTML=[['patrimônio em 5a',imFK(pf),'+'+imFK(gc)+' ganho'],['total aportado',imFK(tot-ci),'+ '+imFK(ci)+' inicial'],['renda mensal (a5)',imFK(rmf),'aluguéis estimados'],['retorno s/aporte',rt.toFixed(1).replace('.',',')+' %','valoriz. + renda']].map(([l,v,s])=>`<div class="mc"><div class="ml">${l}</div><div class="mv">${v}</div><div class="ms">${s}</div></div>`).join('');
+  imMk('im-c1','im-c1',{type:'line',data:{labels:labs,datasets:[
+    {label:'Patrimônio',data:sp,borderColor:'#005e4b',backgroundColor:'rgba(0,94,75,.08)',fill:true,tension:.4,pointRadius:0,borderWidth:1.5},
+    {label:'Aportado',data:sa,borderColor:'#8060A8',borderDash:[5,4],tension:.3,pointRadius:0,borderWidth:1,fill:false},
+    {label:'Renda acum.',data:sr,borderColor:'#B87840',backgroundColor:'rgba(184,120,64,.06)',fill:true,borderDash:[3,3],tension:.4,pointRadius:0,borderWidth:1}
+  ]},options:imCO(imFK)});
+  const segs=[['Residencial',40,'#005e4b','renda estável'],['Comercial',25,'#1050a0','cap rate maior'],['Terreno/lote',20,'#a06200','valorização capital'],['Rural/agro',10,'#135e38','hedge inflação'],['Reserva',5,'#3A3530','liquidez']];
+  imG('im-al1').innerHTML=segs.map(([n,p,c,d])=>`<div class="ac-c"><div class="ap" style="color:${c}">${p}<span style="font-size:11px">%</span></div><div class="an">${n}</div><div class="ad">${d}<br><span style="color:${c}">${imFK(pf*p/100)}</span></div></div>`).join('');
+  const evts=[['Ano 1','1º imóvel com capital inicial'],['Ano 2','1º aluguel ativo'],['Ano 3','2 fontes de renda'],['Ano 4','Refinanciamento estratégico'],['Ano 5','Portfólio maduro']];
+  const ix=[0,3,5,7,sp.length-1];
+  imG('im-tl1').innerHTML=evts.map(([a,e],i)=>`<div class="tc"><div style="font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:var(--d1);margin-bottom:3px">${a}</div><div style="font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--ac);margin-bottom:3px">${sp[ix[i]]?imFK(sp[ix[i]]):'—'}</div><div style="font-size:10px;color:var(--d2);line-height:1.4">${e}</div></div>`).join('');
+}
+
+/* ─── P1: FINANCIAMENTO ─── */
+function imP1(){
+  const vi=+imG('im-s_vi').value,en=+imG('im-s_en').value/100,tf=+imG('im-s_tf').value/100,pf=+imG('im-s_pf').value,vf=+imG('im-s_vf').value/100,cf=+imG('im-s_cf').value/100;
+  imG('im-v_vi').textContent=imFK(vi);imG('im-v_en').textContent=Math.round(en*100)+'%';imG('im-v_tf').textContent=imFP(tf*100);imG('im-v_pf').textContent=pf+'a';imG('im-v_vf').textContent=imFP(vf*100);imG('im-v_cf').textContent=imFP(cf*100);
+  const ent=vi*en,fin=vi*(1-en),tm=Math.pow(1+tf,1/12)-1,mf=pf*12,prest=fin*tm/(1-Math.pow(1+tm,-mf)),custo=ent+prest*mf-vi,rl=.094;
+  const labs=[],sav=[],sfin=[],salt=[];
+  for(let a=1;a<=10;a++){
+    labs.push('a'+a);
+    const vim=vi*Math.pow(1+vf,a),rac=vi*cf*((Math.pow(1+vf,a)-1)/vf);
+    sav.push(Math.round(vim+rac));
+    let sd=fin;for(let m=0;m<Math.min(a*12,mf);m++){sd=sd*(1+tm)-prest;if(sd<0)sd=0;}
+    sfin.push(Math.round(vim-Math.max(0,sd)+rac-Math.min(a*12,mf)*prest+ent));
+    salt.push(Math.round((vi-ent)*Math.pow(1+rl,a)));
+  }
+  let sd10=fin;for(let m=0;m<Math.min(120,mf);m++){sd10=sd10*(1+tm)-prest;if(sd10<0)sd10=0;}
+  const v10=vi*Math.pow(1+vf,10),r10=vi*cf*((Math.pow(1+vf,10)-1)/vf),retAv=v10+r10-vi,retFin=v10-sd10+r10-prest*Math.min(120,mf)-ent;
+  imG('im-gc2').innerHTML=`
+  <div class="card hl"><span class="badge" style="background:var(--ac2);color:var(--ac);border:.5px solid rgba(204,120,92,.2)">À VISTA · MENOR RISCO</span>
+    <div class="crow"><span class="clb">Desembolso</span><span class="cvl">${imFK(vi)}</span></div>
+    <div class="crow"><span class="clb">Custo extra</span><span class="cvl imG">zero</span></div>
+    <div class="crow"><span class="clb">Imóvel em 10a</span><span class="cvl imG">${imFK(v10)}</span></div>
+    <div class="crow"><span class="clb">Renda acum. 10a</span><span class="cvl imG">${imFK(r10)}</span></div>
+    <div class="crow"><span class="clb">Ganho real total</span><span class="cvl imG">${imFK(retAv)}</span></div>
+    <div class="crow"><span class="clb">ROI s/capital</span><span class="cvl imG">${((retAv/vi)*100).toFixed(1).replace('.',',')} %</span></div>
+  </div>
+  <div class="card"><span class="badge" style="background:var(--bl2);color:var(--bl);border:.5px solid rgba(90,127,175,.2)">FINANCIADO · ALAVANCAGEM</span>
+    <div class="crow"><span class="clb">Entrada</span><span class="cvl">${imFK(ent)}</span></div>
+    <div class="crow"><span class="clb">Juros totais (${pf}a)</span><span class="cvl r">-${imFK(custo)}</span></div>
+    <div class="crow"><span class="clb">Prestação/mês</span><span class="cvl a">${imFK(prest)}</span></div>
+    <div class="crow"><span class="clb">Saldo dev. (10a)</span><span class="cvl r">-${imFK(sd10)}</span></div>
+    <div class="crow"><span class="clb">Imóvel em 10a</span><span class="cvl imG">${imFK(v10)}</span></div>
+    <div class="crow"><span class="clb">ROI s/entrada</span><span class="cvl imG">${((retFin/ent)*100).toFixed(1).replace('.',',')} %</span></div>
+  </div>`;
+  imG('im-vbox').innerHTML=`<strong>Análise:</strong> Taxa ${imFP(tf*100)} vs valorização ${imFP(vf*100)} a.a. — ${tf>vf?'custo do dinheiro supera a valorização → <strong>à vista favorecido</strong>':'valorização supera o custo → <strong>financiamento pode alavancar bem</strong>'}. Capital restante ${imFK(vi-ent)} em RF líquida (~9,4% a.a.) = ${imFK((vi-ent)*(Math.pow(1+rl,10)-1))} em 10a. Regra prática: se taxa > valorização + cap rate → priorize à vista.`;
+  imMk('im-c2','im-c2',{type:'line',data:{labels:labs,datasets:[
+    {label:'À vista',data:sav,borderColor:'#005e4b',backgroundColor:'rgba(0,94,75,.08)',fill:true,tension:.4,pointRadius:0,borderWidth:1.5},
+    {label:'Financiado',data:sfin,borderColor:'#1050a0',backgroundColor:'rgba(16,80,160,.09)',fill:true,tension:.4,pointRadius:0,borderWidth:1.5},
+    {label:'Capital em RF',data:salt,borderColor:'#B87840',borderDash:[5,4],tension:.3,pointRadius:0,borderWidth:1,fill:false}
+  ]},options:imCO(imFK)});
+}
+
+/* ─── P2: TRIBUTAÇÃO ─── */
+function imP2(){
+  const rm=+imG('im-s_rm').value,or=+imG('im-s_or').value,dd=+imG('im-s_dd').value/100;
+  imG('im-v_rm').textContent=imFK(rm);imG('im-v_or').textContent=imFK(or);imG('im-v_dd').textContent=Math.round(dd*100)+'%';
+  const ra=rm*12,oa=or*12,da=ra*dd;
+  function irpf(b){const f=[[2259.2*12,0,0],[3500*12,.075,169.44*12],[4636*12,.15,381.44*12],[6868*12,.225,662.77*12],[Infinity,.275,896*12]];for(const[l,a,d]of f)if(b<=l)return Math.max(0,b*a-d);return b*.275-896*12;}
+  const base=ra+oa-da,irPF=irpf(base),liqPF=ra-irPF;
+  const irpj=(ra*.32)*.15+Math.max(0,(ra*.32)-240000)*.10,csll=(ra*.32)*.09,pis=ra*.0065,cof=ra*.03;
+  const totPJ=irpj+csll+pis+cof,liqPJ=ra-totPJ,totSN=ra*.15,liqSN=ra-totSN,eco=liqPJ-liqPF;
+  imG('im-rg3').innerHTML=[
+    ['PF — IRPF',(irPF/ra*100),'#3A3530','rgba(90,114,138,.1)','SIMPLES',irPF,liqPF,false],
+    ['PJ Holding LP',(totPJ/ra*100),'#005e4b','var(--ac2)','RECOMENDADO',totPJ,liqPJ,true],
+    ['Simples (est.)',15,'#8060A8','var(--pu2)','ESTIMATIVA',totSN,liqSN,false]
+  ].map(([n,a,c,bg,b,t,l,best])=>`<div class="rc${best?' best':''}"><span class="badge" style="background:${bg};color:${c};border:.5px solid ${c}3a">${b}</span><div class="rx" style="color:${c}">${typeof a==='number'?a.toFixed(1).replace('.',','):'15,0'}%</div><div style="font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:var(--d2);margin-bottom:7px">alíq. efetiva s/aluguel</div><div style="font-size:11px;color:var(--d3);margin-bottom:2px">Imposto: <strong style="color:var(--d5)">${imFK(t)}/ano</strong></div><div style="font-size:11px;color:var(--d3)">Líquido: <strong style="color:${c}">${imFK(l)}/ano</strong></div></div>`).join('');
+  imG('im-tt').innerHTML=`<tr><th>item</th><th>PF (IRPF)</th><th>PJ Holding LP</th><th>diferença</th></tr>
+  <tr><td>Receita bruta</td><td>${imFK(ra)}</td><td>${imFK(ra)}</td><td>—</td></tr>
+  <tr><td>Deduções</td><td>${imFK(da)}</td><td>presunção 32%</td><td>—</td></tr>
+  <tr><td>IRPJ / IRPF</td><td>${imFK(irPF)}</td><td>${imFK(irpj)}</td><td style="color:${eco>0?'#005e4b':'#C04840'}">${eco>0?'+':''}${imFK(irPF-irpj)}</td></tr>
+  <tr><td>CSLL</td><td>—</td><td>${imFK(csll)}</td><td>—</td></tr>
+  <tr><td>PIS + COFINS</td><td>—</td><td>${imFK(pis+cof)}</td><td>—</td></tr>
+  <tr><td><strong>Total tributos</strong></td><td><strong>${imFK(irPF)}</strong></td><td><strong>${imFK(totPJ)}</strong></td><td><strong style="color:${eco>0?'#005e4b':'#C04840'}">${eco>0?'+':''}${imFK(eco)}/ano</strong></td></tr>`;
+  imMk('im-c3','im-c3',{type:'bar',data:{labels:['PF — IRPF','PJ Holding LP','Simples (est.)'],datasets:[
+    {label:'Imposto',data:[Math.round(irPF),Math.round(totPJ),Math.round(totSN)],backgroundColor:['rgba(110,106,100,.50)','rgba(0,94,75,.50)','rgba(90,64,160,.48)'],borderRadius:3,borderSkipped:false},
+    {label:'Líquido',data:[Math.round(liqPF),Math.round(liqPJ),Math.round(liqSN)],backgroundColor:['rgba(90,114,138,.10)','rgba(0,94,75,.09)','rgba(90,64,160,.11)'],borderRadius:3,borderSkipped:false}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1c1a17',borderColor:'#cec9c0',borderWidth:.5,titleColor:'#0a0806',bodyColor:'#44403a',titleFont:{family:"'JetBrains Mono',monospace",size:10},bodyFont:{family:"'JetBrains Mono',monospace",size:10},callbacks:{label:c=>c.dataset.label+': '+imFK(c.parsed.y)}}},scales:{x:{stacked:true,ticks:{font:{family:"'JetBrains Mono',monospace",size:9},color:'#6b6660'},grid:{color:'rgba(0,0,0,.06)'}},y:{stacked:true,ticks:{font:{family:"'JetBrains Mono',monospace",size:9},color:'#6b6660',callback:v=>imFK(v)},grid:{color:'rgba(0,0,0,.06)'}}}}});
+  const G=200000;
+  imG('im-gc_venda').innerHTML=`
+  <div class="card"><span class="badge" style="background:var(--re2);color:var(--re);border:.5px solid rgba(255,95,95,.2)">PF — TABELA PROGRESSIVA</span>
+    <div class="crow"><span class="clb">Ganho de capital</span><span class="cvl">${imFK(G)}</span></div>
+    <div class="crow"><span class="clb">Alíquota</span><span class="cvl r">15–22,5 %</span></div>
+    <div class="crow"><span class="clb">IR sobre o ganho</span><span class="cvl r">-${imFK(G*.175)}</span></div>
+    <div class="crow"><span class="clb">Líquido após IR</span><span class="cvl imG">${imFK(G*.825)}</span></div>
+  </div>
+  <div class="card hl"><span class="badge" style="background:var(--ac2);color:var(--ac);border:.5px solid rgba(204,120,92,.2)">PJ LUCRO PRESUMIDO</span>
+    <div class="crow"><span class="clb">Ganho de capital</span><span class="cvl">${imFK(G)}</span></div>
+    <div class="crow"><span class="clb">Alíquota efetiva PJ</span><span class="cvl imG">~6,73 %</span></div>
+    <div class="crow"><span class="clb">Tributos</span><span class="cvl imG">-${imFK(G*.0673)}</span></div>
+    <div class="crow"><span class="clb">Economia vs PF</span><span class="cvl imG">+${imFK(G*.175-G*.0673)}</span></div>
+  </div>`;
+  imG('im-obs3').innerHTML=`<strong style="color:var(--pu)">Notas:</strong> (1) Holding compensa acima de ~R$ 4k/mês. (2) Dividendos isentos no regime atual. (3) ITCMD PR: 4%. (4) Alíquota IRPF considera acumulação com ${imFK(or)}/mês de outras rendas.`;
+}
+
+/* ─── P3: HOLDING ─── */
+function imP3(){
+  const ha=+imG('im-s_ha').value,hg=+imG('im-s_hg').value/100;
+  imG('im-v_ha').textContent=imFK(ha);imG('im-v_hg').textContent=imFP(hg*100);
+  const alPF=.265,alPJ=.113;let cumEco=0;
+  const labH=[],sPF=[],sPJ=[],sEco=[];let ra=ha;
+  for(let a=1;a<=5;a++){labH.push('a'+a);sPF.push(Math.round(ra*alPF));sPJ.push(Math.round(ra*alPJ));cumEco+=ra*(alPF-alPJ);sEco.push(Math.round(cumEco));ra*=(1+hg);}
+  const totPF=sPF.reduce((a,b)=>a+b,0),totPJ=sPJ.reduce((a,b)=>a+b,0);
+  imG('im-mh').innerHTML=[['tributo PF (5a)',imFK(totPF),'alíq. ~26,5%'],['tributo PJ (5a)',imFK(totPJ),'alíq. ~11,3%'],['economia 5 anos',imFK(cumEco),'reinvestível em imóveis']].map(([l,v,s])=>`<div class="mc"><div class="ml">${l}</div><div class="mv">${v}</div><div class="ms">${s}</div></div>`).join('');
+  imMk('im-c4','im-c4',{type:'bar',data:{labels:labH,datasets:[
+    {label:'Tributo PF',data:sPF,backgroundColor:'rgba(110,106,100,.50)',borderRadius:3,borderSkipped:false},
+    {label:'Tributo PJ',data:sPJ,backgroundColor:'rgba(0,94,75,.50)',borderRadius:3,borderSkipped:false},
+    {label:'Economia acum.',data:sEco,type:'line',borderColor:'#8060A8',backgroundColor:'rgba(90,64,160,.09)',fill:true,tension:.4,pointRadius:2,borderWidth:1.5,yAxisID:'y2'}
+  ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{backgroundColor:'#1c1a17',borderColor:'#cec9c0',borderWidth:.5,titleColor:'#0a0806',bodyColor:'#44403a',titleFont:{family:"'JetBrains Mono',monospace",size:10},bodyFont:{family:"'JetBrains Mono',monospace",size:10},callbacks:{label:c=>c.dataset.label+': '+imFK(c.parsed.y)}}},scales:{x:{ticks:{font:{family:"'JetBrains Mono',monospace",size:9},color:'#6b6660'},grid:{color:'rgba(0,0,0,.06)'}},y:{ticks:{font:{family:"'JetBrains Mono',monospace",size:9},color:'#6b6660',callback:v=>imFK(v)},grid:{color:'rgba(0,0,0,.06)'}},y2:{position:'right',ticks:{font:{family:"'JetBrains Mono',monospace",size:9},color:'#8060A8',callback:v=>imFK(v)},grid:{display:false}}}}});
+  imG('im-roteiro').innerHTML=[['1','Abrir PJ c/ contador','Mês 1','R$ 1,5–3k'],['2','Integralizar capital','Mês 1–2','—'],['3','PJ compra 1º imóvel','Mês 3–6','ITBI 2%'],['4','Distribuir dividendos','1º aluguel','isento IR'],['5','Doação cotas filhos','Anos 2–5','ITCMD 4%']].map(([n,a,p,c])=>`<div class="tc"><div style="font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:var(--d1);margin-bottom:3px">/ ${n}</div><div style="font-size:11px;font-weight:500;color:var(--d5);margin:3px 0;line-height:1.4">${a}</div><div style="font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:var(--d1)">${p}</div><div style="font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:var(--ac)">${c}</div></div>`).join('');
+}
+
+/* ─── SIGNALS DATA ─── */
+const imSIGS=[
+  {type:'pos',label:'interno · estrutural',title:'Crescimento urbano Cascavel / Toledo',desc:'Expansão de 4,2% a.a. sustenta demanda habitacional real. Valorização histórica acima da inflação nos últimos 8 anos.',tags:['DEMANDA','REGIONAL'],prob:4,impact:4},
+  {type:'pos',label:'externo · médio prazo',title:'Ciclo de queda estrutural da Selic',desc:'Cortes projetados para 2027+ reduziriam custo do financiamento de 10,5% para 7–8% a.a., ampliando demanda imobiliária.',tags:['JURO','MACRO'],prob:3,impact:4},
+  {type:'pos',label:'externo · estrutural',title:'Agronegócio como âncora regional',desc:'C.Vale e cooperativas sustentam nível de renda e emprego estável — suporte direto à demanda de aluguel residencial e comercial.',tags:['AGRO','RENDA'],prob:5,impact:3},
+  {type:'warn',label:'externo · médio prazo',title:'Reforma tributária — dividendos 2026',desc:'Tributação de 10–15% de IR sobre dividendos reduziria vantagem da holding. Janela de 2–3 anos para ajuste estrutural.',tags:['TRIBUTÁRIO','LEGISLAÇÃO'],prob:3,impact:4},
+  {type:'warn',label:'interno · curto prazo',title:'Vacância em ciclo de recessão',desc:'Crises elevam vacância para 20–30%. Com prestação de financiamento, o custo fixo vira risco de caixa imediato e relevante.',tags:['VACÂNCIA','FLUXO'],prob:2,impact:3},
+  {type:'neg',label:'disrupção · longo prazo',title:'Tokenização imobiliária (RWA on-chain)',desc:'Fracionamento via blockchain elimina a iliquidez. Liqi, Vórtx e Habitus já operam. Disrupção estrutural em 5–8 anos.',tags:['TECNOLOGIA','RWA'],prob:3,impact:5},
+  {type:'neg',label:'externo · estrutural',title:'INCC sistematicamente acima do IPCA',desc:'Custo de construção e retrofit sobe de forma estrutural. Manutenção de imóveis antigos fica progressivamente mais cara.',tags:['CUSTO','INCC'],prob:4,impact:3},
+  {type:'dis',label:'disrupção · longo prazo',title:'IA no crédito — desintermediação bancária',desc:'Crédito P2P e avaliação por IA podem eliminar bancos do processo. CET pode cair 3–5pp, ampliando massivamente o acesso.',tags:['IA','FINTECH'],prob:2,impact:5},
+];
+
+const imRISKS=[
+  {n:'Selic alta',prob:4,impact:3,c:'am'},{n:'Vacância elevada',prob:2,impact:3,c:'am'},
+  {n:'Reforma tributária',prob:3,impact:4,c:'re'},{n:'Recessão regional',prob:2,impact:4,c:'am'},
+  {n:'Tokenização RWA',prob:3,impact:5,c:'re'},{n:'INCC>IPCA',prob:4,impact:2,c:'am'},
+  {n:'Crédito IA/P2P',prob:2,impact:4,c:'re'},{n:'Crescimento Cascavel',prob:4,impact:4,c:'ac'},
+  {n:'Queda da Selic',prob:3,impact:4,c:'ac'},{n:'Demanda agro',prob:5,impact:3,c:'ac'},
+];
+
+const imTRANS=[
+  {yr:'2026',nm:'Diagnóstico',de:'Mapear exposição e risco tributário atual'},
+  {yr:'2027',nm:'Ajuste fiscal',de:'Reestruturar holding para foco em sucessão'},
+  {yr:'2028',nm:'+ RWA 15%',de:'Alocar em tokens imobiliários regulamentados'},
+  {yr:'2029',nm:'+ FIIs 20%',de:'Liquidez via FIIs de tijolo consolidados'},
+  {yr:'2030+',nm:'Híbrido',de:'Modelo diversificado e maduro consolidado'},
+];
+
+const imMODEL_ALT=[
+  {type:'current',hd:'MODELO ATUAL',hdColor:'var(--d1)',bars:[['Imóvel físico',100,'#005e4b'],['FIIs',0,'#1050a0'],['RWA tokens',0,'#5a40a0'],['Reserva',5,'#3A3530']]},
+  {type:'tr',hd:'TRANSIÇÃO · 2027–29',hdColor:'var(--am)',bars:[['Imóvel físico',65,'#005e4b'],['FIIs',15,'#1050a0'],['RWA tokens',10,'#5a40a0'],['Reserva',10,'#3A3530']]},
+  {type:'tg',hd:'MODELO ALVO · 2030+',hdColor:'var(--ac)',bars:[['Imóvel físico',50,'#005e4b'],['FIIs',20,'#1050a0'],['RWA tokens',20,'#5a40a0'],['Reserva',10,'#3A3530']]},
+];
+
+function imBuildSignals(){
+  const iM={
+    pos:`<svg viewBox="0 0 14 14" fill="none" stroke="#005e4b" stroke-width="1.5"><path d="M2 10l3-4 2.5 3L11 3"/></svg>`,
+    warn:`<svg viewBox="0 0 14 14" fill="none" stroke="#B87840" stroke-width="1.5"><path d="M7 1L13 12H1L7 1z"/><path d="M7 6v3M7 10.5v.5"/></svg>`,
+    neg:`<svg viewBox="0 0 14 14" fill="none" stroke="#a52d22" stroke-width="1.5"><path d="M2 4l3 4 2.5-3L11 11"/></svg>`,
+    dis:`<svg viewBox="0 0 14 14" fill="none" stroke="#5a40a0" stroke-width="1.5"><path d="M5.5 1.5h3l-1.5 5h4.5L5 13l2-5H2z"/></svg>`,
+  };
+  const bM={pos:'rgba(0,94,75,.12)',warn:'rgba(160,98,0,.13)',neg:'rgba(165,45,34,.12)',dis:'rgba(90,64,160,.13)'};
+  const cM={pos:'#005e4b',warn:'#a06200',neg:'#a52d22',dis:'#5a40a0'};
+  imG('im-sig-list').innerHTML=imSIGS.slice(0,5).map(s=>`
+    <div class="sc ${s.type}">
+      <div class="si" style="background:${bM[s.type]}">${iM[s.type]}</div>
+      <div class="sb">
+        <div class="slb">${s.label}</div>
+        <div class="sti">${s.title}</div>
+        <div class="sde">${s.desc}</div>
+        <div class="stags">${s.tags.map(t=>`<span class="stag" style="background:${bM[s.type]};color:${cM[s.type]}">${t}</span>`).join('')}</div>
+      </div>
+    </div>`).join('');
+
+  imG('im-trans-steps').innerHTML=imTRANS.map(t=>`<div class="tstep" style="background:rgba(90,64,160,.09)"><div class="yr">${t.yr}</div><div class="nm">${t.nm}</div><div class="de">${t.de}</div></div>`).join('');
+
+  imG('im-model-grid').innerHTML=imMODEL_ALT.map(m=>`
+    <div class="model-card ${m.type}">
+      <div class="mc-hd" style="color:${m.hdColor}">${m.hd}</div>
+      ${m.bars.map(([n,v,c])=>`
+        <div class="bar-row">
+          <div class="bar-lbl"><span>${n}</span><span style="color:${c}">${v}%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:${v}%;background:${c}"></div></div>
+        </div>`).join('')}
+    </div>`).join('');
+
+  const posS=imSIGS.filter(s=>s.type==='pos');
+  const negS=imSIGS.filter(s=>s.type!=='pos');
+  imG('im-cat-pos').innerHTML=posS.map(s=>`<div class="cat-item pos"><div class="cat-t">${s.title}</div><div class="cat-d">${s.desc}</div></div>`).join('');
+  imG('im-cat-neg').innerHTML=negS.map(s=>`<div class="cat-item ${s.type}"><div class="cat-t">${s.title}</div><div class="cat-d">${s.desc}</div></div>`).join('');
+}
+
+/* ─── MATRIX ─── */
+function imBuildMatrix(){
+  const wrap=imG('im-mx-wrap');if(!wrap||wrap.children.length>0)return;
+  const cOf={ac:'rgba(0,94,75,.20)',am:'rgba(160,98,0,.25)',re:'rgba(192,72,64,.22)'};
+  const txOf={ac:'#005e4b',am:'#a06200',re:'#a52d22'};
+  const grid=document.createElement('div');
+  grid.className='mx-grid';
+  for(let y=5;y>=1;y--){
+    const yl=document.createElement('div');yl.className='mx-ylabel';yl.textContent=y;grid.appendChild(yl);
+    for(let x=1;x<=5;x++){
+      const v=x*y;
+      const bg=v>=16?cOf.re:v>=9?cOf.am:cOf.ac;
+      const cell=document.createElement('div');cell.className='mx-cell';cell.style.background=bg;
+      const items=imRISKS.filter(r=>r.prob===x&&r.impact===y);
+      items.forEach(r=>{
+        const d=document.createElement('div');d.className='rd';d.style.color=txOf[r.c];d.textContent=r.n;cell.appendChild(d);
+      });
+      grid.appendChild(cell);
+    }
+  }
+  const blank=document.createElement('div');grid.appendChild(blank);
+  for(let x=1;x<=5;x++){const xl=document.createElement('div');xl.className='mx-xlabel';xl.textContent=x;grid.appendChild(xl);}
+  wrap.appendChild(grid);
+
+  const leg=imG('im-risk-leg');
+  leg.innerHTML='<div style="font-family:JetBrains Mono,monospace;font-size:9px;color:var(--d1);letter-spacing:.1em;margin-bottom:8px">RISCOS MAPEADOS</div>';
+  imRISKS.forEach(r=>{
+    const d=document.createElement('div');
+    d.style.cssText='display:flex;align-items:center;gap:7px;font-size:9px;color:var(--d2);margin-bottom:4px';
+    d.innerHTML=`<span style="width:5px;height:5px;border-radius:50%;background:${txOf[r.c]};flex-shrink:0;display:inline-block"></span>${r.n}<span style="margin-left:auto;font-family:JetBrains Mono,monospace;color:var(--d1)">${r.prob}×${r.impact}</span>`;
+    leg.appendChild(d);
+  });
+}
+
+/* ─── RADAR ─── */
+function imDrawRadar(){
+  const c=imG('im-radarC');if(!c)return;
+  const ctx=c.getContext('2d');
+  const W=c.width,H=c.height,cx=W/2,cy=H/2,R=Math.min(W,H)/2-30;
+  ctx.clearRect(0,0,W,H);
+  const axes=['Selic / Juros','Reforma Trib.','Tokenização RWA','Demanda local','Agronegócio','Vacância','IA / Fintech','INCC'];
+  const vals=[.65,.72,.55,.88,.90,.32,.45,.60];
+  const n=axes.length;
+  // rings
+  [.25,.5,.75,1].forEach(r=>{
+    ctx.beginPath();
+    for(let i=0;i<n;i++){const a=Math.PI*2*i/n-Math.PI/2;const x=cx+R*r*Math.cos(a),y=cy+R*r*Math.sin(a);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);}
+    ctx.closePath();ctx.strokeStyle='#ddd9d2';ctx.lineWidth=.5;ctx.stroke();
+  });
+  // spokes
+  axes.forEach((_,i)=>{const a=Math.PI*2*i/n-Math.PI/2;ctx.beginPath();ctx.moveTo(cx,cy);ctx.lineTo(cx+R*Math.cos(a),cy+R*R/R*Math.sin(a));ctx.strokeStyle='#ddd9d2';ctx.lineWidth=.4;ctx.stroke();});
+  // data polygon
+  ctx.beginPath();
+  vals.forEach((v,i)=>{const a=Math.PI*2*i/n-Math.PI/2;const x=cx+R*v*Math.cos(a),y=cy+R*v*Math.sin(a);i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);});
+  ctx.closePath();ctx.fillStyle='rgba(0,94,75,.12)';ctx.fill();ctx.strokeStyle='#005e4b';ctx.lineWidth=1.5;ctx.stroke();
+  // dots
+  vals.forEach((v,i)=>{const a=Math.PI*2*i/n-Math.PI/2;const x=cx+R*v*Math.cos(a),y=cy+R*v*Math.sin(a);ctx.beginPath();ctx.arc(x,y,2.5,0,Math.PI*2);ctx.fillStyle='#005e4b';ctx.fill();});
+  // labels
+  ctx.font="8.5px 'JetBrains Mono',monospace";ctx.fillStyle='#6b6660';ctx.textAlign='center';
+  axes.forEach((ax,i)=>{const a=Math.PI*2*i/n-Math.PI/2;const lx=cx+(R+17)*Math.cos(a),ly=cy+(R+17)*Math.sin(a);ctx.fillText(ax,lx,ly+3);});
+}
+
+/* ─── INIT / RENDER (chamado por goTo('imoveis') e pelo botão Atualizar Tudo) ─── */
+let _imInit=false;
+function rimoveis(){
+  if(!_imInit){
+    ['im-s_ap','im-s_ci','im-s_va','im-s_ra'].forEach(id=>{const el=imG(id);if(el)el.addEventListener('input',imP0);});
+    ['im-s_vi','im-s_en','im-s_tf','im-s_pf','im-s_vf','im-s_cf'].forEach(id=>{const el=imG(id);if(el)el.addEventListener('input',imP1);});
+    ['im-s_rm','im-s_or','im-s_dd'].forEach(id=>{const el=imG(id);if(el)el.addEventListener('input',imP2);});
+    ['im-s_ha','im-s_hg'].forEach(id=>{const el=imG(id);if(el)el.addEventListener('input',imP3);});
+    _imInit=true;
+  }
+  imP0();imP1();imP2();imP3();imBuildSignals();
+  imDrawRadar();
+  imBuildMatrix();
+}
+
+// Botão "↻ Atualizar Tudo" da página Mercado de Imóveis: reprocessa e
+// redesenha tudo (carteira, financiamento, PF vs PJ, holding, sinais/riscos).
+function atualizarMercadoImoveis(){
+  rimoveis();
+  toast('↻ Mercado de Imóveis atualizado');
+}
+
 </script>
 
 <!-- DIVIDENDOS -->
@@ -3990,7 +5060,7 @@ const gridOpts=(cb=v=>v)=>({x:{grid:{color:'rgba(74,122,86,.08)'},ticks:{color:C
 
 // ─── PAGE TITLES for mobile header
 const PAGE_TITLES = {
-  dashboard:'Dashboard', carteira:'Carteira', cotacoes:'Mercado de Ações', graos:'Mercado de Grãos',
+  dashboard:'Dashboard', carteira:'Carteira', cotacoes:'Mercado de Ações', graos:'Mercado de Grãos', imoveis:'Mercado de Imóveis',
   dividendos:'Dividendos', alocacao:'Alocação', contas:'Contas',
   cartoes:'Cartões', bens:'Patrimônio', objetivos:'Objetivos',
   gastos:'Extrato', orcamento:'Orçamento', sinais:'Sinais & Riscos',
@@ -4180,7 +5250,7 @@ function closeMobNav(){
   document.body.style.overflow = '';
 }
 
-const fns={dashboard:rdash,carteira:rcar,cotacoes:rcot,graos:rgraosmkt,dividendos:rdiv,alocacao:raloc,contas:rcontas,cartoes:rcartoes,gastos:rgas,orcamento:rorc,bens:rbens,objetivos:robjetivos,sinais:rsinais,briefing:rbriefing,assistente:rassistente,'assistente-mid':rassistenteMid,'assistente-adv':rassistenteAdv};
+const fns={dashboard:rdash,carteira:rcar,cotacoes:rcot,graos:rgraosmkt, imoveis:rimoveis,dividendos:rdiv,alocacao:raloc,contas:rcontas,cartoes:rcartoes,gastos:rgas,orcamento:rorc,bens:rbens,objetivos:robjetivos,sinais:rsinais,briefing:rbriefing,assistente:rassistente,'assistente-mid':rassistenteMid,'assistente-adv':rassistenteAdv};
 function render(p){fns[p]?.(); if(typeof _reaplicarBuscaSecao==='function') setTimeout(()=>_reaplicarBuscaSecao(p),0);}
 
 // ─── FUNÇÕES DERIVADAS CENTRAIS (Síntese I — coerência entre domínios)
