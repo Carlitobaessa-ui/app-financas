@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 55 -->
+<!-- APP_VERSION: 56 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1564,33 +1564,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
 
 <!-- COTAÇÕES -->
 <div class="page" id="page-cotacoes">
-  <div class="ph"><svg class="ph-scene"><use href="#scene-header"/></svg><svg class="ph-watermark"><use href="#ic-milho"/></svg><div><div class="ph-eye">Mercados</div><div class="ph-title">Cotações ao Vivo</div><div class="ph-sub">Índices · Câmbio · CBOT · Contratos Futuros de Commodities</div></div><button class="btn btn-g" onclick="atualizarCotacoes()">↻ Atualizar Tudo</button></div>
-
-  <!-- CBOT Futuros em destaque -->
-  <div class="panel mb">
-    <div class="phd">
-      <div><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--gld);margin-right:5px"><use href="#ic-trigo"/></svg>CBOT — Contratos Futuros de Grãos</div><div class="ps">Chicago Board of Trade · Preços em USD/bushel · Atualização simulada</div></div>
-      <div style="display:flex;gap:7px;align-items:center"><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('cbot')">+ Incluir</button><span class="badge b-gd">Futuros</span></div>
-    </div>
-    <div class="pbd" style="padding:0">
-      <div class="cbot-head">
-        <div>Commodity</div><div>Contrato</div><div>Último</div><div>Variação</div><div>%</div><div>Abertura / Máx / Mín</div>
-      </div>
-      <div id="cbot-table"></div>
-    </div>
-  </div>
-
-  <!-- Gráfico histórico CBOT -->
-  <div class="g2 mb">
-    <div class="panel">
-      <div class="phd"><div><div class="pt">Soja — Histórico 12 meses (USD/bu)</div></div><span class="badge b-g">ZS</span></div>
-      <div class="pbd"><div class="chart-m"><canvas id="ch-soja"></canvas></div><div class="pft">Cotação simulada da soja (ZS), últimos 12 meses · não reflete posições da carteira</div></div>
-    </div>
-    <div class="panel">
-      <div class="phd"><div><div class="pt">Milho & Trigo — Histórico 12 meses</div></div><span class="badge b-gd">ZC · ZW</span></div>
-      <div class="pbd"><div class="chart-m"><canvas id="ch-milho-trigo"></canvas></div><div class="pft">Cotação simulada de milho (ZC) e trigo (ZW), últimos 12 meses · dado simulado</div></div>
-    </div>
-  </div>
+  <div class="ph"><svg class="ph-scene"><use href="#scene-header"/></svg><svg class="ph-watermark"><use href="#ic-milho"/></svg><div><div class="ph-eye">Mercados</div><div class="ph-title">Cotações ao Vivo</div><div class="ph-sub">Índices · Ações BR & Globais · Ouro · Cripto · Câmbio</div></div><button class="btn btn-g" onclick="atualizarCotacoes()">↻ Atualizar Tudo</button></div>
 
   <!-- Agro & Índices BR -->
   <div class="panel mb">
@@ -1803,6 +1777,32 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
           <circle cx="433" cy="129" r="1.5"/><circle cx="437" cy="131" r="1.5"/>
         </g>
       </svg>
+    </div>
+
+    <!-- CBOT Futuros em destaque (movido de Cotações ao Vivo) -->
+    <div class="panel mb">
+      <div class="phd">
+        <div><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--gld);margin-right:5px"><use href="#ic-trigo"/></svg>CBOT — Contratos Futuros de Grãos</div><div class="ps">Chicago Board of Trade · Preços em USD/bushel · Atualização simulada</div></div>
+        <div style="display:flex;gap:7px;align-items:center"><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('cbot')">+ Incluir</button><span class="badge b-gd">Futuros</span></div>
+      </div>
+      <div class="pbd" style="padding:0">
+        <div class="cbot-head">
+          <div>Commodity</div><div>Contrato</div><div>Último</div><div>Variação</div><div>%</div><div>Abertura / Máx / Mín</div>
+        </div>
+        <div id="cbot-table"></div>
+      </div>
+    </div>
+
+    <!-- Gráfico histórico CBOT -->
+    <div class="g2 mb">
+      <div class="panel">
+        <div class="phd"><div><div class="pt">Soja — Histórico 12 meses (USD/bu)</div></div><span class="badge b-g">ZS</span></div>
+        <div class="pbd"><div class="chart-m"><canvas id="ch-soja"></canvas></div><div class="pft">Cotação simulada da soja (ZS), últimos 12 meses · não reflete posições da carteira</div></div>
+      </div>
+      <div class="panel">
+        <div class="phd"><div><div class="pt">Milho & Trigo — Histórico 12 meses</div></div><span class="badge b-gd">ZC · ZW</span></div>
+        <div class="pbd"><div class="chart-m"><canvas id="ch-milho-trigo"></canvas></div><div class="pft">Cotação simulada de milho (ZC) e trigo (ZW), últimos 12 meses · dado simulado</div></div>
+      </div>
     </div>
 
     <!-- RESUMO EXECUTIVO -->
@@ -2245,6 +2245,7 @@ function rgraosmkt(){
     const fxel=document.getElementById('fxin'); if(fxel) fxel.addEventListener('input',pgUpdFx);
     _pgInit=true;
   }
+  rcbot();
   pgRenderCoops();
   pgRenderCompare();
   pgRenderFutCoop();
@@ -3996,7 +3997,7 @@ const BOTTOM_NAV_PAGES = ['dashboard','carteira','contas','gastos','assistente']
 const _SEC_SEARCH={}; // termo atual por página
 const _SEC_CARD_CONTS={
   contas:['#bc-grid'], cartoes:['#cc-grid'], bens:['#bem-grid','#lista-seguros','#lista-financiamentos'],
-  objetivos:['#obj-cards'], gastos:['#cat-lista'], cotacoes:['#cbot-table']
+  objetivos:['#obj-cards'], gastos:['#cat-lista'], graos:['#cbot-table']
 };
 function _secNorm(s){ return (s||'').toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,''); }
 
@@ -5461,12 +5462,15 @@ const CBOT=[
   {sym:'ZL',nome:'Óleo de Soja',contrato:'Dez 25',ico:'soja',ult:41.82,var:0.34,pct:0.82,ab:41.48,max:42.05,min:41.35,unit:'¢/lb',fator:1,brl_equiv:null},
   {sym:'ZM',nome:'Farelo de Soja',contrato:'Dez 25',ico:'soja',ult:298.40,var:-1.80,pct:-0.60,ab:300.20,max:302.50,min:297.10,unit:'USD/t',fator:1,brl_equiv:null},
 ];
-function rcot(){
+// ─── CBOT — Contratos Futuros de Grãos (agora na página Painel de Grãos)
+function rcbot(){
+  const elTable=document.getElementById('cbot-table');
+  if(!elTable)return; // página ainda não renderizada
   // Aplica jitter nos dados CBOT
   const cj=S.cotWatch.cbot.map(c=>({...c,ult:c.ult*(1+(Math.random()-.5)*.004)}));
 
   // ── CBOT Table
-  document.getElementById('cbot-table').innerHTML=cj.length?cj.map((c,i)=>{
+  elTable.innerHTML=cj.length?cj.map((c,i)=>{
     const up=c.var>=0;
     return`<div class="cbot-row">
       <div style="display:flex;align-items:center;gap:10px">
@@ -5491,7 +5495,9 @@ function rcot(){
   const trigoHist=[620,590,555,530,545,580,560,545,558,540,548,552,552];
   mkCh('ch-soja',{type:'line',data:{labels:meses,datasets:[{label:'Soja ZS (¢/bu)',data:sojaHist,borderColor:C.grn,backgroundColor:'rgba(74,122,86,.07)',fill:true,tension:0.4,pointRadius:2,borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:C.txt,font:{size:11},padding:12}}},scales:gridOpts(v=>v+' ¢')}});
   mkCh('ch-milho-trigo',{type:'line',data:{labels:meses,datasets:[{label:'Milho ZC (¢/bu)',data:milhoHist,borderColor:C.gld,backgroundColor:'rgba(193,95,60,.06)',fill:false,tension:0.4,pointRadius:2,borderWidth:1.5},{label:'Trigo ZW (¢/bu)',data:trigoHist,borderColor:C.blu,backgroundColor:'rgba(74,109,160,.06)',fill:false,tension:0.4,pointRadius:2,borderWidth:1.5}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:C.txt,font:{size:11},padding:12}}},scales:gridOpts(v=>v+' ¢')}});
+}
 
+function rcot(){
   // ── Ticker cards (com botão de remover)
   const q=k=>getQ(k)||MQ[k];
   const card=(item,cat,i)=>{
@@ -5573,7 +5579,7 @@ function salvarCotItem(cat,idx){
     if(!sym||!tk){toast('⚠ Preencha símbolo e ticker');return}
     S.cotWatch[cat][idx]={sym,nome:nome||sym,tk,pf:g('ci-pf').value,ico:g('ci-ico').value};
   }
-  persistir();closeM('m-cotitem');toast('✓ Cotação atualizada');rcot();
+  persistir();closeM('m-cotitem');toast('✓ Cotação atualizada');cat==='cbot'?rcbot():rcot();
 }
 
 function addCotItem(cat){
@@ -5592,14 +5598,14 @@ function addCotItem(cat){
     if(!sym||!tk){toast('⚠ Preencha símbolo e ticker');return}
     S.cotWatch[cat].push({sym,nome:nome||sym,tk,pf:g('ci-pf').value,ico:g('ci-ico').value});
   }
-  persistir();closeM('m-cotitem');toast('✓ Cotação incluída');rcot();
+  persistir();closeM('m-cotitem');toast('✓ Cotação incluída');cat==='cbot'?rcbot():rcot();
 }
 
 function rmCotItem(cat,i){
   if(!S.cotWatch[cat]||!S.cotWatch[cat][i])return;
   const nome=S.cotWatch[cat][i].sym||'item';
   S.cotWatch[cat].splice(i,1);
-  persistir();toast(nome+' removido');rcot();
+  persistir();toast(nome+' removido');cat==='cbot'?rcbot():rcot();
 }
 
 // ─── DIVIDENDOS
