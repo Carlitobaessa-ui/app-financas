@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 63 -->
+<!-- APP_VERSION: 64 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -2978,6 +2978,12 @@ async function atualizarMercadoGraos(){
     </div>
   </div>
 
+  <!-- INDICADORES PÚBLICOS AO VIVO (BCB/SGS) -->
+  <div class="panel mb" style="margin-bottom:16px">
+    <div class="hero-tag" style="margin:0">// INDICADORES PÚBLICOS AO VIVO — BANCO CENTRAL (BCB/SGS)</div>
+    <div id="im-indic-publicos" style="margin-top:8px"></div>
+  </div>
+
   <!-- RADAR + SIGNALS -->
   <div class="sr-layout">
     <div class="radar-box">
@@ -3286,7 +3292,57 @@ const imMODEL_ALT=[
   {type:'im-tg',hd:'MODELO ALVO · 2030+',hdColor:'var(--ac)',bars:[['Imóvel físico',50,'#005e4b'],['FIIs',20,'#1050a0'],['RWA tokens',20,'#5a40a0'],['Reserva',10,'#3A3530']]},
 ];
 
+/* ─── INDICADORES PÚBLICOS (BCB/SGS) — contextualizam os sinais de risco com dados reais ─── */
+let imIndicadores={selic:null, ipca12m:null, fetchedAt:null};
+
+async function imFetchIndicadoresPublicos(){
+  try{
+    const [rSelic,rIpca]=await Promise.allSettled([
+      fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.432/dados/ultimos/1?formato=json'),
+      fetch('https://api.bcb.gov.br/dados/serie/bcdata.sgs.433/dados/ultimos/12?formato=json')
+    ]);
+    if(rSelic.status==='fulfilled' && rSelic.value.ok){
+      const j=await rSelic.value.json();
+      if(j && j[0] && j[0].valor) imIndicadores.selic=parseFloat(String(j[0].valor).replace(',','.'));
+    }
+    if(rIpca.status==='fulfilled' && rIpca.value.ok){
+      const j=await rIpca.value.json();
+      if(Array.isArray(j) && j.length){
+        let fator=1;
+        j.forEach(m=>{ const v=parseFloat(String(m.valor).replace(',','.')); if(!isNaN(v)) fator*=(1+v/100); });
+        imIndicadores.ipca12m=(fator-1)*100;
+      }
+    }
+    if(imIndicadores.selic!=null || imIndicadores.ipca12m!=null) imIndicadores.fetchedAt=new Date();
+  }catch(e){}
+}
+
+function imRenderIndicadores(){
+  const el=imG('im-indic-publicos'); if(!el) return;
+  if(!imIndicadores.fetchedAt){
+    el.innerHTML=`<span class="badge" title="Busca Selic (meta) e IPCA acumulado 12m direto do Banco Central — série SGS 432 e 433">⚪ Selic e IPCA ainda não buscados nesta sessão — clique em "Atualizar Tudo"</span>`;
+    return;
+  }
+  const f=imIndicadores.fetchedAt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+  const selicTxt=imIndicadores.selic!=null?`${imIndicadores.selic.toFixed(2)}% a.a.`:'—';
+  const ipcaTxt=imIndicadores.ipca12m!=null?`${imIndicadores.ipca12m.toFixed(2)}% (12m)`:'—';
+  const riscoJuro=imIndicadores.selic!=null
+    ? (imIndicadores.selic>=12 ? {t:'⚠ financiamento caro — pressiona viabilidade de novas compras alavancadas',c:'cr'}
+      : imIndicadores.selic>=9 ? {t:'custo de financiamento moderado',c:''}
+      : {t:'ciclo de juro baixo — favorece alavancagem imobiliária',c:'cg'})
+    : null;
+  el.innerHTML=`
+    <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+      <span class="badge live">🟢 Selic (meta) ${selicTxt}</span>
+      <span class="badge live">🟢 IPCA acum. ${ipcaTxt}</span>
+      ${riscoJuro?`<span class="badge ${riscoJuro.c}">${riscoJuro.t}</span>`:''}
+      <span class="badge" style="opacity:.75">fonte: BCB/SGS séries 432 e 433 · ${f}</span>
+    </div>
+    <div class="ps" style="margin-top:6px;font-size:11px">Selic e IPCA são buscados ao vivo do Banco Central a cada "Atualizar Tudo" e contextualizam os sinais abaixo (ex.: "Selic alta", "Ciclo de queda da Selic", "INCC > IPCA"). Os demais sinais, matriz de risco e radar são uma leitura qualitativa curada — não recalculados automaticamente a partir desses indicadores.</div>`;
+}
+
 function imBuildSignals(){
+  imRenderIndicadores();
   const iM={
     pos:`<svg viewBox="0 0 14 14" fill="none" stroke="#005e4b" stroke-width="1.5"><path d="M2 10l3-4 2.5 3L11 3"/></svg>`,
     warn:`<svg viewBox="0 0 14 14" fill="none" stroke="#B87840" stroke-width="1.5"><path d="M7 1L13 12H1L7 1z"/><path d="M7 6v3M7 10.5v.5"/></svg>`,
@@ -3403,9 +3459,11 @@ function rimoveis(){
 
 // Botão "↻ Atualizar Tudo" da página Mercado de Imóveis: reprocessa e
 // redesenha tudo (carteira, financiamento, PF vs PJ, holding, sinais/riscos).
-function atualizarMercadoImoveis(){
+async function atualizarMercadoImoveis(){
+  await imFetchIndicadoresPublicos();
   rimoveis();
-  toast('↻ Mercado de Imóveis atualizado');
+  const sufixo=imIndicadores.selic!=null?` · Selic ${imIndicadores.selic.toFixed(2)}% a.a. (BCB)`:'';
+  toast('↻ Mercado de Imóveis atualizado'+sufixo);
 }
 
 </script>
