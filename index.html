@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 42 -->
+<!-- APP_VERSION: 43 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1492,12 +1492,6 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div id="div-monitor-br"></div>
     <div class="pft">Soma de dividendos/JCP recebidos (data já passada) por empresa com ticker no padrão B3, ordenado do maior para o menor total · DY 12M quando o ativo estiver cadastrado na carteira</div>
   </div>
-  <!-- ANÁLISE FUNDAMENTALISTA — AÇÕES BR -->
-  <div class="panel mb" style="margin-top:16px">
-    <div class="phd"><div><div class="pt">Análise Fundamentalista — Ações BR</div><div class="ps">Um card por empresa · gerado sob demanda pela IA</div></div></div>
-    <div id="fund-analise-br"></div>
-    <div class="pft">Análises geradas por IA a partir do ticker e do histórico de proventos (mesma chave do Assistente Estrategista); podem conter imprecisões — use como apoio, não como recomendação de investimento</div>
-  </div>
   <div class="panel mb">
     <div class="phd"><div><div class="pt">Stocks · NYSE / NASDAQ</div></div><span class="badge b-b">EUA</span></div>
     <table><thead><tr><th>Ticker</th><th>Qtd</th><th>PM (USD)</th><th>Atual</th><th class="tr">Posição BRL</th><th class="tr">Resultado</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-us"></tbody></table>
@@ -1508,12 +1502,6 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="phd"><div><div class="pt">Monitoramento de Dividendos — Stocks EUA</div><div class="ps">Proventos já recebidos, agrupados por empresa</div></div><button class="btn btn-g" onclick="openM('m-dividendo')">+ Provento</button></div>
     <div id="div-monitor-us"></div>
     <div class="pft">Soma de dividendos recebidos (data já passada) por empresa com ticker no padrão EUA (só letras), valores em BRL · DY 12M quando o ativo estiver cadastrado na carteira</div>
-  </div>
-  <!-- ANÁLISE FUNDAMENTALISTA — STOCKS EUA -->
-  <div class="panel mb" style="margin-top:16px">
-    <div class="phd"><div><div class="pt">Análise Fundamentalista — Stocks EUA</div><div class="ps">Um card por empresa · gerado sob demanda pela IA</div></div></div>
-    <div id="fund-analise-us"></div>
-    <div class="pft">Análises geradas por IA a partir do ticker e do histórico de proventos (mesma chave do Assistente Estrategista); podem conter imprecisões — use como apoio, não como recomendação de investimento</div>
   </div>
   <!-- ALUGUEL DE AÇÕES -->
   <div class="panel mb" id="panel-aluguel" style="margin-top:16px">
@@ -1609,10 +1597,24 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="pbd"><div class="tg" id="tg-br"></div></div>
   </div>
 
+  <!-- ANÁLISE FUNDAMENTALISTA — AÇÕES BR -->
+  <div class="panel mb">
+    <div class="phd"><div><div class="pt">Análise Fundamentalista — Ações BR</div><div class="ps">Um card por empresa (das empresas com proventos lançados) · gerado sob demanda pela IA</div></div></div>
+    <div id="fund-analise-br"></div>
+    <div class="pft">Análises geradas por IA a partir do ticker e do histórico de proventos (mesma chave do Assistente Estrategista); podem conter imprecisões — use como apoio, não como recomendação de investimento</div>
+  </div>
+
   <!-- Mercado Global -->
   <div class="panel mb">
     <div class="phd"><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--gld);margin-right:5px"><use href="#ic-chart"/></svg>Mercado Global</div><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('us')">+ Incluir</button></div>
     <div class="pbd"><div class="tg" id="tg-us"></div></div>
+  </div>
+
+  <!-- ANÁLISE FUNDAMENTALISTA — STOCKS EUA -->
+  <div class="panel mb">
+    <div class="phd"><div><div class="pt">Análise Fundamentalista — Stocks EUA</div><div class="ps">Um card por empresa (das empresas com proventos lançados) · gerado sob demanda pela IA</div></div></div>
+    <div id="fund-analise-us"></div>
+    <div class="pft">Análises geradas por IA a partir do ticker e do histórico de proventos (mesma chave do Assistente Estrategista); podem conter imprecisões — use como apoio, não como recomendação de investimento</div>
   </div>
 
   <!-- Ouro -->
@@ -4126,7 +4128,6 @@ function rcar(){
   raluguel();
   rgraos();
   rdivMonitor();
-  rfundAnalise();
 }
 // ─── MONITORAMENTO DE DIVIDENDOS POR EMPRESA (Ações BR / Stocks EUA) ───
 // Agrupa S.dividendos por empresa, separando BR de EUA. A classificação usa
@@ -4487,6 +4488,7 @@ function rcot(){
   const now=new Date().toLocaleTimeString('pt-BR');
   const tbCot=document.getElementById('tb-cot');
   if(tbCot)tbCot.innerHTML=S.ativos.filter(a=>a.tipo!=='RF').map(a=>{const qv=getQ(a.ticker)||MQ[a.ticker];if(!qv)return'';const up=qv.dp>=0;return`<tr><td><strong class="mono">${a.ticker}</strong></td><td><span class="badge ${badg(a.tipo)}">${a.tipo}</span></td><td class="mono">${a.tipo==='US'?usd(qv.p):brl(qv.p)}</td><td class="tr mono ${up?'cg':'cr'}">${a.tipo==='US'?'$ ':'R$ '}${Math.abs(qv.d).toFixed(2)}</td><td class="tr mono ${up?'cg':'cr'}">${pct(qv.dp)}</td><td class="tr cm" style="font-size:10px;font-family:var(--mono)">${S.lastUpdate?S.lastUpdate.toLocaleTimeString('pt-BR'):now}</td></tr>`}).join('');
+  rfundAnalise();
 }
 
 // ─── Gerenciar itens de cotação por categoria
