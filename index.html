@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 72 -->
+<!-- APP_VERSION: 73 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -672,7 +672,7 @@ tbody tr:hover td{background:var(--bg2)}
   nav.collapsed{width:240px;transform:translateX(-100%)}
   nav.collapsed.mob-open{width:240px;transform:translateX(0)}
   .nav-toggle{display:none}
-  main{margin-left:0!important;padding:20px 18px 80px}
+  main{margin-left:0!important;padding:20px 18px calc(80px + env(safe-area-inset-bottom,0px))}
   .mob-overlay{display:none;position:fixed;inset:0;background:rgba(26,35,24,.4);z-index:99;backdrop-filter:blur(2px)}
   .mob-overlay.open{display:block}
   /* Bottom nav */
@@ -701,7 +701,7 @@ tbody tr:hover td{background:var(--bg2)}
 
 /* ── SMARTPHONE LANDSCAPE / SMALL TABLET ≤640px ── */
 @media(max-width:640px){
-  main{padding:16px 14px 76px}
+  main{padding:16px 14px calc(76px + env(safe-area-inset-bottom,0px))}
   .kpi-row{grid-template-columns:repeat(2,1fr);gap:8px}
   .kpi-val{font-size:17px}
   .kpi{padding:14px 14px}
@@ -725,7 +725,7 @@ tbody tr:hover td{background:var(--bg2)}
 /* ── SMARTPHONE PORTRAIT ≤480px ── */
 @media(max-width:480px){
   :root{font-size:13px}
-  main{padding:14px 12px 72px}
+  main{padding:14px 12px calc(72px + env(safe-area-inset-bottom,0px))}
   .ph{padding-bottom:14px;margin-bottom:16px}
   .ph-title{font-size:17px;letter-spacing:-.3px}
   .ph-sub{font-size:11px}
@@ -749,7 +749,6 @@ tbody tr:hover td{background:var(--bg2)}
   .chat-messages{padding:12px}
   .chat-input-bar{padding:10px 12px}
   .msg-bubble{font-size:12.5px;padding:9px 13px}
-  .bottom-nav{padding-bottom:env(safe-area-inset-bottom,8px)}
   .bottom-nav-item .ni{font-size:18px}
   .bottom-nav-item span{display:none}
   .pillar{padding:8px 10px}
@@ -801,11 +800,19 @@ tbody tr:hover td{background:var(--bg2)}
   display:none;
   position:fixed;bottom:0;left:0;right:0;
   height:56px;
+  /* A altura precisa SOMAR a área segura (home indicator), não descontar
+     dela — como box-sizing é border-box em todo o app, um padding-bottom
+     simples "comeria" a altura fixa de 56px, espremendo os ícones da barra
+     em telas com área segura maior (reportado no iPhone 17 Air/Pro). O
+     cabeçalho superior (.mob-header) já soma a área segura via calc();
+     aqui fazemos o mesmo. */
+  height:calc(56px + env(safe-area-inset-bottom,8px));
+  padding-bottom:env(safe-area-inset-bottom,8px);
   background:var(--surf);
   border-top:0.5px solid var(--bdr-em);
   z-index:98;
   align-items:stretch;
-  padding:0 4px;
+  padding-left:4px;padding-right:4px;
 }
 .bottom-nav-item{
   flex:1;
@@ -945,6 +952,35 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   table{display:block;overflow-x:auto;-webkit-overflow-scrolling:touch;max-width:100%}
   canvas,img,svg{max-width:100%}
   .chart-m,.chart-l,.cw{overflow:hidden}
+
+  /* ═══ CORREÇÃO — cards "vazando" pra fora da tela dentro de grids ═══
+     Reportado no iPhone 17 Air/Pro (Mercado de Imóveis, Carteira, etc.):
+     mesmo com o grid já colapsado pra 1 coluna no celular, o card interno
+     aparecia cortado/empurrado pra fora da tela. Causa confirmada isolando
+     o app num iframe de 402px de largura: uma coluna "1fr" sozinha equivale
+     a minmax(auto,1fr) — o navegador NÃO deixa a coluna ficar mais estreita
+     que o conteúdo mínimo do item (ex.: "Renda acum. 10a  R$ 353,7k" numa
+     única linha sem quebrar). Resultado medido: grid com 1 coluna correta,
+     mas de 591px de largura dentro de um container de 293px. Correção:
+     permite que os itens do grid encolham abaixo do tamanho mínimo do
+     conteúdo, para valer o colapso de coluna que já existia. */
+  .g2>*,.g3>*,.gw>*,.gn>*,.kpi-row>*,.tg>*,.fgrid>*,.cc-grid>*,.bc-grid>*,.bem-grid>*,#obj-cards>*,
+  #page-imoveis .im-cg>*,#page-imoveis .cg3>*,#page-imoveis .mg>*,#page-imoveis .mg2>*,#page-imoveis .gc2>*,
+  #page-imoveis .gc3>*,#page-imoveis .rg3>*,#page-imoveis .al5>*,#page-imoveis .tl5>*,#page-imoveis .dis-cols>*,
+  #page-imoveis .model-grid>*,#page-imoveis .cat-grid>*,#page-imoveis .sc3>*,#page-imoveis .sr-layout>*,
+  #page-graos .two>*,#page-graos .three>*,#page-graos .kpis>*
+  {min-width:0}
+
+  /* ═══ CORREÇÃO — 1ª coluna da tabela some ao rolar pro lado ═══
+     A regra "table{display:block;overflow-x:auto}" acima já faz a tabela
+     rolar como uma faixa própria no celular. Sem isso, ao rolar pra ver as
+     colunas de valor o usuário perde de vista qual linha é qual (nome do
+     fundo/ativo/categoria) — reportado em Carteira, Dividendos, Cartões,
+     Bens Patrimoniais e Extrato. Mantém a 1ª coluna fixa/visível durante a
+     rolagem horizontal, com sombra sutil indicando que há mais conteúdo. */
+  table td:first-child,table th:first-child{position:sticky;left:0;background:var(--surf);z-index:1;box-shadow:2px 0 5px rgba(0,0,0,.05)}
+  #page-imoveis table td:first-child,#page-imoveis table th:first-child{background:var(--im-s1)}
+  #page-graos table td:first-child,#page-graos table th:first-child{background:var(--pg-surface)}
 }
 </style>
 </head>
