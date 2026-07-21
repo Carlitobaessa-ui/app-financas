@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 52 -->
+<!-- APP_VERSION: 53 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -7424,10 +7424,12 @@ async function atualizarCotacoes(){
 
 // Regera as análises fundamentalistas já geradas (cache) para os itens de
 // Cotações ao Vivo (BR/US/Ouro/Cripto/Câmbio) que ainda estão cadastrados na
-// watchlist. Não gera análise nova pra quem nunca clicou em "Analisar" —
-// só atualiza o que já existia, pra não disparar chamadas de API que o
-// usuário não pediu. Sequencial (uma de cada vez) pra não estourar rate
-// limit da API. Chamada por atualizarCotacoes() após atualizar as cotações.
+// watchlist, E as análises de consolidação de mercado (BR/US, sugestões
+// Barsi/Peter Lynch) que já tiverem sido geradas ao menos uma vez. Não gera
+// nada novo pra quem nunca clicou em "Analisar"/"Gerar consolidação" — só
+// atualiza o que já existia, pra não disparar chamadas de API que o usuário
+// não pediu. Sequencial (uma de cada vez) pra não estourar rate limit da
+// API. Chamada por atualizarCotacoes() após atualizar as cotações.
 async function _atualizarAnalisesCotacoes(){
   if(!temApiKey())return;
   const cache=_lerFundAnalises();
@@ -7435,12 +7437,18 @@ async function _atualizarAnalisesCotacoes(){
     const cat=cache[tk]?.tipo;
     return cat && _FUND_CATS[cat] && _itensCotWatch(cat).some(it=>it.tk===tk);
   });
-  if(!alvos.length)return;
+  const consolCache=_lerFundConsolidacao();
+  const alvosConsol=Object.keys(consolCache).filter(cat=>cat==='BR'||cat==='US');
+  if(!alvos.length && !alvosConsol.length)return;
   for(const tk of alvos){
     const cat=cache[tk].tipo;
     try{ await gerarAnaliseFundamentalista(tk,cat); }catch(_){}
   }
-  toast(`✓ ${alvos.length} análise(s) de Cotações ao Vivo atualizada(s)`);
+  for(const cat of alvosConsol){
+    try{ await gerarConsolidacaoMercado(cat); }catch(_){}
+  }
+  const total=alvos.length+alvosConsol.length;
+  if(total>0) toast(`✓ ${total} análise(s) de Cotações ao Vivo atualizada(s)`);
 }
 
 // ─── TOAST
