@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 51 -->
+<!-- APP_VERSION: 52 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4223,6 +4223,89 @@ function _salvarFundAnalises(obj){
   try{ localStorage.setItem(_FUND_STORE, JSON.stringify(obj)); }catch(_){}
 }
 
+// ─── Análise de Consolidação do mercado (BR/EUA) — diferente dos cards por
+// ticker acima (que analisam UM ativo já cadastrado na watchlist), esta é
+// uma leitura do MERCADO como um todo, com sugestão de boas pagadoras de
+// dividendos para o usuário CONSIDERAR incluir — mesmo que ainda não estejam
+// na watchlist. Traz duas óticas de investimento lado a lado: Barsi
+// (buy-and-hold em empresas perenes/dominantes, dividendo consistente e
+// crescente, ignora ruído de curto prazo) e Peter Lynch (GARP — crescimento
+// a preço razoável, invista no que você entende, negócio simples de
+// explicar), aplicadas à busca por dividendos. Uma análise por mercado
+// (não por ticker), cache separado, mesmo padrão do _lerFundAnalises acima.
+const _FUND_CONSOL_STORE='fund_consolidado';
+let _consolGerando={}; // cat ('BR'|'US') -> true enquanto gera
+function _lerFundConsolidacao(){
+  try{ const raw=localStorage.getItem(_FUND_CONSOL_STORE); return raw?JSON.parse(raw):{}; }catch(_){ return {}; }
+}
+function _salvarFundConsolidacao(obj){
+  try{ localStorage.setItem(_FUND_CONSOL_STORE, JSON.stringify(obj)); }catch(_){}
+}
+function _consolidacaoPrompt(cat){
+  const info=_FUND_CATS[cat]||_FUND_CATS.BR;
+  const escopo = cat==='US' ? 'empresas do mercado americano (NYSE/NASDAQ)' : 'empresas negociadas na B3';
+  const jaAcompanhados=_itensCotWatch(cat).map(it=>it.tk).join(', ')||'nenhuma ainda';
+  const regraComunicacao=`Regra de comunicação (MUITO IMPORTANTE): seja tecnicamente profundo e rigoroso — não superficial — mas escreva para ser entendido por QUALQUER pessoa, mesmo sem nenhum conhecimento de finanças. Sempre que citar um termo técnico ou sigla (ex.: DY, payout, GARP, PEG, blue chip), explique em poucas palavras o que significa. Use uma analogia simples quando ajudar.`;
+  const baseInstrucao=`Deixe claro que as sugestões são estimativas com base em conhecimento público e consenso de mercado até o limite de conhecimento do modelo, SEM acesso a cotações ou indicadores em tempo real, e recomende confirmar cotação, indicadores atualizados e o histórico real de dividendos numa fonte oficial (corretora/home broker, ${cat==='US'?'SEC/investor relations':'B3/RI da empresa'}) antes de decidir.`;
+  return `Você é um analista de investimentos sênior especializado em ações pagadoras de dividendos. Faça uma ANÁLISE DE CONSOLIDAÇÃO do mercado ${cat==='US'?'americano':'brasileiro'}, sugerindo boas ${escopo} pagadoras de dividendos para o usuário CONSIDERAR incluir na carteira — inclusive nomes que ele ainda não acompanha.
+${regraComunicacao}
+Ativos que o usuário já acompanha neste app no ${info.mercado} (evite repetir os mesmos, a menos que seja essencial citá-los como referência do setor): ${jaAcompanhados}.
+Estruture a resposta EXATAMENTE assim, em Markdown simples, em português brasileiro, no máximo 480 palavras no total:
+**Panorama do mercado**: 2-3 frases sobre o momento atual do mercado ${cat==='US'?'americano':'brasileiro'} para quem busca renda passiva via dividendos (juros, ciclo econômico, setores em destaque agora).
+**Sob a ótica de Barsi** (filosofia do investidor brasileiro Luiz Barsi Filho: buy-and-hold em empresas perenes e dominantes em setores essenciais — bancos, energia elétrica, saneamento, seguros —, foco em dividendo consistente e crescente ao longo de décadas, ignorando a volatilidade do preço no curto prazo): liste de 3 a 5 ${escopo}, cada uma com o ticker, 1 frase do motivo (setor essencial/perene, histórico de dividendos, posição dominante) e o DY aproximado esperado (avise que é estimativa, não dado em tempo real).
+**Sob a ótica de Peter Lynch** (GARP — growth at a reasonable price: invista no que você entende, prefira negócios simples de explicar com crescimento de lucro consistente e preço razoável frente a esse crescimento — aqui aplicado à busca por boas pagadoras de dividendos com crescimento saudável, não só dividendo alto e estagnado): liste de 3 a 5 ${escopo}, cada uma com o ticker, 1 frase do motivo (crescimento consistente, simplicidade do negócio, preço razoável frente ao crescimento) e o DY aproximado esperado (avise que é estimativa).
+**Resumindo em 1 frase**: uma frase final, sem jargão técnico, resumindo a leitura geral do mercado agora para quem busca dividendos.
+${baseInstrucao}
+Seja direto, sem saudação.`;
+}
+async function gerarConsolidacaoMercado(cat){
+  if(cat!=='BR' && cat!=='US')return;
+  if(!temApiKey()){ toast('⚠ Configure sua chave de API em Configurações para gerar análises'); return; }
+  _consolGerando[cat]=true;
+  rfundAnalise();
+  try{
+    const resp=await chamarClaudeAPI({model:'claude-sonnet-4-6',max_tokens:1500,messages:[{role:'user',content:_consolidacaoPrompt(cat)}]});
+    const data=await resp.json();
+    if(data.error) throw new Error(data.error.message||'erro na API');
+    const txt=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join(' ').trim();
+    const cache=_lerFundConsolidacao();
+    cache[cat]={texto:txt||'(sem resposta)',geradoEm:new Date().toISOString()};
+    _salvarFundConsolidacao(cache);
+  }catch(err){
+    toast('⚠ Falha ao gerar análise de consolidação: '+err.message);
+  }finally{
+    delete _consolGerando[cat];
+    rfundAnalise();
+  }
+}
+function _consolidacaoHTML(cat){
+  if(cat!=='BR' && cat!=='US')return '';
+  const cache=_lerFundConsolidacao();
+  const cached=cache[cat];
+  const gerando=!!_consolGerando[cat];
+  let corpo;
+  if(gerando){
+    corpo=`<div style="color:var(--blu);font-size:12.5px;padding:6px 0">✦ consolidando o mercado…</div>`;
+  } else if(cached){
+    const geradoFmt=new Date(cached.geradoEm).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    corpo=`<div style="font-size:12.5px;line-height:1.6;color:var(--txt2)">${_mdBriefing(cached.texto)}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--bdr)">
+        <span style="font-size:10.5px;color:var(--txt3)">Gerado em ${geradoFmt}</span>
+        <button class="btn btn-ghost" style="font-size:11px;padding:3px 9px" onclick="gerarConsolidacaoMercado('${cat}')">↻ Atualizar</button>
+      </div>`;
+  } else {
+    corpo=`<button class="btn btn-g" style="font-size:11.5px;padding:5px 12px" onclick="gerarConsolidacaoMercado('${cat}')">🔍 Gerar consolidação</button>`;
+  }
+  const nomeMercado = cat==='US' ? 'EUA' : 'Brasil';
+  return `<div class="card" style="margin-bottom:16px;padding:12px 14px 14px 13px;border-left:3px solid var(--gld)">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-bottom:8px;border-bottom:0.5px solid var(--bdr)">
+      <strong style="font-size:13px">📊 Análise de Consolidação — Mercado ${nomeMercado}</strong>
+    </div>
+    <div style="font-size:11px;color:var(--txt3);margin-bottom:8px">Sugestões de boas pagadoras de dividendos para considerar incluir, sob duas óticas de investimento: <strong style="color:var(--txt2)">Barsi</strong> (buy-and-hold, dividendos perenes) e <strong style="color:var(--txt2)">Peter Lynch</strong> (GARP, crescimento a preço razoável).</div>
+    ${corpo}
+  </div>`;
+}
+
 // Itens cadastrados na watchlist de Cotações ao Vivo para a categoria indicada
 // ('BR'|'US'|'OURO'|'CRIPTO'|'FX'). Em BR/US, exclui índices via _tipoPorTicker().
 function _itensCotWatch(cat){
@@ -4493,12 +4576,16 @@ function _fundCardHTML(item,cat){
 
 function _fundAnaliseHTML(cat){
   const lista=_itensCotWatch(cat);
-  if(!lista.length)return `<div class="empty-hint" style="padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum item cadastrado nesta lista ainda. Use <strong>+ Incluir</strong> no painel acima.</div>`;
   const semChave=!temApiKey() ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--paper);border:0.5px solid var(--bdr);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:11.5px;color:var(--txt3)">
       <span>🔑 Sem chave de API configurada — necessária para gerar novas análises (mesma chave do Assistente Estrategista).</span>
       <button class="btn btn-ghost" style="font-size:11px;padding:3px 9px" onclick="abrirConfigApi()">Configurar chave</button>
     </div>` : '';
-  return semChave + lista.map(item=>_fundCardHTML(item,cat)).join('');
+  // A consolidação de mercado (sugestão de novas empresas pagadoras de
+  // dividendos, sob a ótica de Barsi e de Peter Lynch) não depende dos itens
+  // já cadastrados na watchlist — por isso aparece mesmo com a lista vazia.
+  const consolidacao=_consolidacaoHTML(cat);
+  if(!lista.length)return semChave + consolidacao + `<div class="empty-hint" style="padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum item cadastrado nesta lista ainda. Use <strong>+ Incluir</strong> no painel acima.</div>`;
+  return semChave + consolidacao + lista.map(item=>_fundCardHTML(item,cat)).join('');
 }
 
 function rfundAnalise(){
