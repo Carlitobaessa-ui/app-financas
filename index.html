@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 56 -->
+<!-- APP_VERSION: 57 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1298,8 +1298,8 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <button class="nav-item" onclick="goTo('assistente-mid')" style="color:var(--blu)"><span class="ni"><svg class="svi"><use href="#ic-agent-estrategista"/></svg></span><span class="nav-label"> Assistente Estrategista</span></button>
     <button class="nav-item" onclick="goTo('assistente-adv')" style="color:var(--gld)"><span class="ni"><svg class="svi"><use href="#ic-agent-cfo"/></svg></span><span class="nav-label"> Assistente CFO</span></button>
     <div class="nav-group">Investimentos</div>
-    <button class="nav-item" onclick="goTo('cotacoes')"><span class="ni"><svg class="svi"><use href="#ic-cotacoes"/></svg></span><span class="nav-label"> Cotações ao Vivo</span></button>
-    <button class="nav-item" onclick="goTo('graos')"><span class="ni"><svg class="svi"><use href="#ic-silo"/></svg></span><span class="nav-label"> Painel de Grãos</span></button>
+    <button class="nav-item" onclick="goTo('cotacoes')"><span class="ni"><svg class="svi"><use href="#ic-cotacoes"/></svg></span><span class="nav-label"> Mercado de Ações</span></button>
+    <button class="nav-item" onclick="goTo('graos')"><span class="ni"><svg class="svi"><use href="#ic-silo"/></svg></span><span class="nav-label"> Mercado de Grãos</span></button>
     <button class="nav-item" onclick="goTo('carteira')"><span class="ni"><svg class="svi"><use href="#ic-chart"/></svg></span><span class="nav-label"> Carteira</span></button>
     <button class="nav-item" onclick="goTo('dividendos')"><span class="ni"><svg class="svi"><use href="#ic-moeda"/></svg></span><span class="nav-label"> Dividendos</span></button>
     <button class="nav-item" onclick="goTo('alocacao')"><span class="ni"><svg class="svi"><use href="#ic-alocacao"/></svg></span><span class="nav-label"> Alocação</span></button>
@@ -1564,7 +1564,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
 
 <!-- COTAÇÕES -->
 <div class="page" id="page-cotacoes">
-  <div class="ph"><svg class="ph-scene"><use href="#scene-header"/></svg><svg class="ph-watermark"><use href="#ic-milho"/></svg><div><div class="ph-eye">Mercados</div><div class="ph-title">Cotações ao Vivo</div><div class="ph-sub">Índices · Ações BR & Globais · Ouro · Cripto · Câmbio</div></div><button class="btn btn-g" onclick="atualizarCotacoes()">↻ Atualizar Tudo</button></div>
+  <div class="ph"><svg class="ph-scene"><use href="#scene-header"/></svg><svg class="ph-watermark"><use href="#ic-milho"/></svg><div><div class="ph-eye">Mercados</div><div class="ph-title">Mercado de Ações</div><div class="ph-sub">Índices · Ações BR & Globais · Ouro · Cripto · Câmbio</div></div><button class="btn btn-g" onclick="atualizarCotacoes()">↻ Atualizar Tudo</button></div>
 
   <!-- Agro & Índices BR -->
   <div class="panel mb">
@@ -1724,12 +1724,13 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
 #page-graos .exec-card .meta { font-size:11.5px; color:var(--pg-ink-3); }
 </style>
 <div class="page" id="page-graos">
+  <div class="ph"><svg class="ph-scene"><use href="#scene-header"/></svg><svg class="ph-watermark"><use href="#ic-soja"/></svg><div><div class="ph-eye">Mercados</div><div class="ph-title">Mercado de Grãos</div><div class="ph-sub">Soja · Milho · Trigo — Balcão PR · Relação de troca · B3 · CBOT · Safras</div></div><button class="btn btn-g" onclick="atualizarMercadoGraos()">↻ Atualizar Tudo</button></div>
   <div class="wrap">
 
     <!-- HERO -->
     <div class="hero">
       <div class="content">
-        <h1>Painel de Comercialização de Grãos · <span>Soja, Milho &amp; Trigo</span></h1>
+        <h1>Comercialização de Grãos · <span>Soja, Milho &amp; Trigo</span></h1>
         <div class="sub" style="margin-top:6px">Decisão de <span class="hl">comprar · vender · fixar · trocar</span> — Balcão PR · Relação de troca · B3 · CBOT · Safras</div>
         <div class="sub" style="margin-top:4px;font-size:11.5px">Preços: <span class="hl">18–20/jun/2026</span> · USD/BRL <span class="hl" id="fxhdr">5,17</span> · <span style="color:var(--pg-ink-3)">AgRural · NA · Reuters · 20/jun</span></div>
       </div>
@@ -2252,6 +2253,15 @@ function rgraosmkt(){
   pgUpdFx();
   pgChMilho=pgLineChart('cMilhoCbot',pgFutMilhoCbot.map(x=>x.m),pgFutMilhoCbot.map(x=>x.v),'#B07D1A','US$',pgChMilho);
   pgChSoja=pgLineChart('cSojaCbot',pgFutSojaCbot.map(x=>x.m),pgFutSojaCbot.map(x=>x.v),'#C96A44','US$',pgChSoja);
+}
+
+// Botão "↻ Atualizar Tudo" da página Mercado de Grãos: reprocessa e redesenha
+// tudo que a página exibe — tabela e gráficos CBOT (com nova variação
+// simulada), tabela de cooperativas, comparativo, spread, curva de futuros
+// e câmbio/paridade — reaproveitando o mesmo pipeline de render da página.
+function atualizarMercadoGraos(){
+  rgraosmkt();
+  toast('↻ Mercado de Grãos atualizado');
 }
 </script>
 
@@ -3980,7 +3990,7 @@ const gridOpts=(cb=v=>v)=>({x:{grid:{color:'rgba(74,122,86,.08)'},ticks:{color:C
 
 // ─── PAGE TITLES for mobile header
 const PAGE_TITLES = {
-  dashboard:'Dashboard', carteira:'Carteira', cotacoes:'Cotações', graos:'Painel de Grãos',
+  dashboard:'Dashboard', carteira:'Carteira', cotacoes:'Mercado de Ações', graos:'Mercado de Grãos',
   dividendos:'Dividendos', alocacao:'Alocação', contas:'Contas',
   cartoes:'Cartões', bens:'Patrimônio', objetivos:'Objetivos',
   gastos:'Extrato', orcamento:'Orçamento', sinais:'Sinais & Riscos',
