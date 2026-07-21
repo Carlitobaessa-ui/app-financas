@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 59 -->
+<!-- APP_VERSION: 60 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1639,6 +1639,13 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div id="fund-analise-fx"></div>
     <div class="pft">Análises geradas por IA (mesma chave do Assistente Estrategista); podem conter imprecisões — use como apoio, não como recomendação de investimento</div>
   </div>
+
+  <!-- PAINEL DE SINAIS DE RISCO E DECISÕES — CONSOLIDADO -->
+  <div class="panel mb">
+    <div class="phd"><div><div class="pt">🛡️ Sinais de Risco e Decisões — Consolidado</div><div class="ps">Todos os ativos de Mercado de Ações (BR, EUA, Ouro, Cripto, Câmbio) numa única visão — veredito já gerado pela IA quando existir, e risco de volatilidade do dia com base na variação atual</div></div></div>
+    <div id="cot-sinais-body"></div>
+    <div class="pft">Sinal (Comprar/Vender/Manter) vem da análise fundamentalista já gerada por ativo acima; itens sem análise mostram apenas o risco de volatilidade do dia. Ordenado do maior para o menor movimento do dia. Apoio à decisão — não é recomendação de investimento.</div>
+  </div>
 </div>
 
 <!-- PAINEL DE GRÃOS -->
@@ -1738,7 +1745,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <div class="content">
         <h1>Comercialização de Grãos · <span>Soja, Milho &amp; Trigo</span></h1>
         <div class="sub" style="margin-top:6px">Decisão de <span class="hl">comprar · vender · fixar · trocar</span> — Balcão PR · Relação de troca · B3 · CBOT · Safras</div>
-        <div class="sub" style="margin-top:4px;font-size:11.5px">Preços: <span class="hl">18–20/jun/2026</span> · USD/BRL <span class="hl" id="fxhdr">5,17</span> · <span style="color:var(--pg-ink-3)">AgRural · NA · Reuters · 20/jun</span></div>
+        <span id="fxhdr" style="display:none"></span>
       </div>
       <svg class="hero-art" viewBox="0 0 470 182" xmlns="http://www.w3.org/2000/svg" fill="none">
         <g stroke="#D4C9BE" stroke-opacity=".35" stroke-width="1">
@@ -1873,8 +1880,8 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
         </thead>
         <tbody id="coops"></tbody>
       </table>
-      <div class="note warn">
-        ⚠️ <strong>Origem dos preços (18/jun/2026):</strong> <strong>Copagril e C.Vale</strong> = AgRural Cascavel/Oeste PR (R$ 123/sc soja · R$ 57/sc milho). <strong>Coamo</strong> = AgRural Campo Mourão. <strong>Castrolanda</strong> = AgRural Ponta Grossa. <strong>Cocamar</strong> = NA Maringá ref. <strong>Coopertradição</strong> = AgRural Francisco Beltrão/Guarapuava ref. <strong>Cotrijal</strong> = AgRural Erechim/RS ref. <strong>Cravil</strong> = NA Rio do Sul/SC ref. <strong>Comigo</strong> = AgRural Rio Verde/GO ref. <strong>Integrada</strong> = NA Londrina ref. <strong>Copacol e Lar</strong> = Oeste PR ref AgRural. Preços com "ref" são da praça da região — confirme no app do associado. Quanto <em>menor</em> a sc/t da troca, melhor para você.
+      <div class="note warn" id="coopsOrigemNote">
+        ⚠️ <strong>Origem dos preços:</strong> valores aproximados a partir do indicador regional <strong>CEPEA/Esalq PR</strong> (referência de praça, não é cotação exata por cooperativa). Edite qualquer célula da tabela para inserir o preço real do seu associado — sua edição fica salva neste navegador. <button class="btn" style="padding:2px 8px;font-size:10.5px;margin-left:4px" onclick="pgResetCoops()">restaurar valores padrão</button>
       </div>
     </div>
 
@@ -2037,21 +2044,40 @@ function pgBrl(n){return 'R$ '+pgFmt(n);}
 function pgNum(id){return parseFloat((document.getElementById(id)||{}).value?.replace(',','.'))||0;}
 
 const pgCoopsDefault=[
-  {nome:'Copagril', reg:'M. C. Rondon/PR', soja:123.00, milho:57.00, dt:'18/06 AgRural', live:true},
-  {nome:'Coagru', reg:'Ubiratã/PR', soja:123.00, milho:58.00, dt:'18/06 NA ref', live:true},
-  {nome:'Coopertradição', reg:'Pato Branco/PR', soja:124.00, milho:58.00, dt:'18/06 AgRural ref', live:true},
-  {nome:'Coamo', reg:'Campo Mourão/PR', soja:124.00, milho:58.00, dt:'18/06 AgRural', live:true},
-  {nome:'Cocamar', reg:'Maringá/PR', soja:126.00, milho:65.00, dt:'18/06 NA ref', live:true},
-  {nome:'Castrolanda', reg:'Castro/PR', soja:128.00, milho:60.00, dt:'18/06 AgRural ref', live:true},
-  {nome:'Comigo', reg:'Rio Verde/GO', soja:116.00, milho:55.00, dt:'18/06 AgRural ref', live:true},
-  {nome:'Cotrijal', reg:'Não-Me-Toque/RS', soja:125.00, milho:60.00, dt:'18/06 AgRural ref', live:true},
-  {nome:'Cravil', reg:'Rio do Sul/SC', soja:122.00, milho:61.00, dt:'18/06 NA ref', live:true},
-  {nome:'C.Vale', reg:'Assis Chat./Brasilândia/Palotina', soja:123.00, milho:57.00, dt:'18/06 AgRural ref', live:true},
-  {nome:'Copacol', reg:'Cafelândia/PR', soja:123.00, milho:57.00, dt:'18/06 AgRural ref', live:true},
-  {nome:'Lar', reg:'Medianeira/PR', soja:123.00, milho:58.00, dt:'18/06 AgRural ref', live:true},
-  {nome:'Integrada', reg:'Londrina/PR', soja:125.00, milho:63.00, dt:'18/06 NA ref', live:true},
+  {nome:'Copagril', reg:'M. C. Rondon/PR', soja:132.00, milho:65.00, dt:'20/07 CEPEA ref', live:true},
+  {nome:'Coagru', reg:'Ubiratã/PR', soja:132.00, milho:66.00, dt:'20/07 CEPEA ref', live:true},
+  {nome:'Coopertradição', reg:'Pato Branco/PR', soja:133.00, milho:66.00, dt:'20/07 CEPEA ref', live:true},
+  {nome:'Coamo', reg:'Campo Mourão/PR', soja:133.00, milho:66.00, dt:'20/07 CEPEA ref', live:true},
+  {nome:'Cocamar', reg:'Maringá/PR', soja:135.00, milho:74.00, dt:'20/07 CEPEA ref', live:true},
+  {nome:'Castrolanda', reg:'Castro/PR', soja:137.00, milho:68.00, dt:'20/07 CEPEA ref', live:true},
+  {nome:'Comigo', reg:'Rio Verde/GO', soja:124.00, milho:63.00, dt:'20/07 CEPEA ref', live:true},
+  {nome:'Cotrijal', reg:'Não-Me-Toque/RS', soja:134.00, milho:68.00, dt:'20/07 CEPEA ref', live:true},
+  {nome:'Cravil', reg:'Rio do Sul/SC', soja:131.00, milho:70.00, dt:'20/07 CEPEA ref', live:true},
+  {nome:'C.Vale', reg:'Assis Chat./Brasilândia/Palotina', soja:132.00, milho:65.00, dt:'20/07 CEPEA ref', live:true},
+  {nome:'Copacol', reg:'Cafelândia/PR', soja:132.00, milho:65.00, dt:'20/07 CEPEA ref', live:true},
+  {nome:'Lar', reg:'Medianeira/PR', soja:132.00, milho:66.00, dt:'20/07 CEPEA ref', live:true},
+  {nome:'Integrada', reg:'Londrina/PR', soja:134.00, milho:72.00, dt:'20/07 CEPEA ref', live:true},
 ];
-let pgCoops = JSON.parse(JSON.stringify(pgCoopsDefault));
+const PG_COOPS_LS_KEY='pgCoopsCustom_v1';
+function pgLoadCoops(){
+  try{
+    const raw=localStorage.getItem(PG_COOPS_LS_KEY);
+    if(!raw) return JSON.parse(JSON.stringify(pgCoopsDefault));
+    const saved=JSON.parse(raw);
+    if(!Array.isArray(saved) || saved.length!==pgCoopsDefault.length) return JSON.parse(JSON.stringify(pgCoopsDefault));
+    return pgCoopsDefault.map((d,i)=>({...d, soja:saved[i]&&typeof saved[i].soja==='number'?saved[i].soja:d.soja, milho:saved[i]&&typeof saved[i].milho==='number'?saved[i].milho:d.milho}));
+  }catch(e){ return JSON.parse(JSON.stringify(pgCoopsDefault)); }
+}
+function pgSaveCoops(){
+  try{ localStorage.setItem(PG_COOPS_LS_KEY, JSON.stringify(pgCoops.map(c=>({soja:c.soja,milho:c.milho})))); }catch(e){}
+}
+function pgResetCoops(){
+  try{ localStorage.removeItem(PG_COOPS_LS_KEY); }catch(e){}
+  pgCoops = JSON.parse(JSON.stringify(pgCoopsDefault));
+  pgRenderCoops(); pgRenderCompare();
+  toast('↺ Preços das cooperativas restaurados ao padrão');
+}
+let pgCoops = pgLoadCoops();
 
 const pgRegiao={
   'C.Vale':'Oeste PR','Copagril':'Oeste PR','Copacol':'Oeste PR','Lar':'Oeste PR','Coagru':'Oeste PR',
@@ -2090,6 +2116,7 @@ function pgRenderCoops(){
   tb.querySelectorAll('input.px').forEach(inp=>inp.addEventListener('input',e=>{
     const i=+e.target.dataset.i, k=e.target.dataset.k, v=parseFloat(e.target.value.replace(',','.'));
     pgCoops[i][k]=isNaN(v)?0:v;
+    pgSaveCoops();
     pgRecalcTroca(); pgRenderCompare();
   }));
   pgRecalcTroca();
@@ -6128,6 +6155,7 @@ async function gerarAnaliseFundamentalista(ticker,cat){
   }finally{
     delete _fundGerando[ticker];
     rfundAnalise();
+    if(typeof rcotSinaisConsolidado==='function') rcotSinaisConsolidado();
   }
 }
 
@@ -6620,6 +6648,82 @@ function rcot(){
   const tbCot=document.getElementById('tb-cot');
   if(tbCot)tbCot.innerHTML=S.ativos.filter(a=>a.tipo!=='RF').map(a=>{const qv=getQ(a.ticker)||MQ[a.ticker];if(!qv)return'';const up=qv.dp>=0;return`<tr><td><strong class="mono">${a.ticker}</strong></td><td><span class="badge ${badg(a.tipo)}">${a.tipo}</span></td><td class="mono">${a.tipo==='US'?usd(qv.p):brl(qv.p)}</td><td class="tr mono ${up?'cg':'cr'}">${a.tipo==='US'?'$ ':'R$ '}${Math.abs(qv.d).toFixed(2)}</td><td class="tr mono ${up?'cg':'cr'}">${pct(qv.dp)}</td><td class="tr cm" style="font-size:10px;font-family:var(--mono)">${S.lastUpdate?S.lastUpdate.toLocaleTimeString('pt-BR'):now}</td></tr>`}).join('');
   rfundAnalise();
+  rcotSinaisConsolidado();
+}
+
+// ─── Painel de Sinais de Risco e Decisões — Consolidado (fim de Mercado de
+// Ações). Junta, numa única tabela, TODOS os itens cadastrados nas 5
+// categorias (BR, US, Ouro, Cripto, Câmbio): o veredito (Comprar/Vender/
+// Manter) já extraído da análise fundamentalista gerada por IA quando
+// existir, e um sinal de risco de volatilidade do dia calculado a partir da
+// variação % atual (não depende de IA, sempre disponível). Ordenado do
+// maior para o menor |variação do dia| — os movimentos mais fortes (maior
+// risco/urgência) aparecem primeiro.
+function _sinalDeAnaliseCot(cached){
+  if(!cached||!cached.texto) return null;
+  const t=cached.texto;
+  if(/\*\*Compra\*\*/i.test(t)) return 'compra';
+  if(/\*\*Venda\*\*/i.test(t)) return 'venda';
+  if(/\*\*Manter/i.test(t)) return 'manter';
+  if(/\bcompra\b/i.test(t)&&!/\bvenda\b/i.test(t)) return 'compra';
+  if(/\bvenda\b/i.test(t)&&!/\bcompra\b/i.test(t)) return 'venda';
+  if(/\bmanter\b/i.test(t)) return 'manter';
+  return null;
+}
+function _riscoDiaCot(dp){
+  const a=Math.abs(dp||0);
+  if(a>=5) return {txt:'⚠ Alta volatilidade',cls:'cr'};
+  if(a>=2) return {txt:'Volatilidade moderada',cls:''};
+  return {txt:'Estável',cls:'cg'};
+}
+function rcotSinaisConsolidado(){
+  const el=document.getElementById('cot-sinais-body'); if(!el)return;
+  const cats=[['br','Ação BR'],['us','Stock EUA'],['ouro','Ouro'],['cripto','Cripto'],['fx','Câmbio']];
+  const cache=_lerFundAnalises();
+  let linhas=[];
+  cats.forEach(([key,label])=>{
+    (S.cotWatch[key]||[]).forEach(it=>{
+      const qv=getQ(it.tk)||MQ[it.tk];
+      const dp=qv?qv.dp:0;
+      const cached=cache[it.tk];
+      linhas.push({sym:it.sym||it.tk, nome:it.nome||'', cat:label, dp, preco:qv?qv.p:null, pf:it.pf||'', sinal:_sinalDeAnaliseCot(cached)});
+    });
+  });
+  if(!linhas.length){
+    el.innerHTML='<div class="empty-hint" style="padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum ativo cadastrado em Mercado de Ações ainda.</div>';
+    return;
+  }
+  linhas.sort((a,b)=>Math.abs(b.dp||0)-Math.abs(a.dp||0));
+  const nComprar=linhas.filter(l=>l.sinal==='compra').length;
+  const nVender=linhas.filter(l=>l.sinal==='venda').length;
+  const nManter=linhas.filter(l=>l.sinal==='manter').length;
+  const nSem=linhas.filter(l=>!l.sinal).length;
+  const nAltoRisco=linhas.filter(l=>Math.abs(l.dp||0)>=5).length;
+  const resumo=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+    <span class="badge cg" style="background:rgba(30,125,69,.10)">Comprar: ${nComprar}</span>
+    <span class="badge cr" style="background:rgba(192,57,43,.10)">Vender: ${nVender}</span>
+    <span class="badge cm" style="background:var(--bg2)">Manter: ${nManter}</span>
+    <span class="badge cm" style="background:var(--bg2)">Sem análise: ${nSem}</span>
+    ${nAltoRisco?`<span class="badge cr" style="background:rgba(192,57,43,.10)">⚠ ${nAltoRisco} em alta volatilidade hoje</span>`:''}
+  </div>`;
+  const sinalTxt={compra:'Comprar',venda:'Vender',manter:'Manter'};
+  const sinalCls={compra:'cg',venda:'cr',manter:'cm'};
+  const linhasHtml=linhas.map(l=>{
+    const r=_riscoDiaCot(l.dp);
+    const up=l.dp>=0;
+    return `<tr>
+      <td><strong class="mono">${l.sym}</strong>${l.nome?`<br><span class="cm" style="font-size:10px">${l.nome}</span>`:''}</td>
+      <td class="cm" style="font-size:11.5px">${l.cat}</td>
+      <td class="mono">${l.preco!=null?l.pf+l.preco.toFixed(2):'—'}</td>
+      <td class="tr mono ${up?'cg':'cr'}">${up?'+':''}${(l.dp||0).toFixed(2)}%</td>
+      <td class="tr ${sinalCls[l.sinal]||'cm'}" style="font-weight:600">${sinalTxt[l.sinal]||'— sem análise'}</td>
+      <td class="tr ${r.cls}">${r.txt}</td>
+    </tr>`;
+  }).join('');
+  el.innerHTML=`${resumo}<div style="overflow-x:auto"><table>
+    <thead><tr><th style="text-align:left">Ativo</th><th style="text-align:left">Categoria</th><th style="text-align:left">Preço</th><th class="tr">Var. dia</th><th class="tr">Sinal</th><th class="tr">Risco do dia</th></tr></thead>
+    <tbody>${linhasHtml}</tbody>
+  </table></div>`;
 }
 
 // ─── Gerenciar itens de cotação por categoria
