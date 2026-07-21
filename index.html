@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 41 -->
+<!-- APP_VERSION: 42 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1492,6 +1492,12 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div id="div-monitor-br"></div>
     <div class="pft">Soma de dividendos/JCP recebidos (data já passada) por empresa com ticker no padrão B3, ordenado do maior para o menor total · DY 12M quando o ativo estiver cadastrado na carteira</div>
   </div>
+  <!-- ANÁLISE FUNDAMENTALISTA — AÇÕES BR -->
+  <div class="panel mb" style="margin-top:16px">
+    <div class="phd"><div><div class="pt">Análise Fundamentalista — Ações BR</div><div class="ps">Um card por empresa · gerado sob demanda pela IA</div></div></div>
+    <div id="fund-analise-br"></div>
+    <div class="pft">Análises geradas por IA a partir do ticker e do histórico de proventos (mesma chave do Assistente Estrategista); podem conter imprecisões — use como apoio, não como recomendação de investimento</div>
+  </div>
   <div class="panel mb">
     <div class="phd"><div><div class="pt">Stocks · NYSE / NASDAQ</div></div><span class="badge b-b">EUA</span></div>
     <table><thead><tr><th>Ticker</th><th>Qtd</th><th>PM (USD)</th><th>Atual</th><th class="tr">Posição BRL</th><th class="tr">Resultado</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-us"></tbody></table>
@@ -1502,6 +1508,12 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="phd"><div><div class="pt">Monitoramento de Dividendos — Stocks EUA</div><div class="ps">Proventos já recebidos, agrupados por empresa</div></div><button class="btn btn-g" onclick="openM('m-dividendo')">+ Provento</button></div>
     <div id="div-monitor-us"></div>
     <div class="pft">Soma de dividendos recebidos (data já passada) por empresa com ticker no padrão EUA (só letras), valores em BRL · DY 12M quando o ativo estiver cadastrado na carteira</div>
+  </div>
+  <!-- ANÁLISE FUNDAMENTALISTA — STOCKS EUA -->
+  <div class="panel mb" style="margin-top:16px">
+    <div class="phd"><div><div class="pt">Análise Fundamentalista — Stocks EUA</div><div class="ps">Um card por empresa · gerado sob demanda pela IA</div></div></div>
+    <div id="fund-analise-us"></div>
+    <div class="pft">Análises geradas por IA a partir do ticker e do histórico de proventos (mesma chave do Assistente Estrategista); podem conter imprecisões — use como apoio, não como recomendação de investimento</div>
   </div>
   <!-- ALUGUEL DE AÇÕES -->
   <div class="panel mb" id="panel-aluguel" style="margin-top:16px">
@@ -4114,6 +4126,7 @@ function rcar(){
   raluguel();
   rgraos();
   rdivMonitor();
+  rfundAnalise();
 }
 // ─── MONITORAMENTO DE DIVIDENDOS POR EMPRESA (Ações BR / Stocks EUA) ───
 // Agrupa S.dividendos por empresa, separando BR de EUA. A classificação usa
@@ -4150,6 +4163,102 @@ function _divMonitorHTML(tipoAtivo){
 function rdivMonitor(){
   const elBr=document.getElementById('div-monitor-br');if(elBr)elBr.innerHTML=_divMonitorHTML('BR');
   const elUs=document.getElementById('div-monitor-us');if(elUs)elUs.innerHTML=_divMonitorHTML('US');
+}
+
+// ─── ANÁLISE FUNDAMENTALISTA POR EMPRESA (Ações BR / Stocks EUA) ───
+// Gera, sob demanda e por empresa, uma análise fundamentalista via IA (mesma
+// integração/chave já usada pelo Assistente Estrategista — chamarClaudeAPI).
+// O app não tem uma fonte de indicadores fundamentalistas (P/L, P/VP, ROE etc.)
+// cadastrada — só cotação via brapi.dev — então a análise é gerada por IA a
+// partir do ticker e do histórico de proventos já registrado. Resultado fica
+// em cache (localStorage) por ticker, com botão "Atualizar" para regerar.
+const _FUND_STORE='fund_analises';
+let _fundGerando={}; // ticker -> true enquanto uma chamada está em andamento
+
+function _lerFundAnalises(){
+  try{ const raw=localStorage.getItem(_FUND_STORE); return raw?JSON.parse(raw):{}; }catch(_){ return {}; }
+}
+function _salvarFundAnalises(obj){
+  try{ localStorage.setItem(_FUND_STORE, JSON.stringify(obj)); }catch(_){}
+}
+
+function _fundPrompt(e,tipoAtivo){
+  const mercado = tipoAtivo==='US' ? 'mercado americano (NYSE/NASDAQ)' : 'B3 (mercado brasileiro)';
+  const divCtx = `Já recebi ${e.n} pagamento(s) de proventos desta empresa, totalizando ${brl(e.total)}` +
+    (e.dy!=null ? `, com DY 12M de ${e.dy.toFixed(2)}% sobre a posição atual.` : '.');
+  return `Você é um analista de investimentos. Faça uma análise fundamentalista objetiva da empresa de ticker ${e.ticker}, negociada no ${mercado}.
+Contexto do investidor: ${divCtx}
+Estruture a resposta EXATAMENTE assim, em Markdown simples, em português brasileiro, no máximo 180 palavras no total:
+**Indicadores-chave** (estimativas aproximadas, avise se não tiver certeza): P/L, P/VP (ou P/E, se EUA), ROE, Dívida/Patrimônio.
+**Saúde financeira**: 1-2 frases.
+**Política de dividendos**: 1-2 frases.
+**Principais riscos**: até 3 riscos, bullets curtos.
+**Veredito**: 1 frase objetiva (ex.: "fundamentos sólidos, dividendo sustentável" ou "atenção ao endividamento").
+Seja direto, sem saudação, sem repetir o ticker no início.`;
+}
+
+async function gerarAnaliseFundamentalista(ticker,tipoAtivo){
+  if(!temApiKey()){ toast('⚠ Configure sua chave de API em Configurações para gerar análises fundamentalistas'); return; }
+  const linhas=_divPorEmpresa(tipoAtivo);
+  const e=linhas.find(x=>x.ticker===ticker);
+  if(!e)return;
+  _fundGerando[ticker]=true;
+  rfundAnalise();
+  try{
+    const resp=await chamarClaudeAPI({model:'claude-sonnet-4-6',max_tokens:500,messages:[{role:'user',content:_fundPrompt(e,tipoAtivo)}]});
+    const data=await resp.json();
+    if(data.error) throw new Error(data.error.message||'erro na API');
+    const txt=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join(' ').trim();
+    const cache=_lerFundAnalises();
+    cache[ticker]={texto:txt||'(sem resposta)',geradoEm:new Date().toISOString(),tipo:tipoAtivo};
+    _salvarFundAnalises(cache);
+  }catch(err){
+    toast('⚠ Falha ao gerar análise: '+err.message);
+  }finally{
+    delete _fundGerando[ticker];
+    rfundAnalise();
+  }
+}
+
+function _fundCardHTML(e,tipoAtivo){
+  const cache=_lerFundAnalises();
+  const item=cache[e.ticker];
+  const gerando=!!_fundGerando[e.ticker];
+  let corpo;
+  if(gerando){
+    corpo=`<div style="color:var(--blu);font-size:12.5px;padding:6px 0">✦ analisando fundamentos…</div>`;
+  } else if(item){
+    const geradoFmt=new Date(item.geradoEm).toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    corpo=`<div style="font-size:12.5px;line-height:1.6;color:var(--txt2)">${_mdBriefing(item.texto)}</div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;padding-top:8px;border-top:0.5px solid var(--bdr)">
+        <span style="font-size:10.5px;color:var(--txt3)">Gerado em ${geradoFmt}</span>
+        <button class="btn btn-ghost" style="font-size:11px;padding:3px 9px" onclick="gerarAnaliseFundamentalista('${e.ticker}','${tipoAtivo}')">↻ Atualizar</button>
+      </div>`;
+  } else {
+    corpo=`<button class="btn btn-g" style="font-size:11.5px;padding:5px 12px" onclick="gerarAnaliseFundamentalista('${e.ticker}','${tipoAtivo}')">🔍 Analisar Fundamentos</button>`;
+  }
+  return `<div class="card" style="margin-bottom:10px;padding:12px 14px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+      <strong class="mono" style="font-size:13px">${e.ticker}</strong>
+      ${e.dy!=null?`<span style="font-size:10.5px;color:var(--txt3)">DY 12M ${e.dy.toFixed(2)}%</span>`:''}
+    </div>
+    ${corpo}
+  </div>`;
+}
+
+function _fundAnaliseHTML(tipoAtivo){
+  const linhas=_divPorEmpresa(tipoAtivo);
+  if(!linhas.length)return `<div class="empty-hint" style="padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhuma empresa neste mercado ainda (depende dos proventos lançados acima).</div>`;
+  const semChave=!temApiKey() ? `<div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;background:var(--paper);border:0.5px solid var(--bdr);border-radius:10px;padding:8px 12px;margin-bottom:10px;font-size:11.5px;color:var(--txt3)">
+      <span>🔑 Sem chave de API configurada — necessária para gerar novas análises (mesma chave do Assistente Estrategista).</span>
+      <button class="btn btn-ghost" style="font-size:11px;padding:3px 9px" onclick="abrirConfigApi()">Configurar chave</button>
+    </div>` : '';
+  return semChave + linhas.map(e=>_fundCardHTML(e,tipoAtivo)).join('');
+}
+
+function rfundAnalise(){
+  const elBr=document.getElementById('fund-analise-br');if(elBr)elBr.innerHTML=_fundAnaliseHTML('BR');
+  const elUs=document.getElementById('fund-analise-us');if(elUs)elUs.innerHTML=_fundAnaliseHTML('US');
 }
 // Render do painel de Fundos de Investimento (ativos RF marcados como fundo)
 function rfundos(){
