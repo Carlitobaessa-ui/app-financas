@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 67 -->
+<!-- APP_VERSION: 68 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -5658,6 +5658,75 @@ const _fluxoLabelPlugin={
     });
   }
 };
+// Plugin: rótulo de valor ao final de cada barra horizontal (ranking de categorias
+// — Gastos por Categoria · Média Mensal). Mesmo padrão manual do _fluxoLabelPlugin,
+// já que o Chart.js embutido não traz plugin de datalabels.
+const _catRankLabelPlugin={
+  id:'catRankLabels',
+  afterDatasetsDraw(chart){
+    if(chart.canvas.id!=='ch-cat-rank')return;
+    const meta=chart.getDatasetMeta(0);
+    if(!meta||!meta.data)return;
+    const ctx=chart.ctx;
+    ctx.save();
+    ctx.font='700 10px Inter, system-ui, sans-serif';
+    ctx.textAlign='left';
+    ctx.textBaseline='middle';
+    ctx.fillStyle=(typeof C!=='undefined'&&C.txt)?C.txt:'#2A2A2A';
+    meta.data.forEach((bar,i)=>{
+      const v=chart.data.datasets[0].data[i];
+      if(v==null)return;
+      ctx.fillText(_lblCompacto(v)+'/mês', bar.x+6, bar.y);
+    });
+    ctx.restore();
+  }
+};
+// Plugin: rótulo de valor no último ponto de cada linha (evolução de categorias) —
+// só o valor mais recente de cada série, pra não poluir com um rótulo por mês em
+// até 10 séries simultâneas.
+const _catEvolLabelPlugin={
+  id:'catEvolLabels',
+  afterDatasetsDraw(chart){
+    if(chart.canvas.id!=='ch-cat-evol')return;
+    const ctx=chart.ctx;
+    ctx.save();
+    ctx.font='700 9px Inter, system-ui, sans-serif';
+    ctx.textAlign='left';
+    ctx.textBaseline='middle';
+    (chart.data.datasets||[]).forEach((ds,di)=>{
+      const meta=chart.getDatasetMeta(di);
+      if(!meta||meta.hidden||!meta.data||!meta.data.length)return;
+      const last=meta.data[meta.data.length-1];
+      const v=ds.data[ds.data.length-1];
+      if(v==null)return;
+      const txt=_lblCompacto(v);
+      ctx.lineWidth=3; ctx.strokeStyle='rgba(245,244,236,.92)'; ctx.strokeText(txt,last.x+6,last.y);
+      ctx.fillStyle=ds.borderColor||((typeof C!=='undefined'&&C.txt)?C.txt:'#2A2A2A');
+      ctx.fillText(txt,last.x+6,last.y);
+    });
+    ctx.restore();
+  }
+};
+// Rótulo de valor para gráficos de rosca/pizza (ex.: Gastos por Categoria da
+// fatura aberta) — em vez de escrever texto em cima de fatias finas (ilegível
+// quando há muitas categorias pequenas), anexamos valor + % a cada item da
+// legenda nativa do Chart.js, que já é o local que o usuário lê o nome da
+// categoria. Reaproveita _lblCompacto (some com o valor quando o modo
+// privacidade estiver ativo).
+function _legendComValorGenerateLabels(chart){
+  try{
+    const base=Chart.defaults.plugins.legend.labels.generateLabels(chart);
+    const ds=chart.data.datasets[0];
+    const total=(ds.data||[]).reduce((a,b)=>a+(Number(b)||0),0);
+    return base.map((lbl,i)=>{
+      const v=ds.data[i];
+      if(v==null)return lbl;
+      const pct=total>0?Math.round((v/total)*100):0;
+      lbl.text=chart.data.labels[i]+'  '+_lblCompacto(v)+' ('+pct+'%)';
+      return lbl;
+    });
+  }catch(e){ return Chart.defaults.plugins.legend.labels.generateLabels(chart); }
+}
 function rdash(){
 
   // Função que soma créditos/débitos de um dado mês (ym = 'YYYY-MM')
@@ -5953,7 +6022,7 @@ function rdash(){
     // Barras horizontais: gasto MÉDIO MENSAL por categoria no período (ranking) —
     // catsTop já vem ordenado da maior pra menor média, então a 1ª barra (topo) é
     // sempre a categoria com maior gasto médio mensal.
-    mkCh('ch-cat-rank',{type:'bar',data:{labels:catsTop.map(([k])=>k),datasets:[{data:catsTop.map(([,media])=>media),backgroundColor:catsTop.map(([k])=>corCat(k)),borderRadius:4,barPercentage:0.7,categoryPercentage:0.75}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>brl(ctx.parsed.x)+'/mês'}}},scales:{x:{grid:{color:'rgba(74,122,86,.08)'},ticks:{color:C.muted,font:{size:10},callback:_maskTick(v=>'R$'+(v/1000).toFixed(0)+'k')}},y:{grid:{display:false},ticks:{color:C.txt,font:{size:10.5}}}}}});
+    mkCh('ch-cat-rank',{type:'bar',data:{labels:catsTop.map(([k])=>k),datasets:[{data:catsTop.map(([,media])=>media),backgroundColor:catsTop.map(([k])=>corCat(k)),borderRadius:4,barPercentage:0.7,categoryPercentage:0.75}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,layout:{padding:{right:56}},plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>brl(ctx.parsed.x)+'/mês'}}},scales:{x:{grid:{color:'rgba(74,122,86,.08)'},ticks:{color:C.muted,font:{size:10},callback:_maskTick(v=>'R$'+(v/1000).toFixed(0)+'k')}},y:{grid:{display:false},ticks:{color:C.txt,font:{size:10.5}}}}},plugins:[_catRankLabelPlugin]});
 
     // Linha: evolução das 10 principais categorias (sem agrupar o resto em "Outras" —
     // só as 10 aparecem, conforme pedido). Se o período agrega por ano (>5 anos, mesma
@@ -5964,7 +6033,7 @@ function rdash(){
     const somaBucket=(cats,b)=>mesesCat.filter(ym=>bucketDe(ym)===b).reduce((s,ym)=>s+cats.reduce((s2,cat)=>s2+((porMesCat[ym]||{})[cat]||0),0),0);
     const dsCat=topCats.map(cat=>({label:cat,data:bucketsCat.map(b=>+somaBucket([cat],b).toFixed(2)),borderColor:corCat(cat),backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:bucketsCat.length>18?0:2,borderWidth:1.6}));
     const labelsCat=agregarAno?bucketsCat:bucketsCat.map(ym=>{const [y,m]=ym.split('-');return NOMES_MES[+m-1]+(nMesesCat>12?'/'+y.slice(2):'');});
-    mkCh('ch-cat-evol',{type:'line',data:{labels:labelsCat,datasets:dsCat},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:C.txt,padding:9,font:{size:10},usePointStyle:true,pointStyle:'line'}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+brl(ctx.parsed.y)}}},scales:gridOpts(v=>'R$'+(v/1000).toFixed(0)+'k')}});
+    mkCh('ch-cat-evol',{type:'line',data:{labels:labelsCat,datasets:dsCat},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{right:44}},plugins:{legend:{position:'top',labels:{color:C.txt,padding:9,font:{size:10},usePointStyle:true,pointStyle:'line'}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+brl(ctx.parsed.y)}}},scales:gridOpts(v=>'R$'+(v/1000).toFixed(0)+'k')},plugins:[_catEvolLabelPlugin]});
   }
 
   // Circulação entre baldes (conta ↔ cartão ↔ investimento)
@@ -7382,7 +7451,7 @@ function rcartoes(){
     }).join('');
   }
   const cs=Object.entries(bc).sort((a,b)=>b[1]-a[1]);
-  mkCh('ch-cc-cat',{type:'doughnut',data:{labels:cs.map(([k])=>k),datasets:[{data:cs.map(([,v])=>v),backgroundColor:cs.map(([k])=>corCat(k)),borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{color:C.txt,padding:10,font:{size:11}}}}}});
+  mkCh('ch-cc-cat',{type:'doughnut',data:{labels:cs.map(([k])=>k),datasets:[{data:cs.map(([,v])=>v),backgroundColor:cs.map(([k])=>corCat(k)),borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{color:C.txt,padding:10,font:{size:11},generateLabels:_legendComValorGenerateLabels}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+brl(ctx.parsed)}}}}});
   // "Comprometido" aqui = realizado (fatura + parcelas futuras reais) + previsto
   // (compras forecast do cartão) — o gráfico quer refletir TODO lançamento em
   // aberto, não só o que já é real. Os cards individuais de cada cartão acima
