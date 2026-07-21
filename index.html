@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 40 -->
+<!-- APP_VERSION: 41 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1490,7 +1490,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <div class="panel mb" style="margin-top:16px">
     <div class="phd"><div><div class="pt">Monitoramento de Dividendos — Ações BR</div><div class="ps">Proventos já recebidos, agrupados por empresa</div></div><button class="btn btn-g" onclick="openM('m-dividendo')">+ Provento</button></div>
     <div id="div-monitor-br"></div>
-    <div class="pft">Soma de dividendos/JCP recebidos (data já passada) por ação B3 cadastrada na carteira, ordenado do maior para o menor total · DY 12M sobre a posição atual</div>
+    <div class="pft">Soma de dividendos/JCP recebidos (data já passada) por empresa com ticker no padrão B3, ordenado do maior para o menor total · DY 12M quando o ativo estiver cadastrado na carteira</div>
   </div>
   <div class="panel mb">
     <div class="phd"><div><div class="pt">Stocks · NYSE / NASDAQ</div></div><span class="badge b-b">EUA</span></div>
@@ -1501,7 +1501,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <div class="panel mb" style="margin-top:16px">
     <div class="phd"><div><div class="pt">Monitoramento de Dividendos — Stocks EUA</div><div class="ps">Proventos já recebidos, agrupados por empresa</div></div><button class="btn btn-g" onclick="openM('m-dividendo')">+ Provento</button></div>
     <div id="div-monitor-us"></div>
-    <div class="pft">Soma de dividendos recebidos (data já passada) por stock EUA cadastrada na carteira, valores convertidos em BRL · DY 12M sobre a posição atual</div>
+    <div class="pft">Soma de dividendos recebidos (data já passada) por empresa com ticker no padrão EUA (só letras), valores em BRL · DY 12M quando o ativo estiver cadastrado na carteira</div>
   </div>
   <!-- ALUGUEL DE AÇÕES -->
   <div class="panel mb" id="panel-aluguel" style="margin-top:16px">
@@ -4116,17 +4116,18 @@ function rcar(){
   rdivMonitor();
 }
 // ─── MONITORAMENTO DE DIVIDENDOS POR EMPRESA (Ações BR / Stocks EUA) ───
-// Cruza S.dividendos (lançados por ticker, sem distinção de mercado) com S.ativos
-// (que sabe se o ticker é BR ou US) pra agrupar os proventos já recebidos por
-// empresa, e calcula o DY 12M usando a posição atual do ativo (pos()).
+// Agrupa S.dividendos por empresa, separando BR de EUA. A classificação usa
+// _tipoPorTicker() (mesmo classificador por padrão de ticker usado na importação
+// de ativos) em vez de exigir que o ticker já esteja cadastrado em S.ativos —
+// assim o provento aparece aqui mesmo se o ativo correspondente não estiver (mais)
+// na carteira. Quando existe um ativo cadastrado com aquele ticker, usa a posição
+// atual dele (pos()) só para calcular o DY 12M.
 function _divPorEmpresa(tipoAtivo){
   const hoje=_hojeISO();
   const corte12m=new Date();corte12m.setFullYear(corte12m.getFullYear()-1);
   const corteISO=corte12m.toISOString().slice(0,10);
   const porAtivo={};
-  S.dividendos.filter(d=>(d.data||'')<=hoje).forEach(d=>{
-    const at=S.ativos.find(a=>a.ticker===d.ativo&&a.tipo===tipoAtivo);
-    if(!at)return;
+  S.dividendos.filter(d=>(d.data||'')<=hoje && _tipoPorTicker(d.ativo)===tipoAtivo).forEach(d=>{
     if(!porAtivo[d.ativo])porAtivo[d.ativo]={ticker:d.ativo,total:0,n:0,ultData:'',ultValor:0,rec12:0};
     const e=porAtivo[d.ativo];
     e.total+=d.total||0;e.n++;
@@ -4134,7 +4135,7 @@ function _divPorEmpresa(tipoAtivo){
     if((d.data||'')>e.ultData){e.ultData=d.data;e.ultValor=d.total||0;}
   });
   return Object.values(porAtivo).map(e=>{
-    const at=S.ativos.find(a=>a.ticker===e.ticker&&a.tipo===tipoAtivo);
+    const at=S.ativos.find(a=>a.ticker===e.ticker);
     const posAtual=at?pos(at):0;
     e.dy=posAtual>0?e.rec12/posAtual*100:null;
     return e;
