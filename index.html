@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 48 -->
+<!-- APP_VERSION: 49 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4227,6 +4227,30 @@ function _itensCotWatch(cat){
   return lista.filter(it=>it && it.tk);
 }
 
+// DY 12M em nível de ATIVO (não de carteira): soma o valor pago POR AÇÃO/COTA
+// (campo valorcota de cada lançamento — o mesmo valor por unidade, seja qual
+// for a quantidade que o usuário possua) nos últimos 12 meses, dividido pela
+// cotação atual do ativo (mesma fonte de preço da tela Cotações ao Vivo).
+// Diferente de _divPorEmpresa().dy, que divide pelo valor da POSIÇÃO ATUAL na
+// carteira — este aqui é o mesmo número pra qualquer investidor, independente
+// de quantas ações ele tenha ou se sequer estiver na carteira, por isso é o
+// usado nos cards de Análise (que devem refletir o ativo, não a carteira).
+function _dyAssetLevel(ticker){
+  const hoje=_hojeISO();
+  const corte12m=new Date();corte12m.setFullYear(corte12m.getFullYear()-1);
+  const corteISO=corte12m.toISOString().slice(0,10);
+  let somaPorCota=0;
+  S.dividendos.forEach(d=>{
+    if(d.ativo!==ticker)return;
+    const dt=d.data||'';
+    if(dt<=hoje && dt>=corteISO) somaPorCota+=d.valorcota||0;
+  });
+  if(!somaPorCota)return null;
+  const q=(typeof getQ==='function'?getQ(ticker):null)||(typeof MQ!=='undefined'?MQ[ticker]:null);
+  if(!q || !q.p)return null;
+  return somaPorCota/q.p*100;
+}
+
 function _fundPrompt(ticker,nome,cat,divInfo,precoInfo){
   const info=_FUND_CATS[cat]||_FUND_CATS.BR;
   const moeda = cat==='US' ? 'USD' : (cat==='OURO'||cat==='CRIPTO') ? (/BRL$/.test(ticker)?'BRL':'USD') : 'BRL';
@@ -4237,9 +4261,10 @@ function _fundPrompt(ticker,nome,cat,divInfo,precoInfo){
   const regraComunicacao=`Regra de comunicação (MUITO IMPORTANTE): seja tecnicamente profundo e rigoroso — não superficial — mas escreva para ser entendido por QUALQUER pessoa, mesmo sem nenhum conhecimento de finanças. Sempre que citar um termo técnico, sigla ou indicador (ex.: P/L, ROE, dívida líquida/EBITDA, DY, market cap, DXY, carry trade), explique em poucas palavras o que ele significa e por que importa — nunca deixe uma sigla sem explicação. Use uma analogia simples do dia a dia quando ajudar a entender um conceito. Prefira frases curtas e diretas a jargão.`;
 
   if(cat==='BR'||cat==='US'){
+    const dyAtivo=_dyAssetLevel(ticker);
     const divCtx = divInfo
-      ? `Já recebi ${divInfo.n} pagamento(s) de proventos desta empresa, totalizando ${brl(divInfo.total)}` + (divInfo.dy!=null ? `, com DY 12M de ${divInfo.dy.toFixed(2)}% sobre a posição atual.` : '.')
-      : 'Ainda não recebi proventos registrados desta empresa no app.';
+      ? `Esta empresa tem ${divInfo.n} pagamento(s) de proventos registrado(s) no app` + (dyAtivo!=null ? `, com DY 12M (dividendos pagos por ação nos últimos 12 meses, dividido pela cotação atual) de ${dyAtivo.toFixed(2)}%.` : '.')
+      : 'Ainda não há proventos desta empresa registrados no app.';
     return `Você é um analista de investimentos sênior. Faça uma análise fundamentalista APROFUNDADA e tecnicamente rigorosa da empresa ${nome||ticker} (ticker ${ticker}), negociada no ${info.mercado}.
 ${regraComunicacao}
 Contexto do investidor: ${divCtx} ${precoCtx}
@@ -4297,16 +4322,22 @@ async function gerarAnaliseFundamentalista(ticker,cat){
   }
 }
 
-// ─── Série MENSAL de proventos por ticker para o ANO ATUAL (realizado +
-// previsto/agendado + estimativa sazonal), usada no mini-gráfico dentro do
-// card de análise fundamentalista. Só faz sentido para BR/US (ouro/cripto/
-// câmbio não pagam proventos no app).
+// ─── Série MENSAL de proventos POR AÇÃO/COTA (não em R$ agregado da minha
+// posição) para o ANO ATUAL (realizado + previsto/agendado + estimativa
+// sazonal), usada no mini-gráfico dentro do card de análise fundamentalista.
+// Usa o campo valorcota de cada lançamento — o valor pago por unidade do
+// ativo, o mesmo pra qualquer investidor — em vez de "total" (que é
+// qtd×valorcota, ou seja, depende de quantas ações EU tenho na carteira).
+// Isso garante que o gráfico reflita o ATIVO em si (o que ele paga por ação),
+// e não o quanto eu pessoalmente recebi por causa do tamanho da minha
+// posição. Só faz sentido para BR/US (ouro/cripto/câmbio não pagam
+// proventos no app).
 const _MESES_ABREV=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 function _divSerieMensalTicker(ticker){
   const hoje=_hojeISO();
   const anoAtual=+hoje.slice(0,4);
   const mesAtual=+hoje.slice(5,7);
-  const realizado=new Array(12).fill(0);       // pago este ano, data<=hoje
+  const realizado=new Array(12).fill(0);       // pago este ano (por ação/cota), data<=hoje
   const previsto=new Array(12).fill(0);        // já cadastrado no app, data futura dentro do ano atual
   const historicoPorMes=new Array(12).fill(0); // soma de anos anteriores, por mês (p/ estimar sazonalidade)
   const anosHistoricos=new Set();
@@ -4314,11 +4345,12 @@ function _divSerieMensalTicker(ticker){
     const dt=d.data||''; if(dt.length<10)return;
     const ano=+dt.slice(0,4), mes=+dt.slice(5,7);
     if(!mes||mes<1||mes>12)return;
+    const valorPorAcao=d.valorcota||0;
     if(ano===anoAtual){
-      if(dt<=hoje) realizado[mes-1]+=d.total||0;
-      else previsto[mes-1]+=d.total||0;
+      if(dt<=hoje) realizado[mes-1]+=valorPorAcao;
+      else previsto[mes-1]+=valorPorAcao;
     } else if(ano<anoAtual){
-      historicoPorMes[mes-1]+=d.total||0;
+      historicoPorMes[mes-1]+=valorPorAcao;
       anosHistoricos.add(ano);
     }
   });
@@ -4342,9 +4374,15 @@ function _divSerieMensalTicker(ticker){
   return {anoAtual,mesAtual,realizado,previsto,estimativa,temAlgumDado,proximo};
 }
 
+// Formata valor por ação/cota com mais casas decimais (valores costumam ser
+// pequenos, ex. R$ 0,108) — diferente de brl() que arredonda em 2 casas.
+const _fmtPorAcao=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:4});
+
 // Bloco HTML (título + canvas + linha de próximo pagamento/estimativa). Vazio
 // se não houver nenhum provento (realizado, previsto ou histórico p/ estimar)
-// no ano atual, ou se a categoria não for BR/US.
+// no ano atual, ou se a categoria não for BR/US. Os valores são POR
+// AÇÃO/COTA — refletem o ativo listado em Cotações ao Vivo, não a minha
+// posição na carteira (ver comentário em _divSerieMensalTicker).
 function _divChartBlockHTML(ticker,cat){
   if(cat!=='BR' && cat!=='US')return '';
   const serie=_divSerieMensalTicker(ticker);
@@ -4354,11 +4392,11 @@ function _divChartBlockHTML(ticker,cat){
   if(serie.proximo){
     const nomeMes=_MESES_ABREV[serie.proximo.mesIdx];
     linha = serie.proximo.real
-      ? `Próximo pagamento agendado: <strong>${nomeMes}/${serie.anoAtual}</strong> · ${brl(serie.proximo.valor)}`
-      : `Sem pagamento agendado — estimativa para <strong>${nomeMes}/${serie.anoAtual}</strong> baseada na sazonalidade histórica: <strong>~${brl(serie.proximo.valor)}</strong>`;
+      ? `Próximo pagamento agendado: <strong>${nomeMes}/${serie.anoAtual}</strong> · ${_fmtPorAcao(serie.proximo.valor)}/ação`
+      : `Sem pagamento agendado — estimativa para <strong>${nomeMes}/${serie.anoAtual}</strong> baseada na sazonalidade histórica: <strong>~${_fmtPorAcao(serie.proximo.valor)}/ação</strong>`;
   }
   return `<div style="margin:8px 0 10px">
-    <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.03em">Proventos por mês em ${serie.anoAtual} — realizado &amp; previsto</div>
+    <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.03em">Proventos por ação, por mês, em ${serie.anoAtual} — realizado &amp; previsto</div>
     <div style="height:120px"><canvas id="${canvasId}"></canvas></div>
     ${linha?`<div style="font-size:11px;margin-top:5px;color:var(--txt2)">${linha}</div>`:''}
   </div>`;
@@ -4382,7 +4420,7 @@ function _renderDivChartsFund(cat){
       {label:'Realizado',data:realizado,backgroundColor:C.grn,borderRadius:3,maxBarThickness:16},
       {label:'Previsto (agendado)',data:previsto,backgroundColor:C.gldlt,borderRadius:3,maxBarThickness:16},
       {label:'Estimativa (sazonal)',data:estimativa,backgroundColor:'rgba(154,147,130,.35)',borderColor:C.muted,borderWidth:1,borderDash:[4,3],borderRadius:3,maxBarThickness:16},
-    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:9,font:{size:8.5},color:C.txt,padding:5}}},scales:gridOpts(v=>'R$ '+v)}});
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:9,font:{size:8.5},color:C.txt,padding:5}},tooltip:{callbacks:{label:ctx=>`${ctx.dataset.label}: ${_fmtPorAcao(ctx.parsed.y)}/ação`}}},scales:gridOpts(v=>_fmtPorAcao(v))}});
   });
 }
 
@@ -4391,7 +4429,7 @@ function _fundCardHTML(item,cat){
   const cache=_lerFundAnalises();
   const cached=cache[ticker];
   const gerando=!!_fundGerando[ticker];
-  const divInfo=(cat==='BR'||cat==='US') ? _divPorEmpresa(cat).find(x=>x.ticker===ticker) : null;
+  const dyAtivo=(cat==='BR'||cat==='US') ? _dyAssetLevel(ticker) : null; // DY do ativo, não da carteira
   let corpo;
   if(gerando){
     corpo=`<div style="color:var(--blu);font-size:12.5px;padding:6px 0">✦ analisando…</div>`;
@@ -4411,7 +4449,7 @@ function _fundCardHTML(item,cat){
   return `<div class="card" style="margin-bottom:16px;padding:12px 14px 14px 13px;border-left:3px solid ${corAcento}">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;padding-bottom:8px;border-bottom:0.5px solid var(--bdr)">
       <div><strong class="mono" style="font-size:13px">${item.sym||ticker}</strong>${item.nome?`<strong style="font-size:11.5px;color:var(--txt2);font-weight:600;margin-left:7px">${item.nome}</strong>`:''}</div>
-      ${divInfo && divInfo.dy!=null?`<span style="font-size:10.5px;color:var(--txt3)">DY 12M ${divInfo.dy.toFixed(2)}%</span>`:''}
+      ${dyAtivo!=null?`<span style="font-size:10.5px;color:var(--txt3)">DY 12M ${dyAtivo.toFixed(2)}%</span>`:''}
     </div>
     ${divChart}
     ${corpo}
