@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 61 -->
+<!-- APP_VERSION: 62 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1570,7 +1570,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
 
 <!-- COTAÇÕES -->
 <div class="page" id="page-cotacoes">
-  <div class="ph"><svg class="ph-scene"><use href="#scene-header"/></svg><svg class="ph-watermark"><use href="#ic-milho"/></svg><div><div class="ph-eye">Mercados</div><div class="ph-title">Mercado de Ações</div><div class="ph-sub">Índices · Ações BR & Globais · Ouro · Cripto · Câmbio</div></div><button class="btn btn-g" onclick="atualizarCotacoes()">↻ Atualizar Tudo</button></div>
+  <div class="ph"><svg class="ph-scene"><use href="#scene-header"/></svg><svg class="ph-watermark"><use href="#ic-milho"/></svg><div><div class="ph-eye">Mercados</div><div class="ph-title">Mercado de Ações</div><div class="ph-sub">Índices · Ações BR & Globais · Ouro · Cripto · Câmbio</div><div class="ps" id="cot-status-upd" style="margin-top:2px"></div></div><button class="btn btn-g" onclick="atualizarCotacoes()">↻ Atualizar Tudo</button></div>
 
   <!-- Agro & Índices BR -->
   <div class="panel mb">
@@ -1737,7 +1737,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
 #page-graos .exec-card .meta { font-size:11.5px; color:var(--pg-ink-3); }
 </style>
 <div class="page" id="page-graos">
-  <div class="ph"><svg class="ph-scene"><use href="#scene-header"/></svg><svg class="ph-watermark"><use href="#ic-soja"/></svg><div><div class="ph-eye">Mercados</div><div class="ph-title">Mercado de Grãos</div><div class="ph-sub">Soja · Milho · Trigo — Balcão PR · Relação de troca · B3 · CBOT · Safras</div></div><button class="btn btn-g" onclick="atualizarMercadoGraos()">↻ Atualizar Tudo</button></div>
+  <div class="ph"><svg class="ph-scene"><use href="#scene-header"/></svg><svg class="ph-watermark"><use href="#ic-soja"/></svg><div><div class="ph-eye">Mercados</div><div class="ph-title">Mercado de Grãos</div><div class="ph-sub">Soja · Milho · Trigo — Balcão PR · Relação de troca · B3 · CBOT · Safras</div><div class="ps" style="margin-top:2px">Câmbio ao vivo (AwesomeAPI) quando você atualiza · cooperativas = referência CEPEA/Esalq · CBOT e curva B3 = dado simulado (sem fonte gratuita disponível)</div></div><button class="btn btn-g" onclick="atualizarMercadoGraos()">↻ Atualizar Tudo</button></div>
   <div class="wrap">
 
     <!-- HERO -->
@@ -1796,8 +1796,8 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <!-- CBOT Futuros em destaque (movido de Cotações ao Vivo) -->
     <div class="panel mb">
       <div class="phd">
-        <div><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--gld);margin-right:5px"><use href="#ic-trigo"/></svg>CBOT — Contratos Futuros de Grãos</div><div class="ps">Chicago Board of Trade · Preços em USD/bushel · Atualização simulada</div></div>
-        <div style="display:flex;gap:7px;align-items:center"><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('cbot')">+ Incluir</button><span class="badge b-gd">Futuros</span></div>
+        <div><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--gld);margin-right:5px"><use href="#ic-trigo"/></svg>CBOT — Contratos Futuros de Grãos</div><div class="ps">Chicago Board of Trade · Preços em USD/bushel</div></div>
+        <div style="display:flex;gap:7px;align-items:center"><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('cbot')">+ Incluir</button><span class="badge" style="background:rgba(217,119,87,.14);color:var(--pg-corn)" title="Não há fonte gratuita/sem chave e compatível com navegador (CORS) para futuros CBOT — valores fixos, sem data de atualização real">⚠ dado simulado — não é cotação ao vivo</span></div>
       </div>
       <div class="pbd" style="padding:0">
         <div class="cbot-head">
@@ -1915,12 +1915,12 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <h2><span class="n">3</span> Contratos futuros &amp; curva de fixação</h2>
     <div class="grid two">
       <div class="card">
-        <div class="sub">Curva de fixação (referência B3 que as cooperativas espelham)</div>
+        <div class="sub" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">Curva de fixação (referência B3 que as cooperativas espelham) <span class="badge" style="background:rgba(217,119,87,.14);color:var(--pg-corn)" title="Sem fonte gratuita/sem chave e compatível com navegador (CORS) para a curva B3 — valores fixos, sem data de atualização real">⚠ dado simulado</span></div>
         <table>
           <thead><tr><th>Vencimento</th><th>Soja US$/sc</th><th>Soja R$/sc*</th><th>Milho R$/sc</th></tr></thead>
           <tbody id="futCoop"></tbody>
         </table>
-        <div class="calc">*Soja convertida pelo câmbio. Prêmio porto Paranaguá soja: Jun +0,50 / Jul +0,70 / Ago +1,00 / Set +1,15 US$/bu. As cooperativas ofertam fixação espelhando esses vencimentos ± prêmio de balcão.</div>
+        <div class="calc">*Soja convertida pelo câmbio (este ao vivo — veja acima). Prêmio porto Paranaguá soja: Jun +0,50 / Jul +0,70 / Ago +1,00 / Set +1,15 US$/bu. As cooperativas ofertam fixação espelhando esses vencimentos ± prêmio de balcão.</div>
       </div>
       <div class="card">
         <div class="sub">Como ler a relação de troca</div>
@@ -1938,7 +1938,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     </div>
 
     <!-- 4. MERCADO / CURVAS -->
-    <h2><span class="n">4</span> Resumo de mercado e curvas de futuros</h2>
+    <h2><span class="n">4</span> Resumo de mercado e curvas de futuros <span class="badge" style="background:rgba(217,119,87,.14);color:var(--pg-corn);text-transform:none;letter-spacing:0;font-weight:500;margin-left:8px" title="Snapshot fixo — sem fonte gratuita/sem chave e compatível com navegador para estes dados">⚠ snapshot fixo — não é cotação ao vivo</span></h2>
     <div class="grid kpis">
       <div class="card kpi"><div class="lab">Soja PR <span class="tag t-soy">CEPEA</span></div><div class="val">R$ 126,00</div><div class="meta">18/06 · <span class="up">▲ +1,7%</span></div></div>
       <div class="card kpi"><div class="lab">Soja Paranaguá <span class="tag t-soy">porto</span></div><div class="val">R$ 134,00</div><div class="meta">18/06 AgRural</div></div>
@@ -1975,7 +1975,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       </div>
       <div class="card">
         <div class="sub">Câmbio &amp; paridade soja</div>
-        <div class="calc">Câmbio: <input class="px" id="fxin" value="5.17"> R$/US$</div>
+        <div class="calc">Câmbio: <input class="px" id="fxin" value="5.17"> R$/US$ <span id="fx-status"></span></div>
         <table><tbody>
           <tr><td>Soja CBOT Nov/26 (US$/bu)</td><td>11,49 <span style="font-size:10px;color:var(--pg-muted)">Reuters 17/jun</span></td></tr>
           <tr><td>Paridade bruta (R$/sc)</td><td class="hl" id="parsoja">—</td></tr>
@@ -2039,6 +2039,32 @@ const pgFutMilhoCbot=[{m:'Jul/26',v:4.1900},{m:'Set/26',v:4.2700},{m:'Dez/26',v:
 const pgFutSojaCbot=[{m:'Jul/26',v:11.32},{m:'Ago/26',v:11.37},{m:'Set/26',v:11.40},{m:'Nov/26',v:11.4925}];
 
 function pgFxv(){return parseFloat((document.getElementById('fxin')||{}).value?.replace(',','.'))||5.17;}
+
+// Câmbio ao vivo do painel de Grãos — reaproveita a MESMA fonte gratuita
+// (AwesomeAPI, sem chave) já usada em Mercado de Ações via _fxFetch(), em
+// vez de depender só do valor manual digitado no campo. pgFxFetchedAt fica
+// null enquanto o usuário não clicar em Atualizar Tudo/Atualizar Mercado
+// pelo menos uma vez nesta sessão — usado pra rotular o campo como "ao
+// vivo" ou "valor manual" com honestidade.
+let pgFxFetchedAt=null;
+async function pgFetchFxLive(){
+  try{
+    if(typeof _fxFetch==='function') await _fxFetch();
+    const usd=(typeof MQ!=='undefined'?MQ['USDBRL']:null)||(typeof getQ==='function'?getQ('USDBRL'):null);
+    if(usd && usd.p){
+      const el=document.getElementById('fxin');
+      if(el) el.value=usd.p.toFixed(2);
+      pgFxFetchedAt=new Date();
+    }
+  }catch(e){ /* mantém valor manual em caso de falha de rede/CORS */ }
+}
+function pgFxStatusHTML(){
+  if(pgFxFetchedAt){
+    const f=pgFxFetchedAt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+    return `<span class="badge live" style="margin-left:6px">🟢 ao vivo · AwesomeAPI · ${f}</span>`;
+  }
+  return `<span class="badge" style="margin-left:6px">⚪ valor manual — clique em Atualizar Tudo/Atualizar Mercado p/ buscar ao vivo</span>`;
+}
 function pgFmt(n,d=2){return (isNaN(n)?0:n).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});}
 function pgBrl(n){return 'R$ '+pgFmt(n);}
 function pgNum(id){return parseFloat((document.getElementById(id)||{}).value?.replace(',','.'))||0;}
@@ -2235,6 +2261,7 @@ function pgUpdFx(){
   const pel=document.getElementById('parsoja'); if(pel)pel.textContent='~R$ '+par.toFixed(0);
   const gap=126.00-par, el=document.getElementById('baseGap');
   if(el){ el.textContent=(gap>=0?'+':'')+pgFmt(gap)+' R$/sc'; el.className=gap>=0?'up':'down'; }
+  const st=document.getElementById('fx-status'); if(st) st.innerHTML=pgFxStatusHTML();
   pgRenderFutCoop();
 }
 
@@ -2293,9 +2320,10 @@ function rgraosmkt(){
 // tudo que a página exibe — tabela e gráficos CBOT (com nova variação
 // simulada), tabela de cooperativas, comparativo, spread, curva de futuros
 // e câmbio/paridade — reaproveitando o mesmo pipeline de render da página.
-function atualizarMercadoGraos(){
+async function atualizarMercadoGraos(){
+  await pgFetchFxLive();
   rgraosmkt();
-  toast('↻ Mercado de Grãos atualizado');
+  toast('↻ Mercado de Grãos atualizado (câmbio ao vivo · CBOT/curva B3 seguem simulados — sem fonte gratuita disponível)');
 }
 </script>
 
@@ -2582,7 +2610,7 @@ function atualizarMercadoGraos(){
 
 </style>
 <div class="page" id="page-imoveis">
-  <div class="ph"><svg class="ph-scene"><use href="#scene-header"/></svg><svg class="ph-watermark"><use href="#ic-imovel"/></svg><div><div class="ph-eye">Mercados</div><div class="ph-title">Mercado de Imóveis</div><div class="ph-sub">Carteira · Financiamento · PF vs PJ · Holding · Sinais &amp; Riscos</div></div><button class="btn btn-g" onclick="atualizarMercadoImoveis()">↻ Atualizar Tudo</button></div>
+  <div class="ph"><svg class="ph-scene"><use href="#scene-header"/></svg><svg class="ph-watermark"><use href="#ic-imovel"/></svg><div><div class="ph-eye">Mercados</div><div class="ph-title">Mercado de Imóveis</div><div class="ph-sub">Carteira · Financiamento · PF vs PJ · Holding · Sinais &amp; Riscos</div><div class="ps" style="margin-top:2px">🧮 Calculadora de premissas ajustáveis (sliders) — não busca cotação de mercado ao vivo</div></div><button class="btn btn-g" onclick="atualizarMercadoImoveis()">↻ Atualizar Tudo</button></div>
   <div class="im-shell">
 
 <!-- ══ NAV ══ -->
@@ -6644,6 +6672,12 @@ function rcot(){
   renderGrupo('ouro','tg-ouro');
   renderGrupo('cripto','tg-cripto');
   renderGrupo('fx','tg-fx');
+  const statusEl=document.getElementById('cot-status-upd');
+  if(statusEl){
+    statusEl.innerHTML = S.lastUpdate
+      ? `🟢 Cotações ao vivo atualizadas em ${S.lastUpdate.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`
+      : `⚪ Ainda não atualizado ao vivo nesta sessão — clique em "Atualizar Tudo"`;
+  }
   const now=new Date().toLocaleTimeString('pt-BR');
   const tbCot=document.getElementById('tb-cot');
   if(tbCot)tbCot.innerHTML=S.ativos.filter(a=>a.tipo!=='RF').map(a=>{const qv=getQ(a.ticker)||MQ[a.ticker];if(!qv)return'';const up=qv.dp>=0;return`<tr><td><strong class="mono">${a.ticker}</strong></td><td><span class="badge ${badg(a.tipo)}">${a.tipo}</span></td><td class="mono">${a.tipo==='US'?usd(qv.p):brl(qv.p)}</td><td class="tr mono ${up?'cg':'cr'}">${a.tipo==='US'?'$ ':'R$ '}${Math.abs(qv.d).toFixed(2)}</td><td class="tr mono ${up?'cg':'cr'}">${pct(qv.dp)}</td><td class="tr cm" style="font-size:10px;font-family:var(--mono)">${S.lastUpdate?S.lastUpdate.toLocaleTimeString('pt-BR'):now}</td></tr>`}).join('');
@@ -9275,8 +9309,19 @@ async function atualizarCotacoes(){
   S.ativos.forEach(a=>{const q=getQ(a.ticker);if(q&&a.tipo!=='RF'){a.preco=q.p;a.varDia=q.d;a.varPct=q.dp}});
   S.usdBrl=getQ('USDBRL')?.p||S.usdBrl||5.42;S.lastUpdate=new Date();
   document.getElementById('ri').textContent='↻';
-  document.getElementById('last-upd').textContent=S.lastUpdate.toLocaleTimeString('pt-BR');
+  document.getElementById('last-upd').textContent=S.lastUpdate.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
   document.getElementById('mkt-st').textContent='';
+  // Reaproveita o câmbio já buscado acima (_fxFetch) pro campo de câmbio do
+  // Painel de Grãos — sem isso, "Atualizar Mercado" (botão global) não
+  // deixaria o câmbio de Grãos marcado como "ao vivo".
+  try{
+    const usdG=getQ('USDBRL');
+    if(usdG && usdG.p){
+      const fxelG=document.getElementById('fxin');
+      if(fxelG) fxelG.value=usdG.p.toFixed(2);
+      if(typeof pgFxFetchedAt!=='undefined') pgFxFetchedAt=new Date();
+    }
+  }catch(e){}
   // Atualiza TODAS as páginas do app (não só a que está visível agora), para
   // que qualquer informação/derivada de cotações (patrimônio, indicadores,
   // gráficos, contexto dos assistentes etc.) fique consistente em todo o app
@@ -13879,8 +13924,11 @@ function renderDisrupcao(dis,m){
     S.ativos.forEach(a=>{const q=MQ[a.ticker];if(q&&a.tipo!=='RF'&&!a.preco){a.preco=q.p;a.varDia=q.d;a.varPct=q.dp}});
     toast('✓ Dados restaurados com sucesso');
   }
-  S.lastUpdate=new Date();
-  document.getElementById('last-upd').textContent=S.lastUpdate.toLocaleTimeString('pt-BR');
+  // NÃO marca S.lastUpdate aqui — os preços neste ponto ainda são os
+  // valores mockados/de referência (MQ), não uma busca ao vivo real.
+  // Mostrar um "atualizado agora" falso enganaria sobre a precisão dos
+  // dados; o rótulo some só quando atualizarCotacoes() buscar de verdade.
+  document.getElementById('last-upd').textContent='— aguardando 1ª atualização —';
 
   // Restaurar estado colapsado do nav
   if(localStorage.getItem('nav_collapsed')==='1'){
