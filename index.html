@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 68 -->
+<!-- APP_VERSION: 69 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -5708,25 +5708,40 @@ const _catEvolLabelPlugin={
   }
 };
 // Rótulo de valor para gráficos de rosca/pizza (ex.: Gastos por Categoria da
-// fatura aberta) — em vez de escrever texto em cima de fatias finas (ilegível
-// quando há muitas categorias pequenas), anexamos valor + % a cada item da
-// legenda nativa do Chart.js, que já é o local que o usuário lê o nome da
-// categoria. Reaproveita _lblCompacto (some com o valor quando o modo
+// fatura aberta). Testamos anexar valor+% ao texto da legenda nativa, mas
+// com muitas categorias isso estoura a 2ª coluna da legenda (texto cortado
+// no limite do painel) — por isso o rótulo aparece diretamente sobre a
+// fatia, e só nas fatias com participação relevante no total (fatias
+// pequenas ficariam ilegíveis); as demais continuam disponíveis ao passar o
+// mouse (tooltip). Reaproveita _lblCompacto (some com o valor quando o modo
 // privacidade estiver ativo).
-function _legendComValorGenerateLabels(chart){
-  try{
-    const base=Chart.defaults.plugins.legend.labels.generateLabels(chart);
+const _donutValueLabelPlugin={
+  id:'donutValueLabels',
+  afterDatasetsDraw(chart){
+    if(chart.canvas.id!=='ch-cc-cat')return;
+    const meta=chart.getDatasetMeta(0);
+    if(!meta||!meta.data||!meta.data.length)return;
     const ds=chart.data.datasets[0];
     const total=(ds.data||[]).reduce((a,b)=>a+(Number(b)||0),0);
-    return base.map((lbl,i)=>{
+    if(total<=0)return;
+    const ctx=chart.ctx;
+    ctx.save();
+    ctx.font='700 10px Inter, system-ui, sans-serif';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    meta.data.forEach((arc,i)=>{
       const v=ds.data[i];
-      if(v==null)return lbl;
-      const pct=total>0?Math.round((v/total)*100):0;
-      lbl.text=chart.data.labels[i]+'  '+_lblCompacto(v)+' ('+pct+'%)';
-      return lbl;
+      if(v==null)return;
+      if((v/total)<0.06)return; // fatia pequena demais pra rótulo legível
+      const pos=arc.getCenterPoint();
+      const txt=_lblCompacto(v);
+      ctx.lineWidth=2.5; ctx.strokeStyle='rgba(0,0,0,.35)'; ctx.strokeText(txt,pos.x,pos.y);
+      ctx.fillStyle='#fff';
+      ctx.fillText(txt,pos.x,pos.y);
     });
-  }catch(e){ return Chart.defaults.plugins.legend.labels.generateLabels(chart); }
-}
+    ctx.restore();
+  }
+};
 function rdash(){
 
   // Função que soma créditos/débitos de um dado mês (ym = 'YYYY-MM')
@@ -7451,7 +7466,7 @@ function rcartoes(){
     }).join('');
   }
   const cs=Object.entries(bc).sort((a,b)=>b[1]-a[1]);
-  mkCh('ch-cc-cat',{type:'doughnut',data:{labels:cs.map(([k])=>k),datasets:[{data:cs.map(([,v])=>v),backgroundColor:cs.map(([k])=>corCat(k)),borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{color:C.txt,padding:10,font:{size:11},generateLabels:_legendComValorGenerateLabels}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+brl(ctx.parsed)}}}}});
+  mkCh('ch-cc-cat',{type:'doughnut',data:{labels:cs.map(([k])=>k),datasets:[{data:cs.map(([,v])=>v),backgroundColor:cs.map(([k])=>corCat(k)),borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{color:C.txt,padding:10,font:{size:11}}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+brl(ctx.parsed)}}}},plugins:[_donutValueLabelPlugin]});
   // "Comprometido" aqui = realizado (fatura + parcelas futuras reais) + previsto
   // (compras forecast do cartão) — o gráfico quer refletir TODO lançamento em
   // aberto, não só o que já é real. Os cards individuais de cada cartão acima
