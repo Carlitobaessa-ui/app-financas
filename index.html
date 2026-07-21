@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 65 -->
+<!-- APP_VERSION: 66 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1644,7 +1644,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <div class="panel mb">
     <div class="phd"><div><div class="pt">🛡️ Sinais de Risco e Decisões — Consolidado</div><div class="ps">Todos os ativos de Mercado de Ações (BR, EUA, Ouro, Cripto, Câmbio) numa única visão — veredito já gerado pela IA quando existir, e risco de volatilidade do dia com base na variação atual</div></div></div>
     <div id="cot-sinais-body"></div>
-    <div class="pft">Sinal (Comprar/Vender/Manter) vem da análise fundamentalista já gerada por ativo acima; itens sem análise mostram apenas o risco de volatilidade do dia. Ordenado do maior para o menor movimento do dia. Apoio à decisão — não é recomendação de investimento.</div>
+    <div class="pft">Sinal (Comprar/Vender/Manter) vem da análise fundamentalista já gerada por ativo acima; o Comentário resume o veredito dessa análise. Itens sem análise mostram apenas o risco de volatilidade do dia, sem inventar uma justificativa fundamentalista. Ordenado do maior para o menor movimento do dia. Apoio à decisão — não é recomendação de investimento.</div>
   </div>
 </div>
 
@@ -6792,6 +6792,22 @@ function _riscoDiaCot(dp){
   if(a>=2) return {txt:'Volatilidade moderada',cls:''};
   return {txt:'Estável',cls:'cg'};
 }
+// Comentário breve como lastro do sinal — quando há análise de IA já gerada,
+// usa o próprio veredito (3 frases: fundamentos, avaliação de preço,
+// recomendação) resumido; quando não há análise ("sem análise"), explica que
+// o único dado disponível é a variação do dia (não inventa uma justificativa
+// fundamentalista que não foi gerada).
+function _comentarioSinalCot(cached,dp){
+  if(cached && cached.texto){
+    const m=cached.texto.match(/\*\*Veredito\*\*:?\s*([\s\S]*?)(?:\n\*\*|$)/);
+    let txt=(m?m[1]:cached.texto).replace(/\n/g,' ').replace(/\*\*/g,'').trim();
+    if(txt.length>170) txt=txt.slice(0,167).trim()+'…';
+    return txt||'(análise gerada sem texto de veredito)';
+  }
+  const a=Math.abs(dp||0);
+  const nivel=a>=5?'alta volatilidade':a>=2?'volatilidade moderada':'variação estável';
+  return `Sem parecer fundamentalista gerado ainda — apenas a variação de hoje (${(dp>=0?'+':'')}${(dp||0).toFixed(2)}%, ${nivel}) está disponível.`;
+}
 // Ocultar/exibir o painel de Sinais de Risco e Decisões — estado
 // persistido em localStorage (mesmo padrão de _lerFundColapso), pra
 // sobreviver a reload. Usa o helper genérico já existente (_fundSecaoColapsada/
@@ -6826,7 +6842,7 @@ function rcotSinaisConsolidado(){
       const qv=getQ(it.tk)||MQ[it.tk];
       const dp=qv?qv.dp:0;
       const cached=cache[it.tk];
-      linhas.push({sym:it.sym||it.tk, nome:it.nome||'', cat:label, dp, preco:qv?qv.p:null, pf:it.pf||'', sinal:_sinalDeAnaliseCot(cached)});
+      linhas.push({sym:it.sym||it.tk, nome:it.nome||'', cat:label, dp, preco:qv?qv.p:null, pf:it.pf||'', sinal:_sinalDeAnaliseCot(cached), comentario:_comentarioSinalCot(cached,dp)});
     });
   });
   if(!linhas.length){
@@ -6868,10 +6884,11 @@ function rcotSinaisConsolidado(){
       <td class="tr mono ${up?'cg':'cr'}">${up?'+':''}${(l.dp||0).toFixed(2)}%</td>
       <td class="tr ${sinalCls[l.sinal]||'cm'}" style="font-weight:600">${sinalTxt[l.sinal]||'— sem análise'}</td>
       <td class="tr ${r.cls}">${r.txt}</td>
+      <td style="max-width:240px;white-space:normal;line-height:1.4;font-size:11px;color:var(--txt3)">${l.comentario}</td>
     </tr>`;
   }).join('');
   el.innerHTML=`${toggleBtn}${resumo}<div style="overflow-x:auto"><table>
-    <thead><tr><th style="text-align:left">Ativo</th><th style="text-align:left">Categoria</th><th style="text-align:left">Preço</th><th class="tr">Var. dia</th><th class="tr">Sinal</th><th class="tr">Risco do dia</th></tr></thead>
+    <thead><tr><th style="text-align:left">Ativo</th><th style="text-align:left">Categoria</th><th style="text-align:left">Preço</th><th class="tr">Var. dia</th><th class="tr">Sinal</th><th class="tr">Risco do dia</th><th style="text-align:left">Comentário (lastro)</th></tr></thead>
     <tbody>${linhasHtml}</tbody>
   </table></div>`;
 }
