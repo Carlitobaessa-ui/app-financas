@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 69 -->
+<!-- APP_VERSION: 70 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -3566,7 +3566,7 @@ async function atualizarMercadoImoveis(){
   </div>
   <div class="cc-grid" id="cc-grid"></div>
   <div class="g2 mb">
-    <div class="panel"><div class="phd"><div><div class="pt">Gastos por Categoria</div></div><span class="badge b-gd">Fatura aberta</span></div><div class="pbd"><div class="chart-m"><canvas id="ch-cc-cat"></canvas></div><div class="pft">Compras no cartão, só realizadas (sem previstos) · mês da fatura aberta</div></div></div>
+    <div class="panel"><div class="phd"><div><div class="pt">Gastos por Categoria</div></div><span class="badge b-gd">Fatura aberta</span></div><div class="pbd"><div class="chart-m"><canvas id="ch-cc-cat"></canvas></div><div class="pft">Compras no cartão, só realizadas (sem previstos) · mês da fatura aberta · não inclui "Pagamento cartão crédito" (meio de pagamento, não despesa)</div></div></div>
     <div class="panel"><div class="phd"><div class="pt">Utilização de Limite</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-cc-uso"></canvas></div><div class="pft">Comprometido = realizado (fatura + parcelas futuras) + previstos · Limite = total do cartão</div></div></div>
   </div>
   <div class="panel">
@@ -5742,6 +5742,13 @@ const _donutValueLabelPlugin={
     ctx.restore();
   }
 };
+// Categoria "Pagamento cartão crédito" (e variações de grafia) é meio de
+// pagamento/transferência entre "baldes" (a conta pagando a fatura do
+// cartão), não uma despesa efetiva — usado para excluí-la de gráficos de
+// gastos por categoria, onde contá-la duplicaria o gasto (a compra em si já
+// entra com sua categoria real quando lançada no cartão).
+const CATS_NAO_DESPESA_CAT=new Set(['pagamento cartão crédito','pagamento cartao credito','pagamento cartão de crédito','pagamento cartao de credito']);
+function _ehCatPagamentoCartao(cat){ return CATS_NAO_DESPESA_CAT.has((cat||'').toLowerCase().trim()); }
 function rdash(){
 
   // Função que soma créditos/débitos de um dado mês (ym = 'YYYY-MM')
@@ -5984,9 +5991,7 @@ function rdash(){
     // Categorias excluídas destes 2 gráficos: são meio de pagamento/transferência
     // entre "baldes" (ex.: conta paga fatura do cartão), não uma despesa efetiva —
     // contar aqui duplicaria o gasto, já que a compra em si entra com sua própria
-    // categoria real quando lançada no cartão.
-    const CATS_NAO_DESPESA_CAT=new Set(['pagamento cartão crédito','pagamento cartao credito','pagamento cartão de crédito','pagamento cartao de credito']);
-    const _normCat=s=>(s||'').toLowerCase().trim();
+    // categoria real quando lançada no cartão. (_ehCatPagamentoCartao é global.)
     const nMesesCat=Math.max(1,agregarAno?Math.round(fluxoAnos)*12:Math.round(fluxoAnos*12));
     const mesesCat=[]; // ['YYYY-MM',...] do mais antigo pro mais recente, terminando no mês atual
     for(let k=nMesesCat-1;k>=0;k--){
@@ -5997,12 +6002,12 @@ function rdash(){
     const porMesCat={}; // {ym:{categoria:valor}}
     mesesCat.forEach(ym=>porMesCat[ym]={});
     S.compras.forEach(cp=>{
-      if(cp.forecast||!cp.cat||CATS_NAO_DESPESA_CAT.has(_normCat(cp.cat)))return;
+      if(cp.forecast||!cp.cat||_ehCatPagamentoCartao(cp.cat))return;
       const ym=(cp.data||'').slice(0,7); if(!_ymSetCat.has(ym))return;
       porMesCat[ym][cp.cat]=(porMesCat[ym][cp.cat]||0)+cp.valor;
     });
     S.lancamentos.forEach(l=>{
-      if(l.forecast||l.tipo!=='debito'||!l.cat||CATS_NAO_DESPESA_CAT.has(_normCat(l.cat)))return;
+      if(l.forecast||l.tipo!=='debito'||!l.cat||_ehCatPagamentoCartao(l.cat))return;
       const ym=(l.data||'').slice(0,7); if(!_ymSetCat.has(ym))return;
       porMesCat[ym][l.cat]=(porMesCat[ym][l.cat]||0)+l.valor;
     });
@@ -7447,7 +7452,9 @@ function rcartoes(){
   // um mês futuro de compra prevista, e o filtro !cp.forecast abaixo não encontrava
   // nada nesse mês, deixando o gráfico vazio.
   const _mesCcCat=mesRefDe(S.compras.filter(cp=>!cp.forecast));
-  const bc={};S.compras.filter(cp=>(!fc||cp.cartao===fc)&&cp.data.startsWith(_mesCcCat)&&!cp.forecast).forEach(cp=>{bc[cp.cat]=(bc[cp.cat]||0)+cp.valor});
+  // "Pagamento cartão crédito" fica fora: é meio de pagamento/transferência entre
+  // contas (a conta pagando a fatura), não uma despesa efetiva desta fatura.
+  const bc={};S.compras.filter(cp=>(!fc||cp.cartao===fc)&&cp.data.startsWith(_mesCcCat)&&!cp.forecast&&!_ehCatPagamentoCartao(cp.cat)).forEach(cp=>{bc[cp.cat]=(bc[cp.cat]||0)+cp.valor});
   // Histórico de pagamentos de fatura (respeitando o filtro de cartão)
   const filCartPg=document.getElementById('fil-cart')?.value||'';
   const pags=[...(S.pagamentosFatura||[])].filter(p=>!filCartPg||p.cartaoId===filCartPg).sort((a,b)=>b.data.localeCompare(a.data));
