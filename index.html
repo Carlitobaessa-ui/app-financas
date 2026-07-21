@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 46 -->
+<!-- APP_VERSION: 47 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4234,19 +4234,22 @@ function _fundPrompt(ticker,nome,cat,divInfo,precoInfo){
     ? `Cotação atual: ${moeda} ${precoInfo.p.toFixed(2)}${precoInfo.dp!=null?` (variação do dia: ${precoInfo.dp>=0?'+':''}${precoInfo.dp.toFixed(2)}%)`:''}.`
     : 'Cotação atual não disponível no app.';
   const baseInstrucao=`**Base da análise**: 1 frase citando em que a avaliação se apoiou (ex.: "estimativas com base em dados públicos e consenso de mercado até o conhecimento do modelo, sem acesso a dados em tempo real"). Deixe claro que não é uma cotação de indicadores em tempo real e recomende conferir uma fonte oficial (corretora/home broker, B3/SEC, ou o Banco Central, conforme o caso) antes de decidir.`;
+  const regraComunicacao=`Regra de comunicação (MUITO IMPORTANTE): seja tecnicamente profundo e rigoroso — não superficial — mas escreva para ser entendido por QUALQUER pessoa, mesmo sem nenhum conhecimento de finanças. Sempre que citar um termo técnico, sigla ou indicador (ex.: P/L, ROE, dívida líquida/EBITDA, DY, market cap, DXY, carry trade), explique em poucas palavras o que ele significa e por que importa — nunca deixe uma sigla sem explicação. Use uma analogia simples do dia a dia quando ajudar a entender um conceito. Prefira frases curtas e diretas a jargão.`;
 
   if(cat==='BR'||cat==='US'){
     const divCtx = divInfo
       ? `Já recebi ${divInfo.n} pagamento(s) de proventos desta empresa, totalizando ${brl(divInfo.total)}` + (divInfo.dy!=null ? `, com DY 12M de ${divInfo.dy.toFixed(2)}% sobre a posição atual.` : '.')
       : 'Ainda não recebi proventos registrados desta empresa no app.';
-    return `Você é um analista de investimentos. Faça uma análise fundamentalista objetiva da empresa ${nome||ticker} (ticker ${ticker}), negociada no ${info.mercado}.
+    return `Você é um analista de investimentos sênior. Faça uma análise fundamentalista APROFUNDADA e tecnicamente rigorosa da empresa ${nome||ticker} (ticker ${ticker}), negociada no ${info.mercado}.
+${regraComunicacao}
 Contexto do investidor: ${divCtx} ${precoCtx}
-Estruture a resposta EXATAMENTE assim, em Markdown simples, em português brasileiro, no máximo 240 palavras no total:
-**Indicadores-chave** (estimativas aproximadas, avise se não tiver certeza): P/L, P/VP (ou P/E, se EUA), ROE, Dívida/Patrimônio.
-**Saúde financeira**: 1-2 frases.
-**Política de dividendos**: 1-2 frases.
-**Principais riscos**: até 3 riscos, bullets curtos.
+Estruture a resposta EXATAMENTE assim, em Markdown simples, em português brasileiro, no máximo 420 palavras no total:
+**Indicadores-chave** (estimativas aproximadas, avise se não tiver certeza): para cada um — P/L, P/VP (ou P/E, se EUA), ROE, Dívida líquida/EBITDA (ou Dívida/Patrimônio) e margem líquida — dê o valor estimado, explique em uma frase simples o que aquele número representa, e diga se está bom, ruim ou neutro para esta empresa e por quê.
+**Saúde financeira**: 2-3 frases técnicas explicando, em termos práticos, se a empresa gera caixa suficiente e consegue honrar suas dívidas.
+**Política de dividendos**: 2-3 frases sobre histórico, consistência e sustentabilidade dos pagamentos (o que isso significa pra quem vive de renda passiva).
+**Principais riscos**: até 4 riscos, bullets, cada um com 1 frase curta explicando o que aconteceria na prática se o risco se concretizasse.
 **Veredito**: 3 frases objetivas, nesta ordem — (1) fundamentos: ex. "fundamentos sólidos, dividendo sustentável" ou "atenção ao endividamento"; (2) avaliação do PREÇO ATUAL frente aos fundamentos e à cotação informada — barato, justo ou caro (ex. "no preço atual, o papel parece descontado frente ao P/L histórico"); (3) uma recomendação objetiva de **Compra**, **Venda** ou **Manter (posição neutra)**, com a justificativa em poucas palavras.
+**Resumindo em 1 frase**: uma frase final, sem NENHUM jargão técnico, que qualquer pessoa leigo entenda de primeira, resumindo se vale a pena ou não.
 ${baseInstrucao}
 Seja direto, sem saudação, sem repetir o ticker no início.`;
   }
@@ -4256,13 +4259,15 @@ Seja direto, sem saudação, sem repetir o ticker no início.`;
     CRIPTO:'fluxo institucional/ETFs, regulação, ciclo de liquidez global, adoção e narrativa de mercado',
     FX:'diferencial de juros (carry), risco fiscal/político, termos de troca, fluxo de capital estrangeiro',
   };
-  return `Você é um analista de mercado. Faça uma análise objetiva de ${nome||ticker} (${ticker}), ${info.label}, no ${info.mercado}.
+  return `Você é um analista de mercado sênior. Faça uma análise APROFUNDADA e tecnicamente rigorosa de ${nome||ticker} (${ticker}), ${info.label}, no ${info.mercado}.
+${regraComunicacao}
 Contexto: ${precoCtx}
-Estruture a resposta EXATAMENTE assim, em Markdown simples, em português brasileiro, no máximo 220 palavras no total:
-**Contexto atual**: 1-2 frases sobre o momento do ativo.
-**Fatores-chave**: até 4 bullets com os principais direcionadores (ex.: ${driversPorCat[cat]||'fatores macro relevantes'}).
-**Principais riscos**: até 3 riscos, bullets curtos.
+Estruture a resposta EXATAMENTE assim, em Markdown simples, em português brasileiro, no máximo 380 palavras no total:
+**Contexto atual**: 2-3 frases sobre o momento do ativo, indo além do óbvio (ex.: por que o mercado está precificando assim agora).
+**Fatores-chave**: até 5 bullets com os principais direcionadores (ex.: ${driversPorCat[cat]||'fatores macro relevantes'}), cada um com 1 frase explicando o mecanismo — como esse fator afeta o preço, na prática.
+**Principais riscos**: até 4 riscos, bullets, cada um com 1 frase explicando o impacto prático caso se concretize.
 **Veredito**: 3 frases objetivas, nesta ordem — (1) viés atual (alta/baixa/neutro) e por quê; (2) avaliação do PREÇO ATUAL frente ao contexto — barato, justo ou caro; (3) uma recomendação objetiva de **Compra**, **Venda** ou **Manter (posição neutra)**, com a justificativa em poucas palavras.
+**Resumindo em 1 frase**: uma frase final, sem NENHUM jargão técnico, que qualquer pessoa leiga entenda de primeira, resumindo o cenário.
 ${baseInstrucao}
 Seja direto, sem saudação, sem repetir o ticker no início.`;
 }
@@ -4277,7 +4282,7 @@ async function gerarAnaliseFundamentalista(ticker,cat){
   _fundGerando[ticker]=true;
   rfundAnalise();
   try{
-    const resp=await chamarClaudeAPI({model:'claude-sonnet-4-6',max_tokens:700,messages:[{role:'user',content:_fundPrompt(ticker,item.nome,cat,divInfo,precoInfo)}]});
+    const resp=await chamarClaudeAPI({model:'claude-sonnet-4-6',max_tokens:1400,messages:[{role:'user',content:_fundPrompt(ticker,item.nome,cat,divInfo,precoInfo)}]});
     const data=await resp.json();
     if(data.error) throw new Error(data.error.message||'erro na API');
     const txt=(data.content||[]).filter(x=>x.type==='text').map(x=>x.text).join(' ').trim();
@@ -4292,55 +4297,68 @@ async function gerarAnaliseFundamentalista(ticker,cat){
   }
 }
 
-// ─── Série anual de proventos por ticker (histórico recebido + agendado +
-// projeção), usada no mini-gráfico dentro do card de análise fundamentalista.
-// Só faz sentido para BR/US (ouro/cripto/câmbio não pagam proventos no app).
-function _divSerieTicker(ticker){
+// ─── Série MENSAL de proventos por ticker para o ANO ATUAL (realizado +
+// previsto/agendado + estimativa sazonal), usada no mini-gráfico dentro do
+// card de análise fundamentalista. Só faz sentido para BR/US (ouro/cripto/
+// câmbio não pagam proventos no app).
+const _MESES_ABREV=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+function _divSerieMensalTicker(ticker){
   const hoje=_hojeISO();
-  const porAno={};
-  let proxFuturo=null;
+  const anoAtual=+hoje.slice(0,4);
+  const mesAtual=+hoje.slice(5,7);
+  const realizado=new Array(12).fill(0);       // pago este ano, data<=hoje
+  const previsto=new Array(12).fill(0);        // já cadastrado no app, data futura dentro do ano atual
+  const historicoPorMes=new Array(12).fill(0); // soma de anos anteriores, por mês (p/ estimar sazonalidade)
+  const anosHistoricos=new Set();
   S.dividendos.filter(d=>d.ativo===ticker).forEach(d=>{
-    const dt=d.data||''; if(dt.length<4)return;
-    const ano=dt.slice(0,4);
-    if(!porAno[ano])porAno[ano]={recebido:0,aReceber:0};
-    if(dt<=hoje){ porAno[ano].recebido+=d.total||0; }
-    else{
-      porAno[ano].aReceber+=d.total||0;
-      if(!proxFuturo||dt<proxFuturo.data)proxFuturo={data:dt,total:d.total||0};
+    const dt=d.data||''; if(dt.length<10)return;
+    const ano=+dt.slice(0,4), mes=+dt.slice(5,7);
+    if(!mes||mes<1||mes>12)return;
+    if(ano===anoAtual){
+      if(dt<=hoje) realizado[mes-1]+=d.total||0;
+      else previsto[mes-1]+=d.total||0;
+    } else if(ano<anoAtual){
+      historicoPorMes[mes-1]+=d.total||0;
+      anosHistoricos.add(ano);
     }
   });
-  const anos=Object.keys(porAno).sort();
-  // Sem nenhum pagamento agendado (a receber) cadastrado, mas com histórico
-  // suficiente: projeta o próximo ano usando a média dos últimos até 3 anos
-  // com pagamento recebido — só uma estimativa simples, não é dado oficial.
-  let projAno=null,projValor=null;
-  const temFuturo=anos.some(a=>porAno[a].aReceber>0);
-  const anosComRecebido=anos.filter(a=>porAno[a].recebido>0);
-  if(!temFuturo && anosComRecebido.length){
-    const ultimos=anosComRecebido.slice(-3);
-    const media=ultimos.reduce((s,a)=>s+porAno[a].recebido,0)/ultimos.length;
-    projAno=String(+anosComRecebido[anosComRecebido.length-1]+1);
-    projValor=media;
+  const nAnos=anosHistoricos.size||1;
+  // Meses futuros do ano atual sem pagamento agendado real: estima com base
+  // na média histórica daquele mesmo mês em anos anteriores (sazonalidade
+  // simples — empresas costumam pagar nos mesmos meses todo ano). Só uma
+  // estimativa, não é dado oficial.
+  const estimativa=new Array(12).fill(0);
+  for(let m=0;m<12;m++){
+    if((m+1)>mesAtual && previsto[m]===0 && historicoPorMes[m]>0){
+      estimativa[m]=historicoPorMes[m]/nAnos;
+    }
   }
-  return {anos,porAno,proxFuturo,projAno,projValor};
+  const temAlgumDado=realizado.some(v=>v>0)||previsto.some(v=>v>0)||estimativa.some(v=>v>0);
+  // Próximo pagamento: primeiro mês a partir do atual com previsto real;
+  // senão, primeiro mês futuro com estimativa sazonal.
+  let proximo=null;
+  for(let m=mesAtual-1;m<12;m++){ if(previsto[m]>0){ proximo={mesIdx:m,valor:previsto[m],real:true}; break; } }
+  if(!proximo) for(let m=mesAtual-1;m<12;m++){ if(estimativa[m]>0){ proximo={mesIdx:m,valor:estimativa[m],real:false}; break; } }
+  return {anoAtual,mesAtual,realizado,previsto,estimativa,temAlgumDado,proximo};
 }
 
-// Bloco HTML (título + canvas + linha de próximo pagamento/projeção). Vazio
-// se não houver nenhum provento (recebido, agendado ou histórico) cadastrado
-// para o ticker, ou se a categoria não for BR/US.
+// Bloco HTML (título + canvas + linha de próximo pagamento/estimativa). Vazio
+// se não houver nenhum provento (realizado, previsto ou histórico p/ estimar)
+// no ano atual, ou se a categoria não for BR/US.
 function _divChartBlockHTML(ticker,cat){
   if(cat!=='BR' && cat!=='US')return '';
-  const serie=_divSerieTicker(ticker);
-  if(!serie.anos.length && !serie.projAno)return '';
+  const serie=_divSerieMensalTicker(ticker);
+  if(!serie.temAlgumDado)return '';
   const canvasId='ch-funddiv-'+ticker.replace(/[^A-Za-z0-9]/g,'_');
   let linha='';
-  if(serie.proxFuturo){
-    linha=`Próximo pagamento agendado: <strong>${fdt(serie.proxFuturo.data)}</strong> · ${brl(serie.proxFuturo.total)}`;
-  } else if(serie.projAno){
-    linha=`Sem pagamento agendado — projeção ${serie.projAno} baseada na média dos últimos anos: <strong>~${brl(serie.projValor)}</strong>`;
+  if(serie.proximo){
+    const nomeMes=_MESES_ABREV[serie.proximo.mesIdx];
+    linha = serie.proximo.real
+      ? `Próximo pagamento agendado: <strong>${nomeMes}/${serie.anoAtual}</strong> · ${brl(serie.proximo.valor)}`
+      : `Sem pagamento agendado — estimativa para <strong>${nomeMes}/${serie.anoAtual}</strong> baseada na sazonalidade histórica: <strong>~${brl(serie.proximo.valor)}</strong>`;
   }
   return `<div style="margin:8px 0 10px">
-    <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.03em">Histórico &amp; previsão de proventos</div>
+    <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.03em">Proventos por mês em ${serie.anoAtual} — realizado &amp; previsto</div>
     <div style="height:120px"><canvas id="${canvasId}"></canvas></div>
     ${linha?`<div style="font-size:11px;margin-top:5px;color:var(--txt2)">${linha}</div>`:''}
   </div>`;
@@ -4352,21 +4370,19 @@ function _renderDivChartsFund(cat){
   if(cat!=='BR' && cat!=='US')return;
   _itensCotWatch(cat).forEach(item=>{
     const ticker=item.tk;
-    const serie=_divSerieTicker(ticker);
-    if(!serie.anos.length && !serie.projAno)return;
+    const serie=_divSerieMensalTicker(ticker);
+    if(!serie.temAlgumDado)return;
     const canvasId='ch-funddiv-'+ticker.replace(/[^A-Za-z0-9]/g,'_');
     const el=document.getElementById(canvasId);
     if(!el)return;
-    let labels=serie.anos.slice();
-    let recebido=labels.map(a=>serie.porAno[a].recebido||null);
-    let aReceber=labels.map(a=>serie.porAno[a].aReceber||null);
-    let projecao=labels.map(()=>null);
-    if(serie.projAno){ labels=labels.concat([serie.projAno]); recebido=recebido.concat([null]); aReceber=aReceber.concat([null]); projecao=projecao.concat([serie.projValor]); }
-    mkCh(canvasId,{type:'bar',data:{labels,datasets:[
-      {label:'Recebido',data:recebido,backgroundColor:C.grn,borderRadius:3,maxBarThickness:28},
-      {label:'A receber (agendado)',data:aReceber,backgroundColor:C.gldlt,borderRadius:3,maxBarThickness:28},
-      {label:'Projeção (estimativa)',data:projecao,backgroundColor:'rgba(154,147,130,.35)',borderColor:C.muted,borderWidth:1,borderDash:[4,3],borderRadius:3,maxBarThickness:28},
-    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:9,font:{size:9},color:C.txt,padding:6}}},scales:gridOpts(v=>'R$ '+v)}});
+    const realizado=serie.realizado.map(v=>v>0?v:null);
+    const previsto=serie.previsto.map(v=>v>0?v:null);
+    const estimativa=serie.estimativa.map(v=>v>0?v:null);
+    mkCh(canvasId,{type:'bar',data:{labels:_MESES_ABREV,datasets:[
+      {label:'Realizado',data:realizado,backgroundColor:C.grn,borderRadius:3,maxBarThickness:16},
+      {label:'Previsto (agendado)',data:previsto,backgroundColor:C.gldlt,borderRadius:3,maxBarThickness:16},
+      {label:'Estimativa (sazonal)',data:estimativa,backgroundColor:'rgba(154,147,130,.35)',borderColor:C.muted,borderWidth:1,borderDash:[4,3],borderRadius:3,maxBarThickness:16},
+    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:true,position:'bottom',labels:{boxWidth:9,font:{size:8.5},color:C.txt,padding:5}}},scales:gridOpts(v=>'R$ '+v)}});
   });
 }
 
