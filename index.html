@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 74 -->
+<!-- APP_VERSION: 75 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1926,7 +1926,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <button class="btn" onclick="pgRecalcTroca()">recalcular</button>
     </div>
     <div class="card" style="overflow-x:auto">
-      <table>
+      <table class="tbl-mob-cards">
         <thead>
           <tr>
             <th>Cooperativa</th>
@@ -1963,7 +1963,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       </div>
     </div>
     <div class="card" style="margin-top:12px">
-      <table>
+      <table class="tbl-mob-cards">
         <thead>
           <tr><th>Cultura</th><th>Maior</th><th>Menor</th><th>Spread (R$/sc)</th><th>Em 1.000 sc</th></tr>
         </thead>
@@ -1977,7 +1977,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="grid two">
       <div class="card">
         <div class="sub" style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">Curva de fixação (referência B3 que as cooperativas espelham) <span class="badge" style="background:rgba(217,119,87,.14);color:var(--pg-corn)" title="Sem fonte gratuita/sem chave e compatível com navegador (CORS) para a curva B3 — valores fixos, sem data de atualização real">⚠ dado simulado</span></div>
-        <table>
+        <table class="tbl-mob-cards">
           <thead><tr><th>Vencimento</th><th>Soja US$/sc</th><th>Soja R$/sc*</th><th>Milho R$/sc</th></tr></thead>
           <tbody id="futCoop"></tbody>
         </table>
@@ -1986,12 +1986,12 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <div class="card">
         <div class="sub">Como ler a relação de troca</div>
         <div class="calc">A coluna "sc/t" da seção 1 = quantas sacas do seu grão você entrega por 1 tonelada do insumo (preço insumo ÷ preço da saca daquela cooperativa).</div>
-        <table style="margin-top:8px">
+        <table class="tbl-mob-cards" style="margin-top:8px">
           <thead><tr><th>Faixa (soja×KCl)</th><th>Leitura</th></tr></thead>
           <tbody>
-            <tr><td>≤ 22 sc/t</td><td class="up">favorável — bom p/ travar insumo</td></tr>
-            <tr><td>23–27 sc/t</td><td class="flat">neutra</td></tr>
-            <tr><td>≥ 28 sc/t</td><td class="down">cara — poder de compra baixo</td></tr>
+            <tr><td data-label="Faixa (soja×KCl)">≤ 22 sc/t</td><td class="up" data-label="Leitura">favorável — bom p/ travar insumo</td></tr>
+            <tr><td data-label="Faixa (soja×KCl)">23–27 sc/t</td><td class="flat" data-label="Leitura">neutra</td></tr>
+            <tr><td data-label="Faixa (soja×KCl)">≥ 28 sc/t</td><td class="down" data-label="Leitura">cara — poder de compra baixo</td></tr>
           </tbody>
         </table>
         <div class="calc">Referência 2026: KCl ~23 sc/t (mar) com tendência de piora p/ ~28 sc/t (jul). Editar os preços dos insumos na seção 1 muda todas as cooperativas.</div>
@@ -2052,23 +2052,23 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="grid two">
       <div class="card">
         <div class="sub">Brasil — CONAB (9º levantamento, jun/26)</div>
-        <table>
+        <table class="tbl-mob-cards">
           <thead><tr><th>Cultura</th><th>mi t</th><th>vs 24/25</th></tr></thead>
           <tbody>
-            <tr><td>Soja <span class="tag t-soy">recorde</span></td><td>180,25</td><td class="up">+8,8</td></tr>
-            <tr><td>Milho (3 safras)</td><td>140,46</td><td class="up">alta</td></tr>
-            <tr><td class="hl">Total grãos</td><td class="hl">358,64</td><td class="up">+1,8%</td></tr>
+            <tr><td data-label="Cultura">Soja <span class="tag t-soy">recorde</span></td><td data-label="mi t">180,25</td><td class="up" data-label="vs 24/25">+8,8</td></tr>
+            <tr><td data-label="Cultura">Milho (3 safras)</td><td data-label="mi t">140,46</td><td class="up" data-label="vs 24/25">alta</td></tr>
+            <tr><td class="hl" data-label="Cultura">Total grãos</td><td class="hl" data-label="mi t">358,64</td><td class="up" data-label="vs 24/25">+1,8%</td></tr>
           </tbody>
         </table>
       </div>
       <div class="card">
         <div class="sub">EUA (USDA 2026/27) &amp; Mundo 25/26</div>
-        <table>
+        <table class="tbl-mob-cards">
           <thead><tr><th>Item</th><th>Soja</th><th>Milho</th></tr></thead>
           <tbody>
-            <tr><td>EUA produção</td><td>4,435 bi bu</td><td>16,0 bi bu</td></tr>
-            <tr><td>Argentina (mi t)</td><td>~48,5</td><td>~52,0</td></tr>
-            <tr><td>Mundo (mi t)</td><td>~425,8 rec.</td><td>~1.283</td></tr>
+            <tr><td data-label="Item">EUA produção</td><td data-label="Soja">4,435 bi bu</td><td data-label="Milho">16,0 bi bu</td></tr>
+            <tr><td data-label="Item">Argentina (mi t)</td><td data-label="Soja">~48,5</td><td data-label="Milho">~52,0</td></tr>
+            <tr><td data-label="Item">Mundo (mi t)</td><td data-label="Soja">~425,8 rec.</td><td data-label="Milho">~1.283</td></tr>
           </tbody>
         </table>
         <div class="calc">Oferta global de soja recorde = teto estrutural. Milho EUA −6% dá suporte relativo.</div>
@@ -2192,12 +2192,12 @@ function pgRenderCoops(){
   const tb=document.getElementById('coops'); if(!tb)return; tb.innerHTML='';
   pgCoops.forEach((c,i)=>{
     tb.innerHTML+=`<tr>
-      <td class="hl">${c.nome}${c.live?'<span class="badge live">público</span>':'<span class="badge">app</span>'}</td>
-      <td>${c.reg}</td>
-      <td><input class="px" data-k="soja" data-i="${i}" value="${c.soja?c.soja.toFixed(2):''}" placeholder="—"></td>
-      <td><input class="px" data-k="milho" data-i="${i}" value="${c.milho?c.milho.toFixed(2):''}" placeholder="—"></td>
-      <td class="tKCl"></td><td class="tMAP"></td><td class="tUr"></td>
-      <td style="font-size:10.5px;color:var(--pg-muted)">${c.dt}</td>
+      <td class="hl" data-label="Cooperativa">${c.nome}${c.live?'<span class="badge live">público</span>':'<span class="badge">app</span>'}</td>
+      <td data-label="Região / Base">${c.reg}</td>
+      <td data-label="Soja R$/sc"><input class="px" data-k="soja" data-i="${i}" value="${c.soja?c.soja.toFixed(2):''}" placeholder="—"></td>
+      <td data-label="Milho R$/sc"><input class="px" data-k="milho" data-i="${i}" value="${c.milho?c.milho.toFixed(2):''}" placeholder="—"></td>
+      <td class="tKCl" data-label="Sacas soja/KCl"></td><td class="tMAP" data-label="Sacas soja/MAP"></td><td class="tUr" data-label="Sacas milho/Ureia"></td>
+      <td style="font-size:10.5px;color:var(--pg-muted)" data-label="Atualizado">${c.dt}</td>
     </tr>`;
   });
   tb.querySelectorAll('input.px').forEach(inp=>inp.addEventListener('input',e=>{
@@ -2287,14 +2287,14 @@ function pgRenderCompare(){
 
   const sp=document.getElementById('spread'); if(!sp)return; sp.innerHTML='';
   [['Soja',sj,c=>c.soja],['Milho',mi,c=>c.milho]].forEach(([nome,rows,f])=>{
-    if(!rows.length){sp.innerHTML+=`<tr><td>${nome}</td><td colspan="4" style="color:var(--pg-muted)">sem dados</td></tr>`;return;}
+    if(!rows.length){sp.innerHTML+=`<tr><td data-label="Cultura">${nome}</td><td colspan="4" style="color:var(--pg-muted)">sem dados</td></tr>`;return;}
     const mx=rows[0], mn=rows[rows.length-1], spread=f(mx)-f(mn);
     sp.innerHTML+=`<tr>
-      <td class="hl">${nome}</td>
-      <td><span class="up">${pgFmt(f(mx))}</span> <span style="font-size:11px;color:var(--pg-muted)">${mx.nome}</span></td>
-      <td><span class="down">${pgFmt(f(mn))}</span> <span style="font-size:11px;color:var(--pg-muted)">${mn.nome}</span></td>
-      <td class="hl">${pgFmt(spread)}</td>
-      <td>${pgBrl(spread*1000)}</td>
+      <td class="hl" data-label="Cultura">${nome}</td>
+      <td data-label="Maior"><span class="up">${pgFmt(f(mx))}</span> <span style="font-size:11px;color:var(--pg-muted)">${mx.nome}</span></td>
+      <td data-label="Menor"><span class="down">${pgFmt(f(mn))}</span> <span style="font-size:11px;color:var(--pg-muted)">${mn.nome}</span></td>
+      <td class="hl" data-label="Spread (R$/sc)">${pgFmt(spread)}</td>
+      <td data-label="Em 1.000 sc">${pgBrl(spread*1000)}</td>
     </tr>`;
   });
 }
@@ -2307,10 +2307,10 @@ function pgRenderFutCoop(){
   Object.keys(m).forEach(k=>{
     const s=m[k].soja, mi=m[k].milho;
     tb.innerHTML+=`<tr>
-      <td>${k}</td>
-      <td>${s?pgFmt(s):'—'}</td>
-      <td>${s?pgFmt(s*pgFxv()):'—'}</td>
-      <td>${mi?pgFmt(mi):'—'}</td>
+      <td data-label="Vencimento">${k}</td>
+      <td data-label="Soja US$/sc">${s?pgFmt(s):'—'}</td>
+      <td data-label="Soja R$/sc*">${s?pgFmt(s*pgFxv()):'—'}</td>
+      <td data-label="Milho R$/sc">${mi?pgFmt(mi):'—'}</td>
     </tr>`;
   });
 }
@@ -2500,7 +2500,7 @@ async function atualizarMercadoGraos(){
 #page-imoveis .gc2{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
 #page-imoveis .gc3{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:16px}
 #page-imoveis .card{background:var(--im-s1);border:.5px solid var(--im-ln);border-radius:var(--im-r2);padding:16px;transition:box-shadow .2s}
-#page-imoveis .card.hl{border-color:var(--im-ac);box-shadow:0 0 24px rgba(204,120,92,.04)}
+#page-imoveis .card.hl{display:block;border-color:var(--im-ac);box-shadow:0 0 24px rgba(204,120,92,.04)}
 #page-imoveis .card-h{font-size:12px;font-weight:600;color:var(--im-d5);margin-bottom:10px;display:flex;align-items:center;gap:8px}
 #page-imoveis .badge{display:inline-flex;align-items:center;gap:5px;font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;letter-spacing:.05em;padding:3px 8px;border-radius:3px;margin-bottom:9px}
 #page-imoveis .crow{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:.5px solid var(--im-ln);font-size:11.5px}
@@ -2895,7 +2895,7 @@ async function atualizarMercadoGraos(){
   </div>
   <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><rect x="1.5" y="2.5" width="12" height="10" rx="1"/><path d="M5 2.5v10M10 2.5v10M1.5 7.5h12"/></svg>regimes tributários</div>
   <div class="rg3" id="im-rg3"></div>
-  <div class="tbl"><table id="im-tt"></table></div>
+  <div class="tbl"><table id="im-tt" class="tbl-mob-cards"></table></div>
   <div class="ch" style="height:178px"><canvas id="im-c3" role="img" aria-label="Carga tributária por regime"></canvas></div>
   <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><path d="M2 13l3-8 4 6 2-4 2 6"/></svg>ganho de capital na venda · R$ 200k de lucro</div>
   <div class="gc2" id="im-gc_venda"></div>
@@ -3280,13 +3280,15 @@ function imP2(){
     ['PJ Holding LP',(totPJ/ra*100),'#005e4b','var(--ac2)','RECOMENDADO',totPJ,liqPJ,true],
     ['Simples (est.)',15,'#8060A8','var(--pu2)','ESTIMATIVA',totSN,liqSN,false]
   ].map(([n,a,c,bg,b,t,l,best])=>`<div class="rc${best?' best':''}"><span class="badge" style="background:${bg};color:${c};border:.5px solid ${c}3a">${b}</span><div class="rx" style="color:${c}">${typeof a==='number'?a.toFixed(1).replace('.',','):'15,0'}%</div><div style="font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:9px;color:var(--d2);margin-bottom:7px">alíq. efetiva s/aluguel</div><div style="font-size:11px;color:var(--d3);margin-bottom:2px">Imposto: <strong style="color:var(--d5)">${imFK(t)}/ano</strong></div><div style="font-size:11px;color:var(--d3)">Líquido: <strong style="color:${c}">${imFK(l)}/ano</strong></div></div>`).join('');
-  imG('im-tt').innerHTML=`<tr><th>item</th><th>PF (IRPF)</th><th>PJ Holding LP</th><th>diferença</th></tr>
-  <tr><td>Receita bruta</td><td>${imFK(ra)}</td><td>${imFK(ra)}</td><td>—</td></tr>
-  <tr><td>Deduções</td><td>${imFK(da)}</td><td>presunção 32%</td><td>—</td></tr>
-  <tr><td>IRPJ / IRPF</td><td>${imFK(irPF)}</td><td>${imFK(irpj)}</td><td style="color:${eco>0?'#005e4b':'#C04840'}">${eco>0?'+':''}${imFK(irPF-irpj)}</td></tr>
-  <tr><td>CSLL</td><td>—</td><td>${imFK(csll)}</td><td>—</td></tr>
-  <tr><td>PIS + COFINS</td><td>—</td><td>${imFK(pis+cof)}</td><td>—</td></tr>
-  <tr><td><strong>Total tributos</strong></td><td><strong>${imFK(irPF)}</strong></td><td><strong>${imFK(totPJ)}</strong></td><td><strong style="color:${eco>0?'#005e4b':'#C04840'}">${eco>0?'+':''}${imFK(eco)}/ano</strong></td></tr>`;
+  imG('im-tt').innerHTML=`<thead><tr><th>item</th><th>PF (IRPF)</th><th>PJ Holding LP</th><th>diferença</th></tr></thead>
+  <tbody>
+  <tr><td data-label="Item">Receita bruta</td><td data-label="PF (IRPF)">${imFK(ra)}</td><td data-label="PJ Holding LP">${imFK(ra)}</td><td data-label="Diferença">—</td></tr>
+  <tr><td data-label="Item">Deduções</td><td data-label="PF (IRPF)">${imFK(da)}</td><td data-label="PJ Holding LP">presunção 32%</td><td data-label="Diferença">—</td></tr>
+  <tr><td data-label="Item">IRPJ / IRPF</td><td data-label="PF (IRPF)">${imFK(irPF)}</td><td data-label="PJ Holding LP">${imFK(irpj)}</td><td data-label="Diferença" style="color:${eco>0?'#005e4b':'#C04840'}">${eco>0?'+':''}${imFK(irPF-irpj)}</td></tr>
+  <tr><td data-label="Item">CSLL</td><td data-label="PF (IRPF)">—</td><td data-label="PJ Holding LP">${imFK(csll)}</td><td data-label="Diferença">—</td></tr>
+  <tr><td data-label="Item">PIS + COFINS</td><td data-label="PF (IRPF)">—</td><td data-label="PJ Holding LP">${imFK(pis+cof)}</td><td data-label="Diferença">—</td></tr>
+  <tr><td data-label="Item"><strong>Total tributos</strong></td><td data-label="PF (IRPF)"><strong>${imFK(irPF)}</strong></td><td data-label="PJ Holding LP"><strong>${imFK(totPJ)}</strong></td><td data-label="Diferença"><strong style="color:${eco>0?'#005e4b':'#C04840'}">${eco>0?'+':''}${imFK(eco)}/ano</strong></td></tr>
+  </tbody>`;
   imMk('im-c3','im-c3',{type:'bar',data:{labels:['PF — IRPF','PJ Holding LP','Simples (est.)'],datasets:[
     {label:'Imposto',data:[Math.round(irPF),Math.round(totPJ),Math.round(totSN)],backgroundColor:['rgba(110,106,100,.50)','rgba(0,94,75,.50)','rgba(90,64,160,.48)'],borderRadius:3,borderSkipped:false},
     {label:'Líquido',data:[Math.round(liqPF),Math.round(liqPJ),Math.round(liqSN)],backgroundColor:['rgba(90,114,138,.10)','rgba(0,94,75,.09)','rgba(90,64,160,.11)'],borderRadius:3,borderSkipped:false}
