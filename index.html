@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 58 -->
+<!-- APP_VERSION: 59 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -2254,6 +2254,7 @@ function rgraosmkt(){
   }
   rcbot();
   pgRenderCoops();
+  pgRecalcTroca();
   pgRenderCompare();
   pgRenderFutCoop();
   pgUpdFx();
@@ -2531,7 +2532,26 @@ function atualizarMercadoGraos(){
 
 @media(max-width:440px){#page-imoveis .cg3, #page-imoveis .gc3, #page-imoveis .rg3, #page-imoveis .sc3, #page-imoveis .model-grid{grid-template-columns:1fr}
 }
-
+@media(max-width:740px){
+  #page-imoveis .hero{flex-direction:column;align-items:flex-start;gap:14px}
+  #page-imoveis .hero-svg{width:100%;max-width:220px;height:auto}
+  #page-imoveis .dis-top{flex-direction:column;gap:14px}
+  #page-imoveis .mx-inner{flex-direction:column}
+  #page-imoveis .mx-grid{width:100%;max-width:280px}
+  #page-imoveis .nav{flex-wrap:wrap;gap:5px}
+  #page-imoveis .nb{flex:1 1 30%;min-width:0}
+}
+@media(max-width:480px){
+  #page-imoveis .im-shell{padding:0 14px 80px}
+  #page-imoveis .mg, #page-imoveis .mg2, #page-imoveis .al5, #page-imoveis .tl5,
+  #page-imoveis .gc2, #page-imoveis .im-cg, #page-imoveis .dis-cols, #page-imoveis .cat-grid{
+    grid-template-columns:1fr
+  }
+  #page-imoveis .trans-steps{flex-direction:column}
+  #page-imoveis .tstep{border-right:none;border-bottom:.5px solid var(--im-ln);padding:10px 8px}
+  #page-imoveis .tstep:last-child{border-bottom:none}
+  #page-imoveis .nb{flex:1 1 45%;font-size:8.5px;padding:7px 6px}
+}
 
 </style>
 <div class="page" id="page-imoveis">
@@ -9138,7 +9158,11 @@ async function atualizarCotacoes(){
   document.getElementById('ri').textContent='↻';
   document.getElementById('last-upd').textContent=S.lastUpdate.toLocaleTimeString('pt-BR');
   document.getElementById('mkt-st').textContent='';
-  const ap=document.querySelector('.page.active')?.id?.replace('page-','');render(ap);
+  // Atualiza TODAS as páginas do app (não só a que está visível agora), para
+  // que qualquer informação/derivada de cotações (patrimônio, indicadores,
+  // gráficos, contexto dos assistentes etc.) fique consistente em todo o app
+  // assim que o usuário navegar até elas.
+  Object.keys(fns).forEach(p=>{ try{ render(p); }catch(e){ console.error('Erro ao atualizar página '+p+':', e); } });
   const totalTickers=tickersBr.length+tickersUs.length;
   const aoVivo=_tickersAoVivo.size;
   if(totalTickers===0){ toast('↻ Cotações atualizadas'); }
