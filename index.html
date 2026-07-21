@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 50 -->
+<!-- APP_VERSION: 51 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -2760,8 +2760,13 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
 <div class="fg" style="margin-bottom:6px"><label>Token brapi.dev (opcional)</label>
   <input id="cfg-brapi-token" type="password" placeholder="cole seu token gratuito aqui" autocomplete="off" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:11.5px">
 </div>
-<div style="font-size:11px;color:var(--txt3);margin-bottom:4px">O token fica salvo apenas neste navegador (localStorage). Obtenha o seu gratuitamente em <span class="mono">brapi.dev</span> → Criar conta.</div>
-<div class="mfoot"><button class="btn btn-d" onclick="limparBrapiToken()">Remover Token</button><button class="btn btn-ghost" onclick="closeM('m-config-brapi')">Cancelar</button><button class="btn btn-g" onclick="salvarBrapiToken()">Salvar Token</button></div>
+<div style="font-size:11px;color:var(--txt3);margin-bottom:12px">O token fica salvo apenas neste navegador (localStorage). Obtenha o seu gratuitamente em <span class="mono">brapi.dev</span> → Criar conta. Este mesmo token também é usado para buscar o histórico <strong style="color:var(--txt2)">público</strong> de dividendos de ações da B3 nas Análises Fundamentalistas (fonte: CVM).</div>
+<div style="font-size:12px;color:var(--txt3);line-height:1.55;margin:14px 0 10px;padding-top:12px;border-top:0.5px solid var(--bdr)">Para o histórico <strong style="color:var(--txt2)">público</strong> de dividendos de ações dos <strong style="color:var(--txt2)">EUA</strong> nas Análises Fundamentalistas, cole também um token gratuito da <strong style="color:var(--txt2)">financialmodelingprep.com</strong> (cadastro rápido, plano free).</div>
+<div class="fg" style="margin-bottom:6px"><label>Token financialmodelingprep.com (opcional)</label>
+  <input id="cfg-fmp-token" type="password" placeholder="cole seu token gratuito aqui" autocomplete="off" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:11.5px">
+</div>
+<div style="font-size:11px;color:var(--txt3);margin-bottom:4px">Também salvo apenas neste navegador (localStorage).</div>
+<div class="mfoot"><button class="btn btn-d" onclick="limparTokensCotacoes()">Remover Tokens</button><button class="btn btn-ghost" onclick="closeM('m-config-brapi')">Cancelar</button><button class="btn btn-g" onclick="salvarBrapiToken()">Salvar Tokens</button></div>
 </div></div>
 
 <div class="ov" id="m-backup"><div class="modal" style="width:560px"><button class="mc" onclick="closeM('m-backup')">✕</button>
@@ -4227,34 +4232,24 @@ function _itensCotWatch(cat){
   return lista.filter(it=>it && it.tk);
 }
 
-// DY 12M em nível de ATIVO (não de carteira): soma o valor pago POR AÇÃO/COTA
-// (campo valorcota de cada lançamento — o mesmo valor por unidade, seja qual
-// for a quantidade que o usuário possua) nos últimos 12 meses, dividido pela
-// cotação atual do ativo (mesma fonte de preço da tela Cotações ao Vivo).
-// Diferente de _divPorEmpresa().dy, que divide pelo valor da POSIÇÃO ATUAL na
-// carteira — este aqui é o mesmo número pra qualquer investidor, independente
-// de quantas ações ele tenha ou se sequer estiver na carteira, por isso é o
-// usado nos cards de Análise (que devem refletir o ativo, não a carteira).
+// DY 12M em nível de ATIVO (não de carteira, não da minha posição): soma o
+// valor pago POR AÇÃO nos últimos 12 meses segundo dados PÚBLICOS de mercado
+// (_pubDivCache — brapi.dev/CVM para B3, financialmodelingprep.com para EUA),
+// dividido pela cotação atual do ativo. Não usa S.dividendos (isso seria a
+// carteira/lançamentos pessoais do usuário) — é o mesmo número pra qualquer
+// investidor, esteja o ticker na carteira dele ou não.
 function _dyAssetLevel(ticker){
+  const cache=_pubDivCache[ticker];
+  if(!cache || !cache.lista || !cache.lista.length)return null;
   const hoje=_hojeISO();
   const corte12m=new Date();corte12m.setFullYear(corte12m.getFullYear()-1);
   const corteISO=corte12m.toISOString().slice(0,10);
-  let somaPorCota=0,temDado=false;
-  S.dividendos.forEach(d=>{
-    if(d.ativo!==ticker)return;
+  let somaPorCota=0;
+  cache.lista.forEach(d=>{
     const dt=d.data||'';
-    if(!(dt<=hoje && dt>=corteISO))return;
-    // Tenta o valor por ação; se o lançamento não tiver valorcota nem qtd
-    // (comum em importações de extrato sem quantidade), ignora esse
-    // lançamento em vez de estimar errado — melhor omitir o badge do que
-    // mostrar um DY calculado com dado incompleto.
-    let v=null;
-    if(d.valorcota>0) v=d.valorcota;
-    else if(d.qtd>0) v=(d.total||0)/d.qtd;
-    if(v==null)return;
-    somaPorCota+=v; temDado=true;
+    if(dt<=hoje && dt>=corteISO) somaPorCota+=d.valor||0;
   });
-  if(!temDado)return null;
+  if(!somaPorCota)return null;
   const q=(typeof getQ==='function'?getQ(ticker):null)||(typeof MQ!=='undefined'?MQ[ticker]:null);
   if(!q || !q.p)return null;
   return somaPorCota/q.p*100;
@@ -4272,8 +4267,8 @@ function _fundPrompt(ticker,nome,cat,divInfo,precoInfo){
   if(cat==='BR'||cat==='US'){
     const dyAtivo=_dyAssetLevel(ticker);
     const divCtx = divInfo
-      ? `Esta empresa tem ${divInfo.n} pagamento(s) de proventos registrado(s) no app` + (dyAtivo!=null ? `, com DY 12M (dividendos pagos por ação nos últimos 12 meses, dividido pela cotação atual) de ${dyAtivo.toFixed(2)}%.` : '.')
-      : 'Ainda não há proventos desta empresa registrados no app.';
+      ? `Segundo dados públicos de mercado, esta empresa tem ${divInfo.n} pagamento(s) de dividendos/JCP no histórico consultado` + (dyAtivo!=null ? `, com DY 12M (dividendos pagos por ação nos últimos 12 meses, dividido pela cotação atual) de ${dyAtivo.toFixed(2)}%.` : '.')
+      : 'Não foi possível consultar o histórico público de dividendos desta empresa agora (token de dados públicos não configurado ou consulta indisponível).';
     return `Você é um analista de investimentos sênior. Faça uma análise fundamentalista APROFUNDADA e tecnicamente rigorosa da empresa ${nome||ticker} (ticker ${ticker}), negociada no ${info.mercado}.
 ${regraComunicacao}
 Contexto do investidor: ${divCtx} ${precoCtx}
@@ -4310,7 +4305,11 @@ async function gerarAnaliseFundamentalista(ticker,cat){
   if(!temApiKey()){ toast('⚠ Configure sua chave de API em Configurações para gerar análises'); return; }
   const item=_itensCotWatch(cat).find(x=>x.tk===ticker);
   if(!item)return;
-  const divInfo=(cat==='BR'||cat==='US') ? (_divPorEmpresa(cat).find(x=>x.ticker===ticker)||null) : null;
+  // Garante que o histórico PÚBLICO de dividendos (não a carteira do usuário)
+  // já foi buscado antes de montar o contexto da análise.
+  if(cat==='BR'||cat==='US'){ await _garantirDividendosPublicos(ticker,cat); }
+  const pubCache=_pubDivCache[ticker];
+  const divInfo=(cat==='BR'||cat==='US') && pubCache && pubCache.lista && pubCache.lista.length ? {n:pubCache.lista.length} : null;
   const qv=(typeof getQ==='function'?getQ(ticker):null)||(typeof MQ!=='undefined'?MQ[ticker]:null);
   const precoInfo=qv?{p:qv.p,dp:qv.dp}:null;
   _fundGerando[ticker]=true;
@@ -4331,42 +4330,33 @@ async function gerarAnaliseFundamentalista(ticker,cat){
   }
 }
 
-// ─── Série MENSAL de proventos POR AÇÃO/COTA (não em R$ agregado da minha
-// posição) para o ANO ATUAL (realizado + previsto/agendado + estimativa
-// sazonal), usada no mini-gráfico dentro do card de análise fundamentalista.
-// Usa o campo valorcota de cada lançamento — o valor pago por unidade do
-// ativo, o mesmo pra qualquer investidor — em vez de "total" (que é
-// qtd×valorcota, ou seja, depende de quantas ações EU tenho na carteira).
-// Isso garante que o gráfico reflita o ATIVO em si (o que ele paga por ação),
-// e não o quanto eu pessoalmente recebi por causa do tamanho da minha
-// posição. Só faz sentido para BR/US (ouro/cripto/câmbio não pagam
-// proventos no app).
+// ─── Série MENSAL de proventos POR AÇÃO, com base em dados PÚBLICOS de
+// mercado (_pubDivCache — não S.dividendos, que são os lançamentos pessoais
+// da carteira do usuário), para o ANO ATUAL (realizado + previsto/anunciado
+// + estimativa sazonal), usada no mini-gráfico do card de análise
+// fundamentalista. Reflete o que o ATIVO paga por ação no mercado, igual pra
+// qualquer investidor — não depende de o ticker estar na carteira do usuário
+// nem de quantas ações ele possua. Só faz sentido para BR/US (ouro/cripto/
+// câmbio não pagam proventos).
 const _MESES_ABREV=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
 function _divSerieMensalTicker(ticker){
   const hoje=_hojeISO();
   const anoAtual=+hoje.slice(0,4);
   const mesAtual=+hoje.slice(5,7);
-  const entradas=S.dividendos.filter(d=>d.ativo===ticker && (d.data||'').length>=10);
-  // Modo "por ação": só é possível quando TODOS os lançamentos do ticker
-  // permitem calcular o valor por ação (valorcota informado, ou qtd
-  // informado pra derivar total/qtd). Muitos lançamentos importados de
-  // extrato só trazem o total (sem quantidade) — nesse caso não dá pra
-  // separar "quanto a empresa pagou por ação" de "quanto eu recebi", então
-  // caímos pro total agregado (ainda assim é a série de proventos DESSE
-  // ticker, não da carteira como um todo — só não normalizado por ação).
-  const modoPorAcao=entradas.length>0 && entradas.every(d=>(d.valorcota>0)||(d.qtd>0));
-  const valorDaEntrada=d=>{
-    if(!modoPorAcao) return d.total||0;
-    return d.valorcota>0 ? d.valorcota : (d.total||0)/d.qtd;
-  };
-  const realizado=new Array(12).fill(0);       // pago este ano, data<=hoje
-  const previsto=new Array(12).fill(0);        // já cadastrado no app, data futura dentro do ano atual
+  const cache=_pubDivCache[ticker];
+  const carregando=!cache;               // fetch ainda não concluído
+  const semToken=cache && cache.erro==='sem-token';
+  const falhou=cache && cache.erro==='falhou';
+  const entradas=(cache && cache.lista) ? cache.lista : [];
+  const realizado=new Array(12).fill(0);       // já pago este ano (data pagamento <= hoje)
+  const previsto=new Array(12).fill(0);        // anunciado publicamente, data futura dentro do ano atual
   const historicoPorMes=new Array(12).fill(0); // soma de anos anteriores, por mês (p/ estimar sazonalidade)
   const anosHistoricos=new Set();
   entradas.forEach(d=>{
-    const dt=d.data; const ano=+dt.slice(0,4), mes=+dt.slice(5,7);
+    const dt=d.data; if(!dt || dt.length<10)return;
+    const ano=+dt.slice(0,4), mes=+dt.slice(5,7);
     if(!mes||mes<1||mes>12)return;
-    const v=valorDaEntrada(d);
+    const v=d.valor||0;
     if(ano===anoAtual){
       if(dt<=hoje) realizado[mes-1]+=v;
       else previsto[mes-1]+=v;
@@ -4376,8 +4366,8 @@ function _divSerieMensalTicker(ticker){
     }
   });
   const nAnos=anosHistoricos.size||1;
-  // Meses futuros do ano atual sem pagamento agendado real: estima com base
-  // na média histórica daquele mesmo mês em anos anteriores (sazonalidade
+  // Meses futuros do ano atual sem pagamento anunciado: estima com base na
+  // média histórica daquele mesmo mês em anos anteriores (sazonalidade
   // simples — empresas costumam pagar nos mesmos meses todo ano). Só uma
   // estimativa, não é dado oficial.
   const estimativa=new Array(12).fill(0);
@@ -4387,12 +4377,12 @@ function _divSerieMensalTicker(ticker){
     }
   }
   const temAlgumDado=realizado.some(v=>v>0)||previsto.some(v=>v>0)||estimativa.some(v=>v>0);
-  // Próximo pagamento: primeiro mês a partir do atual com previsto real;
+  // Próximo pagamento: primeiro mês a partir do atual com anúncio real;
   // senão, primeiro mês futuro com estimativa sazonal.
   let proximo=null;
   for(let m=mesAtual-1;m<12;m++){ if(previsto[m]>0){ proximo={mesIdx:m,valor:previsto[m],real:true}; break; } }
   if(!proximo) for(let m=mesAtual-1;m<12;m++){ if(estimativa[m]>0){ proximo={mesIdx:m,valor:estimativa[m],real:false}; break; } }
-  return {anoAtual,mesAtual,realizado,previsto,estimativa,temAlgumDado,proximo,modoPorAcao};
+  return {anoAtual,mesAtual,realizado,previsto,estimativa,temAlgumDado,proximo,modoPorAcao:true,carregando,semToken,falhou};
 }
 
 // Formata valor por ação/cota com mais casas decimais (valores costumam ser
@@ -4403,18 +4393,29 @@ const _fmtPorAcao=v=>'R$ '+v.toLocaleString('pt-BR',{minimumFractionDigits:2,max
 const _fmtDivChart=(v,porAcao)=>porAcao?_fmtPorAcao(v):brl(v);
 const _sufixoDivChart=porAcao=>porAcao?'/ação':'';
 
-// Bloco HTML (título + canvas + linha de próximo pagamento/estimativa). Vazio
-// se não houver nenhum provento (realizado, previsto ou histórico p/ estimar)
-// no ano atual, ou se a categoria não for BR/US. Sempre que os lançamentos
-// do ticker permitirem, usa o valor POR AÇÃO/COTA (asset-level, igual pra
-// qualquer investidor); quando não dá (lançamentos importados sem
-// quantidade), cai pro total recebido daquele ticker — que ainda é sobre o
-// ATIVO listado em Cotações ao Vivo, só não normalizado por ação (ver
-// _divSerieMensalTicker para o critério).
+// Bloco HTML (título + canvas + linha de próximo pagamento/estimativa), com
+// dados PÚBLICOS de mercado (_pubDivCache), nunca da carteira do usuário.
+// Estados possíveis: ainda buscando (carregando), sem token configurado
+// (mostra CTA pra configurar), falha na consulta, sem histórico de
+// dividendos público, ou o gráfico normal.
 function _divChartBlockHTML(ticker,cat){
   if(cat!=='BR' && cat!=='US')return '';
+  const cache=_pubDivCache[ticker];
+  if(!cache){
+    return `<div style="margin:8px 0 10px;font-size:11px;color:var(--txt3)">⏳ carregando dividendos públicos…</div>`;
+  }
+  if(cache.erro==='sem-token'){
+    const fonte = cat==='US' ? 'financialmodelingprep.com' : 'brapi.dev';
+    return `<div style="margin:8px 0 10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;background:var(--paper);border:0.5px solid var(--bdr);border-radius:8px;padding:7px 10px;font-size:11px;color:var(--txt3)">
+      <span>📊 Configure um token gratuito da <strong style="color:var(--txt2)">${fonte}</strong> para ver o histórico público de dividendos deste ativo.</span>
+      <button class="btn btn-ghost" style="font-size:10.5px;padding:2px 8px;white-space:nowrap" onclick="abrirConfigBrapi()">Configurar</button>
+    </div>`;
+  }
+  if(cache.erro==='falhou'){
+    return `<div style="margin:8px 0 10px;font-size:11px;color:var(--txt3)">⚠ Não foi possível carregar o histórico público de dividendos agora. Tente atualizar mais tarde.</div>`;
+  }
   const serie=_divSerieMensalTicker(ticker);
-  if(!serie.temAlgumDado)return '';
+  if(!serie.temAlgumDado)return `<div style="margin:8px 0 10px;font-size:11px;color:var(--txt3)">Sem histórico público de dividendos para este ativo.</div>`;
   const canvasId='ch-funddiv-'+ticker.replace(/[^A-Za-z0-9]/g,'_');
   const suf=_sufixoDivChart(serie.modoPorAcao);
   let linha='';
@@ -4422,10 +4423,10 @@ function _divChartBlockHTML(ticker,cat){
     const nomeMes=_MESES_ABREV[serie.proximo.mesIdx];
     const valorFmt=_fmtDivChart(serie.proximo.valor,serie.modoPorAcao)+suf;
     linha = serie.proximo.real
-      ? `Próximo pagamento agendado: <strong>${nomeMes}/${serie.anoAtual}</strong> · ${valorFmt}`
-      : `Sem pagamento agendado — estimativa para <strong>${nomeMes}/${serie.anoAtual}</strong> baseada na sazonalidade histórica: <strong>~${valorFmt}</strong>`;
+      ? `Próximo pagamento anunciado: <strong>${nomeMes}/${serie.anoAtual}</strong> · ${valorFmt}`
+      : `Sem pagamento anunciado — estimativa para <strong>${nomeMes}/${serie.anoAtual}</strong> baseada na sazonalidade histórica: <strong>~${valorFmt}</strong>`;
   }
-  const titulo=serie.modoPorAcao ? `Proventos por ação, por mês, em ${serie.anoAtual} — realizado &amp; previsto` : `Proventos por mês em ${serie.anoAtual} — realizado &amp; previsto`;
+  const titulo=`Proventos por ação, por mês, em ${serie.anoAtual} — dados públicos, realizado &amp; anunciado`;
   return `<div style="margin:8px 0 10px">
     <div style="font-size:10px;color:var(--txt3);margin-bottom:4px;font-weight:600;text-transform:uppercase;letter-spacing:.03em">${titulo}</div>
     <div style="height:120px"><canvas id="${canvasId}"></canvas></div>
@@ -4439,6 +4440,8 @@ function _renderDivChartsFund(cat){
   if(cat!=='BR' && cat!=='US')return;
   _itensCotWatch(cat).forEach(item=>{
     const ticker=item.tk;
+    const cache=_pubDivCache[ticker];
+    if(!cache || cache.erro)return; // carregando, sem token ou falhou — sem canvas pra desenhar
     const serie=_divSerieMensalTicker(ticker);
     if(!serie.temAlgumDado)return;
     const canvasId='ch-funddiv-'+ticker.replace(/[^A-Za-z0-9]/g,'_');
@@ -4503,6 +4506,18 @@ function rfundAnalise(){
     const id='fund-analise-'+_FUND_CATS[cat].key;
     const el=document.getElementById(id);
     if(el){ el.innerHTML=_fundAnaliseHTML(cat); _renderDivChartsFund(cat); }
+  });
+  // Primeiro render usa o que já estiver em _pubDivCache (possivelmente
+  // nada ainda). Em paralelo, busca o histórico PÚBLICO de dividendos que
+  // faltar (ou estiver expirado) e, quando chegar, re-renderiza só BR/US —
+  // não trava a tela esperando rede, e não refaz o fetch se já tiver cache
+  // fresco (ver _PUB_DIV_TTL_MS).
+  ['BR','US'].forEach(cat=>{
+    _prefetchDividendosPublicos(cat).then(()=>{
+      const id='fund-analise-'+_FUND_CATS[cat].key;
+      const el=document.getElementById(id);
+      if(el){ el.innerHTML=_fundAnaliseHTML(cat); _renderDivChartsFund(cat); }
+    });
   });
 }
 
@@ -10691,24 +10706,102 @@ function _refletirStatusApi(){
 // com token gratuito (cadastro em brapi.dev), cobre qualquer ticker da B3.
 const _BRAPI_TOKEN_STORE='brapi_token';
 function getBrapiToken(){ try{ return localStorage.getItem(_BRAPI_TOKEN_STORE)||''; }catch(_){ return ''; } }
+// Token da financialmodelingprep.com — usado só para buscar o histórico
+// PÚBLICO de dividendos de ações dos EUA (brapi.dev não cobre proventos de
+// tickers americanos, sua fonte é CVM/BCB, só B3). Mesma lógica do token
+// brapi: opcional, gratuito, salvo só neste navegador.
+const _FMP_TOKEN_STORE='fmp_token';
+function getFmpToken(){ try{ return localStorage.getItem(_FMP_TOKEN_STORE)||''; }catch(_){ return ''; } }
 function abrirConfigBrapi(){
   const inp=document.getElementById('cfg-brapi-token');
   if(inp) inp.value=getBrapiToken();
+  const inp2=document.getElementById('cfg-fmp-token');
+  if(inp2) inp2.value=getFmpToken();
   openM('m-config-brapi');
 }
 function salvarBrapiToken(){
   const inp=document.getElementById('cfg-brapi-token');
   const val=(inp?inp.value:'').trim();
-  try{
-    if(val){ localStorage.setItem(_BRAPI_TOKEN_STORE,val); toast('✓ Token salvo neste navegador'); }
-    else{ localStorage.removeItem(_BRAPI_TOKEN_STORE); toast('Token removido'); }
-  }catch(e){ toast('⚠ Não foi possível salvar o token'); }
+  try{ if(val) localStorage.setItem(_BRAPI_TOKEN_STORE,val); else localStorage.removeItem(_BRAPI_TOKEN_STORE); }catch(_){}
+  const inp2=document.getElementById('cfg-fmp-token');
+  const val2=(inp2?inp2.value:'').trim();
+  try{ if(val2) localStorage.setItem(_FMP_TOKEN_STORE,val2); else localStorage.removeItem(_FMP_TOKEN_STORE); }catch(_){}
+  toast('✓ Tokens salvos neste navegador');
+  // Tokens novos invalidam o que já estava em cache de dividendos públicos.
+  Object.keys(_pubDivCache).forEach(k=>delete _pubDivCache[k]);
   closeM('m-config-brapi');
+  if(typeof rfundAnalise==='function') rfundAnalise();
 }
 function limparBrapiToken(){
   try{ localStorage.removeItem(_BRAPI_TOKEN_STORE); }catch(_){}
   const inp=document.getElementById('cfg-brapi-token'); if(inp)inp.value='';
-  toast('Token removido deste navegador');
+}
+function limparFmpToken(){
+  try{ localStorage.removeItem(_FMP_TOKEN_STORE); }catch(_){}
+  const inp=document.getElementById('cfg-fmp-token'); if(inp)inp.value='';
+}
+function limparTokensCotacoes(){
+  limparBrapiToken(); limparFmpToken();
+  Object.keys(_pubDivCache).forEach(k=>delete _pubDivCache[k]);
+  toast('Tokens removidos deste navegador');
+  closeM('m-config-brapi');
+  if(typeof rfundAnalise==='function') rfundAnalise();
+}
+
+// ── Dividendos PÚBLICOS por ticker (fonte oficial de mercado, não a carteira
+// do usuário) — usados nas Análises Fundamentalistas de Cotações ao Vivo.
+// BR (B3): brapi.dev, módulo dividendsData (fonte CVM), mesmo token da
+// cotação. US: financialmodelingprep.com, endpoint de histórico de
+// dividendos por ação, token próprio (brapi não cobre proventos dos EUA).
+// Cache em memória por ticker, com TTL de 12h — evita rebuscar a cada render.
+const _pubDivCache={}; // ticker -> {lista:[{data,valor,tipo}], erro:null|'sem-token'|'falhou', ts}
+const _PUB_DIV_TTL_MS=12*60*60*1000;
+async function _fetchDividendosPublicosBR(ticker){
+  const token=getBrapiToken();
+  if(!token) return {lista:[],erro:'sem-token'};
+  try{
+    const url=`https://brapi.dev/api/quote/${encodeURIComponent(ticker)}?dividends=true&token=${encodeURIComponent(token)}`;
+    const resp=await fetch(url);
+    if(!resp.ok) return {lista:[],erro:'falhou'};
+    const data=await resp.json();
+    const cd=data?.results?.[0]?.dividendsData?.cashDividends||[];
+    const lista=cd.map(x=>({data:String(x.paymentDate||x.lastDatePrior||'').slice(0,10),valor:Number(x.rate)||0,tipo:x.label||'Provento'}))
+      .filter(x=>x.data.length===10 && x.valor>0);
+    return {lista,erro:null};
+  }catch(_){ return {lista:[],erro:'falhou'}; }
+}
+async function _fetchDividendosPublicosUS(ticker){
+  const token=getFmpToken();
+  if(!token) return {lista:[],erro:'sem-token'};
+  try{
+    const url=`https://financialmodelingprep.com/api/v3/historical-price-full/stock_dividend/${encodeURIComponent(ticker)}?apikey=${encodeURIComponent(token)}`;
+    const resp=await fetch(url);
+    if(!resp.ok) return {lista:[],erro:'falhou'};
+    const data=await resp.json();
+    const hist=data?.historical||[];
+    const lista=hist.map(x=>({data:String(x.paymentDate||x.date||'').slice(0,10),valor:Number(x.adjDividend!=null?x.adjDividend:x.dividend)||0,tipo:'Dividend'}))
+      .filter(x=>x.data.length===10 && x.valor>0);
+    return {lista,erro:null};
+  }catch(_){ return {lista:[],erro:'falhou'}; }
+}
+async function _garantirDividendosPublicos(ticker,cat){
+  const now=Date.now();
+  const cached=_pubDivCache[ticker];
+  if(cached && (now-cached.ts)<_PUB_DIV_TTL_MS) return cached;
+  const res = cat==='US' ? await _fetchDividendosPublicosUS(ticker) : await _fetchDividendosPublicosBR(ticker);
+  const entry={...res,ts:now};
+  _pubDivCache[ticker]=entry;
+  return entry;
+}
+async function _prefetchDividendosPublicos(cat){
+  if(cat!=='BR' && cat!=='US')return;
+  const now=Date.now();
+  const pendentes=_itensCotWatch(cat).filter(it=>{
+    const c=_pubDivCache[it.tk];
+    return !c || (now-c.ts)>=_PUB_DIV_TTL_MS;
+  });
+  if(!pendentes.length)return;
+  await Promise.allSettled(pendentes.map(it=>_garantirDividendosPublicos(it.tk,cat)));
 }
 
 // Conjunto de tickers que conseguiram cotação real na última atualização
