@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 77 -->
+<!-- APP_VERSION: 78 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -3677,7 +3677,7 @@ async function atualizarMercadoImoveis(){
   </div>
   <div class="gw">
     <div class="panel"><div class="phd"><div class="pt">Por Categoria</div></div><div class="pbd" id="cat-lista"></div></div>
-    <div class="panel"><div class="phd"><div class="pt">Distribuição</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-gas-pie"></canvas></div><div class="pft">Gastos avulsos (S.gastos) não-previstos do mês de referência</div></div></div>
+    <div class="panel"><div class="phd"><div class="pt">Distribuição</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-gas-pie"></canvas></div><div class="pft">Gastos avulsos realizados e previstos + provisórios de Bens/Orçamento do mês de referência</div></div></div>
   </div>
   <div class="panel">
     <div class="phd"><div class="pt">Todos os Lançamentos</div></div>
@@ -8082,9 +8082,18 @@ const _visGExtractors={
   valor:{fn:t=>t[0].valor||0,type:'num'}
 };
 function rgas(){
-  const _mgas=mesRefDe(S.gastos);const mes=S.gastos.filter(g=>g.data.startsWith(_mgas)&&!g.forecast),ant=S.gastos.filter(g=>g.data.startsWith(mesAntRef(_mgas))&&!g.forecast);
+  const _mgas=mesRefDe(S.gastos);
+  // KPIs/gráficos do topo (Total do Mês, Por Categoria, Distribuição) agora somam
+  // tanto os lançamentos realizados quanto os previstos de S.gastos, mais os
+  // provisórios automáticos de despesa (Financiamento/Seguro de Bens Patrimoniais
+  // e categorias do Orçamento) — exclui apenas a receita mensal prevista (tipo
+  // 'credito'), pois este é um painel de DESPESAS. A tabela "Todos os Lançamentos"
+  // abaixo continua com o toggle Realizados/Previstos, sem alteração.
+  const _provDesp=_provisorios().filter(p=>p.tipo!=='credito');
+  const mes=S.gastos.filter(g=>g.data.startsWith(_mgas)).concat(_provDesp.filter(p=>p.data.startsWith(_mgas)));
+  const ant=S.gastos.filter(g=>g.data.startsWith(mesAntRef(_mgas))).concat(_provDesp.filter(p=>p.data.startsWith(mesAntRef(_mgas))));
   const tm=mes.reduce((s,g)=>s+g.valor,0),ta=ant.reduce((s,g)=>s+g.valor,0);
-  const bc={};mes.forEach(g=>{bc[g.cat]=(bc[g.cat]||0)+g.valor});
+  const bc={};mes.forEach(g=>{const c=g.cat||g._pCat||'Outros';bc[c]=(bc[c]||0)+g.valor});
   const sorted=Object.entries(bc).sort((a,b)=>b[1]-a[1]);
   document.getElementById('g-tot').textContent=brl(tm);document.getElementById('g-ant').textContent=brl(ta);
   document.getElementById('g-cat').textContent=sorted[0]?.[0]||'—';document.getElementById('g-num').textContent=mes.length;
