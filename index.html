@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 78 -->
+<!-- APP_VERSION: 79 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -3643,7 +3643,7 @@ async function atualizarMercadoImoveis(){
   </div>
   <div class="cc-grid" id="cc-grid"></div>
   <div class="g2 mb">
-    <div class="panel"><div class="phd"><div><div class="pt">Gastos por Categoria</div></div><span class="badge b-gd">Fatura aberta</span></div><div class="pbd"><div class="chart-m"><canvas id="ch-cc-cat"></canvas></div><div class="pft">Compras no cartão, só realizadas (sem previstos) · mês da fatura aberta · não inclui "Pagamento cartão crédito" (meio de pagamento, não despesa)</div></div></div>
+    <div class="panel"><div class="phd"><div><div class="pt">Gastos por Categoria</div></div><span class="badge b-gd">Fatura aberta</span></div><div class="pbd"><div class="chart-m"><canvas id="ch-cc-cat"></canvas></div><div class="pft">Compras no cartão, só realizadas (sem previstos) · mês da fatura aberta · não inclui "Pagamento cartão crédito" (meio de pagamento, não despesa) · clique numa categoria para filtrar a tabela abaixo</div></div></div>
     <div class="panel"><div class="phd"><div class="pt">Utilização de Limite</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-cc-uso"></canvas></div><div class="pft">Comprometido = realizado (fatura + parcelas futuras) + previstos · Limite = total do cartão</div></div></div>
   </div>
   <div class="panel">
@@ -7721,7 +7721,10 @@ function rcartoes(){
     }).join('');
   }
   const cs=Object.entries(bc).sort((a,b)=>b[1]-a[1]);
-  mkCh('ch-cc-cat',{type:'doughnut',data:{labels:cs.map(([k])=>k),datasets:[{data:cs.map(([,v])=>v),backgroundColor:cs.map(([k])=>corCat(k)),borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right',labels:{color:C.txt,padding:10,font:{size:11}}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+brl(ctx.parsed)}}}},plugins:[_donutValueLabelPlugin]});
+  // Clique numa fatia OU num item da legenda filtra a tabela "Todas as Compras"
+  // abaixo pela categoria clicada (via filtrarComprasPorCategoria). O onHover
+  // troca o cursor pra "pointer" só quando o ponteiro está sobre uma fatia.
+  mkCh('ch-cc-cat',{type:'doughnut',data:{labels:cs.map(([k])=>k),datasets:[{data:cs.map(([,v])=>v),backgroundColor:cs.map(([k])=>corCat(k)),borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',onClick:(evt,els,chart)=>{if(els&&els.length){const cat=chart.data.labels[els[0].index];filtrarComprasPorCategoria(cat);}},onHover:(evt,els)=>{if(evt.native&&evt.native.target)evt.native.target.style.cursor=(els&&els.length)?'pointer':'default';},plugins:{legend:{position:'right',labels:{color:C.txt,padding:10,font:{size:11}},onClick:(evt,item)=>{if(item&&item.text)filtrarComprasPorCategoria(item.text);}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+brl(ctx.parsed)}}}},plugins:[_donutValueLabelPlugin]});
   // "Comprometido" aqui = realizado (fatura + parcelas futuras reais) + previsto
   // (compras forecast do cartão) — o gráfico quer refletir TODO lançamento em
   // aberto, não só o que já é real. Os cards individuais de cada cartão acima
@@ -7729,6 +7732,22 @@ function rcartoes(){
   mkCh('ch-cc-uso',{type:'bar',data:{labels:S.cartoes.map(c=>c.nome.split(' ').slice(0,2).join(' ')),datasets:[{label:'Comprometido',data:S.cartoes.map(c=>limiteComprometido(c)+comprometidoPrevistoCartao(c.id)),backgroundColor:'rgba(163,58,46,.28)',borderColor:C.red,borderWidth:1,borderRadius:3},{label:'Limite',data:S.cartoes.map(c=>c.limite),backgroundColor:'rgba(74,122,86,.14)',borderColor:C.grn,borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:C.txt,padding:12,font:{size:11}}}},scales:gridOpts(v=>'R$'+(v/1000).toFixed(0)+'k')}});
 }
 function verFatCart(id){document.getElementById('fil-cart').value=id;document.getElementById('tb-comp').closest('.panel').scrollIntoView({behavior:'smooth',block:'start'});rcartoes()}
+// Clique numa fatia/legenda do gráfico "Gastos por Categoria" (painel Cartões)
+// filtra a tabela "Todas as Compras" abaixo pela mesma categoria, reaproveitando
+// o select "fil-cc-cat" que já existe ali (mesmo mecanismo do filtro manual).
+function filtrarComprasPorCategoria(cat){
+  const sel=document.getElementById('fil-cc-cat');
+  if(!sel||!cat)return;
+  // Garante a opção mesmo se a categoria tiver sido removida de "Gerenciar
+  // Categorias" depois de usada em compras antigas (evita filtro "travar" vazio).
+  if(![...sel.options].some(o=>o.value===cat)){
+    const o=document.createElement('option');o.value=cat;o.textContent=cat;sel.appendChild(o);
+  }
+  sel.value=cat;
+  rcartoes();
+  const painel=document.getElementById('tb-comp')?.closest('.panel');
+  if(painel)painel.scrollIntoView({behavior:'smooth',block:'start'});
+}
 let _pagFatIdx=null;
 function pagarFat(i){
   const c=S.cartoes[i];
