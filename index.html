@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 75 -->
+<!-- APP_VERSION: 76 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -355,6 +355,20 @@ tr:last-child td{border-bottom:none}
 tbody tr:hover td{background:var(--bg2)}
 .tr{text-align:right}
 .mono{font-family:var(--mono);font-weight:300;font-size:12px}
+
+/* ─── ORDENAÇÃO POR CABEÇALHO (clique pra ordenar crescente/decrescente) ──── */
+th.th-sort{cursor:pointer;user-select:none;white-space:nowrap}
+th.th-sort:hover{color:var(--txt)}
+th.th-sort .sort-ic{font-size:8px;letter-spacing:0;margin-left:2px;color:var(--acc,#4A7A56)}
+@media(max-width:768px){
+  /* Nas tabelas viradas em cards (v74/v75), a linha de cabeçalho fica oculta —
+     a ordenação continua funcionando (o estado persiste e reordena os cards),
+     só não há onde clicar. Adiciona um controle equivalente por tabela via
+     JS (ver _sortMobileControls) usando os mesmos data-tbl/data-key/data-render. */
+  .sort-mob-bar{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+  .sort-mob-bar select{font-size:11px;padding:5px 8px;border-radius:var(--r);border:0.5px solid var(--bdr);background:var(--surf);color:var(--txt)}
+}
+@media(min-width:769px){.sort-mob-bar{display:none}}
 
 /* ─── BADGES ──── */
 .badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:20px;font-size:9.5px;font-weight:600;letter-spacing:.5px;text-transform:uppercase}
@@ -1551,7 +1565,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   </div>
   <div class="panel mb">
     <div class="phd"><div><div class="pt">Ações BR · B3</div></div><span class="badge b-g">B3</span></div>
-    <table class="tbl-mob-cards"><thead><tr><th>Ticker</th><th>Qtd</th><th>PM</th><th>Atual</th><th class="tr">Posição</th><th class="tr">Resultado</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-br"></tbody></table>
+    <table class="tbl-mob-cards"><thead><tr><th class="th-sort" data-tbl="br" data-key="ticker" data-render="rcar" onclick="sortTbl(this)">Ticker<span class="sort-ic"></span></th><th class="th-sort" data-tbl="br" data-key="qtd" data-render="rcar" onclick="sortTbl(this)">Qtd<span class="sort-ic"></span></th><th class="th-sort" data-tbl="br" data-key="pm" data-render="rcar" onclick="sortTbl(this)">PM<span class="sort-ic"></span></th><th class="th-sort" data-tbl="br" data-key="atual" data-render="rcar" onclick="sortTbl(this)">Atual<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="br" data-key="posicao" data-render="rcar" onclick="sortTbl(this)">Posição<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="br" data-key="resultado" data-render="rcar" onclick="sortTbl(this)">Resultado<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="br" data-key="rent" data-render="rcar" onclick="sortTbl(this)">Rent.<span class="sort-ic"></span></th><th></th></tr></thead><tbody id="tb-br"></tbody></table>
     <div class="pft">Todas as ações B3 cadastradas na carteira, posição atual</div>
   </div>
   <!-- MONITORAMENTO DE DIVIDENDOS — AÇÕES BR -->
@@ -1562,7 +1576,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   </div>
   <div class="panel mb">
     <div class="phd"><div><div class="pt">Stocks · NYSE / NASDAQ</div></div><span class="badge b-b">EUA</span></div>
-    <table class="tbl-mob-cards"><thead><tr><th>Ticker</th><th>Qtd</th><th>PM (USD)</th><th>Atual</th><th class="tr">Posição BRL</th><th class="tr">Resultado</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-us"></tbody></table>
+    <table class="tbl-mob-cards"><thead><tr><th class="th-sort" data-tbl="us" data-key="ticker" data-render="rcar" onclick="sortTbl(this)">Ticker<span class="sort-ic"></span></th><th class="th-sort" data-tbl="us" data-key="qtd" data-render="rcar" onclick="sortTbl(this)">Qtd<span class="sort-ic"></span></th><th class="th-sort" data-tbl="us" data-key="pm" data-render="rcar" onclick="sortTbl(this)">PM (USD)<span class="sort-ic"></span></th><th class="th-sort" data-tbl="us" data-key="atual" data-render="rcar" onclick="sortTbl(this)">Atual<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="us" data-key="posicao" data-render="rcar" onclick="sortTbl(this)">Posição BRL<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="us" data-key="resultado" data-render="rcar" onclick="sortTbl(this)">Resultado<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="us" data-key="rent" data-render="rcar" onclick="sortTbl(this)">Rent.<span class="sort-ic"></span></th><th></th></tr></thead><tbody id="tb-us"></tbody></table>
     <div class="pft">Todas as stocks EUA cadastradas, posição convertida em BRL</div>
   </div>
   <!-- MONITORAMENTO DE DIVIDENDOS — STOCKS EUA -->
@@ -1579,12 +1593,12 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     </div>
     <div id="aluguel-kpis" class="kpi-row" style="margin-bottom:12px"></div>
     <div id="aluguel-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum contrato de aluguel cadastrado. Use <strong>+ Contrato</strong> ou importe por foto/PDF.</div>
-    <table id="aluguel-tabela" class="tbl-mob-cards"><thead><tr><th>Ativo</th><th>Papel</th><th class="tr">Qtd</th><th class="tr">Preço médio</th><th class="tr">Preço ação</th><th class="tr">Posição</th><th class="tr">Rent.</th><th class="tr">Vencimento</th><th></th></tr></thead><tbody id="tb-aluguel"></tbody></table>
+    <table id="aluguel-tabela" class="tbl-mob-cards"><thead><tr><th class="th-sort" data-tbl="aluguel" data-key="ativo" data-render="raluguel" onclick="sortTbl(this)">Ativo<span class="sort-ic"></span></th><th class="th-sort" data-tbl="aluguel" data-key="papel" data-render="raluguel" onclick="sortTbl(this)">Papel<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="aluguel" data-key="qtd" data-render="raluguel" onclick="sortTbl(this)">Qtd<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="aluguel" data-key="pm" data-render="raluguel" onclick="sortTbl(this)">Preço médio<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="aluguel" data-key="preco" data-render="raluguel" onclick="sortTbl(this)">Preço ação<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="aluguel" data-key="posicao" data-render="raluguel" onclick="sortTbl(this)">Posição<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="aluguel" data-key="rent" data-render="raluguel" onclick="sortTbl(this)">Rent.<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="aluguel" data-key="vencimento" data-render="raluguel" onclick="sortTbl(this)">Vencimento<span class="sort-ic"></span></th><th></th></tr></thead><tbody id="tb-aluguel"></tbody></table>
     <div class="pft">Todos os contratos de aluguel de ações cadastrados (doador/tomador)</div>
   </div>
 
   <!-- FUNDOS IMOBILIÁRIOS -->
-  <div class="panel mb" style="margin-top:16px"><div class="phd"><div class="pt">Fundos Imobiliários</div><div class="ha"><button class="btn btn-ghost" onclick="abrirFotoImport('ativos')"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportAtivos()">⭳ Importar</button><button class="btn btn-g" onclick="abrirAtivoTipo('FII')">+ Fundo</button><span class="badge b-gd">FII</span></div></div><table class="tbl-mob-cards"><thead><tr><th>Fundo</th><th>Qtd</th><th>PM</th><th>Atual</th><th class="tr">DY</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-fii"></tbody></table><div class="pft">Todos os fundos imobiliários cadastrados na carteira</div></div>
+  <div class="panel mb" style="margin-top:16px"><div class="phd"><div class="pt">Fundos Imobiliários</div><div class="ha"><button class="btn btn-ghost" onclick="abrirFotoImport('ativos')"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportAtivos()">⭳ Importar</button><button class="btn btn-g" onclick="abrirAtivoTipo('FII')">+ Fundo</button><span class="badge b-gd">FII</span></div></div><table class="tbl-mob-cards"><thead><tr><th class="th-sort" data-tbl="fii" data-key="ticker" data-render="rcar" onclick="sortTbl(this)">Fundo<span class="sort-ic"></span></th><th class="th-sort" data-tbl="fii" data-key="qtd" data-render="rcar" onclick="sortTbl(this)">Qtd<span class="sort-ic"></span></th><th class="th-sort" data-tbl="fii" data-key="pm" data-render="rcar" onclick="sortTbl(this)">PM<span class="sort-ic"></span></th><th class="th-sort" data-tbl="fii" data-key="atual" data-render="rcar" onclick="sortTbl(this)">Atual<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="fii" data-key="dy" data-render="rcar" onclick="sortTbl(this)">DY<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="fii" data-key="rent" data-render="rcar" onclick="sortTbl(this)">Rent.<span class="sort-ic"></span></th><th></th></tr></thead><tbody id="tb-fii"></tbody></table><div class="pft">Todos os fundos imobiliários cadastrados na carteira</div></div>
 
   <!-- FUNDOS DE INVESTIMENTO -->
   <div class="panel mb" id="panel-fundos" style="margin-top:16px">
@@ -1594,12 +1608,12 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     </div>
     <div id="fundos-kpis" class="kpi-row" style="margin-bottom:12px"></div>
     <div id="fundos-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum fundo cadastrado. Use <strong>+ Fundo</strong> ou importe por foto/PDF da posição.</div>
-    <table id="fundos-tabela" class="tbl-mob-cards"><thead><tr><th>Fundo</th><th class="tr">Aplicado</th><th class="tr">Posição</th><th class="tr">Rendimento</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-fundos"></tbody></table>
+    <table id="fundos-tabela" class="tbl-mob-cards"><thead><tr><th class="th-sort" data-tbl="fundos" data-key="fundo" data-render="rfundos" onclick="sortTbl(this)">Fundo<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="fundos" data-key="aplicado" data-render="rfundos" onclick="sortTbl(this)">Aplicado<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="fundos" data-key="posicao" data-render="rfundos" onclick="sortTbl(this)">Posição<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="fundos" data-key="rendimento" data-render="rfundos" onclick="sortTbl(this)">Rendimento<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="fundos" data-key="rent" data-render="rfundos" onclick="sortTbl(this)">Rent.<span class="sort-ic"></span></th><th></th></tr></thead><tbody id="tb-fundos"></tbody></table>
     <div class="pft">Fundos DI/RF/multimercado cadastrados, por valor aplicado e posição atual</div>
   </div>
 
   <!-- RENDA FIXA · CDB -->
-  <div class="panel mb" style="margin-top:16px"><div class="phd"><div class="pt">Renda Fixa · CDB</div><div class="ha"><button class="btn btn-ghost" onclick="abrirFotoImport('ativos')"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportAtivos()">⭳ Importar</button><button class="btn btn-g" onclick="abrirAtivoTipo('RF')">+ Título</button><span class="badge b-n">RF</span></div></div><table class="tbl-mob-cards"><thead><tr><th>Produto</th><th>Inst.</th><th>Taxa</th><th class="tr">Valor</th><th class="tr">Vencimento</th><th></th></tr></thead><tbody id="tb-rf"></tbody></table><div class="pft">Todos os CDBs e títulos de renda fixa cadastrados (exceto fundos)</div></div>
+  <div class="panel mb" style="margin-top:16px"><div class="phd"><div class="pt">Renda Fixa · CDB</div><div class="ha"><button class="btn btn-ghost" onclick="abrirFotoImport('ativos')"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportAtivos()">⭳ Importar</button><button class="btn btn-g" onclick="abrirAtivoTipo('RF')">+ Título</button><span class="badge b-n">RF</span></div></div><table class="tbl-mob-cards"><thead><tr><th class="th-sort" data-tbl="rf" data-key="produto" data-render="rcar" onclick="sortTbl(this)">Produto<span class="sort-ic"></span></th><th class="th-sort" data-tbl="rf" data-key="inst" data-render="rcar" onclick="sortTbl(this)">Inst.<span class="sort-ic"></span></th><th class="th-sort" data-tbl="rf" data-key="taxa" data-render="rcar" onclick="sortTbl(this)">Taxa<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="rf" data-key="valor" data-render="rcar" onclick="sortTbl(this)">Valor<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="rf" data-key="vencimento" data-render="rcar" onclick="sortTbl(this)">Vencimento<span class="sort-ic"></span></th><th></th></tr></thead><tbody id="tb-rf"></tbody></table><div class="pft">Todos os CDBs e títulos de renda fixa cadastrados (exceto fundos)</div></div>
 
   <!-- SATÉLITE · POSIÇÕES ASSIMÉTRICAS -->
   <div class="panel mb" id="panel-sat" style="margin-top:16px">
@@ -1608,7 +1622,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <div class="ha"><button class="btn btn-g" onclick="openM('m-ativo')">+ Adicionar</button></div>
     </div>
     <div id="sat-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhuma posição satélite. O Comitê recomenda no máximo 5% da carteira — aposta pequena e assimétrica.</div>
-    <table id="sat-tabela" class="tbl-mob-cards"><thead><tr><th>Ticker</th><th>Qtd</th><th>PM</th><th>Atual</th><th class="tr">Posição</th><th class="tr">Resultado</th><th class="tr">Rent.</th><th></th></tr></thead><tbody id="tb-sat"></tbody></table>
+    <table id="sat-tabela" class="tbl-mob-cards"><thead><tr><th class="th-sort" data-tbl="sat" data-key="ticker" data-render="rcar" onclick="sortTbl(this)">Ticker<span class="sort-ic"></span></th><th class="th-sort" data-tbl="sat" data-key="qtd" data-render="rcar" onclick="sortTbl(this)">Qtd<span class="sort-ic"></span></th><th class="th-sort" data-tbl="sat" data-key="pm" data-render="rcar" onclick="sortTbl(this)">PM<span class="sort-ic"></span></th><th class="th-sort" data-tbl="sat" data-key="atual" data-render="rcar" onclick="sortTbl(this)">Atual<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="sat" data-key="posicao" data-render="rcar" onclick="sortTbl(this)">Posição<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="sat" data-key="resultado" data-render="rcar" onclick="sortTbl(this)">Resultado<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="sat" data-key="rent" data-render="rcar" onclick="sortTbl(this)">Rent.<span class="sort-ic"></span></th><th></th></tr></thead><tbody id="tb-sat"></tbody></table>
     <div class="pft">Posições satélite (convicção assimétrica), todas cadastradas</div>
   </div>
 
@@ -1623,7 +1637,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <div id="grao-posicao"></div>
       <div id="grao-exposicao" style="margin-top:18px"></div>
       <div id="grao-evol-wrap" style="margin-top:18px"><div class="pt" style="font-size:13px;margin-bottom:10px">Evolução do Estoque &amp; Resultado</div><div class="chart-m"><canvas id="ch-grao-evol"></canvas></div></div>
-      <div style="margin-top:18px"><div class="pt" style="font-size:13px;margin-bottom:10px">Operações</div><div style="overflow-x:auto"><table id="tb-grao-ops" class="tbl-mob-cards"><thead><tr><th>Data</th><th>Produto</th><th>Op.</th><th class="tr">Sacas</th><th class="tr">R$/saca</th><th class="tr">Total</th><th>Contraparte</th><th class="tr">Hedge</th><th></th></tr></thead><tbody id="tb-grao"></tbody></table></div></div>
+      <div style="margin-top:18px"><div class="pt" style="font-size:13px;margin-bottom:10px">Operações</div><div style="overflow-x:auto"><table id="tb-grao-ops" class="tbl-mob-cards"><thead><tr><th class="th-sort" data-tbl="grao" data-key="data" data-render="rgraos" onclick="sortTbl(this)">Data<span class="sort-ic"></span></th><th class="th-sort" data-tbl="grao" data-key="produto" data-render="rgraos" onclick="sortTbl(this)">Produto<span class="sort-ic"></span></th><th class="th-sort" data-tbl="grao" data-key="tipo" data-render="rgraos" onclick="sortTbl(this)">Op.<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="grao" data-key="sacas" data-render="rgraos" onclick="sortTbl(this)">Sacas<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="grao" data-key="precosaca" data-render="rgraos" onclick="sortTbl(this)">R$/saca<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="grao" data-key="total" data-render="rgraos" onclick="sortTbl(this)">Total<span class="sort-ic"></span></th><th class="th-sort" data-tbl="grao" data-key="contraparte" data-render="rgraos" onclick="sortTbl(this)">Contraparte<span class="sort-ic"></span></th><th class="tr">Hedge</th><th></th></tr></thead><tbody id="tb-grao"></tbody></table></div></div>
       <div class="pft">Trading físico + hedge de grãos: todo o histórico de operações (S.graos), sem previstos</div>
     </div>
   </div>
@@ -3570,7 +3584,7 @@ async function atualizarMercadoImoveis(){
   </div>
   <div class="panel">
     <div class="phd"><div class="pt">Histórico Detalhado</div></div>
-    <table class="tbl-mob-cards"><thead><tr><th>Data</th><th>Ativo</th><th>Tipo</th><th>Cotas</th><th class="tr">R$/Cota</th><th class="tr">Total</th><th></th></tr></thead><tbody id="tb-div"></tbody></table>
+    <table class="tbl-mob-cards"><thead><tr><th class="th-sort" data-tbl="div" data-key="data" data-render="rdiv" onclick="sortTbl(this)">Data<span class="sort-ic"></span></th><th class="th-sort" data-tbl="div" data-key="ativo" data-render="rdiv" onclick="sortTbl(this)">Ativo<span class="sort-ic"></span></th><th class="th-sort" data-tbl="div" data-key="tipo" data-render="rdiv" onclick="sortTbl(this)">Tipo<span class="sort-ic"></span></th><th class="th-sort" data-tbl="div" data-key="cotas" data-render="rdiv" onclick="sortTbl(this)">Cotas<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="div" data-key="valorcota" data-render="rdiv" onclick="sortTbl(this)">R$/Cota<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="div" data-key="total" data-render="rdiv" onclick="sortTbl(this)">Total<span class="sort-ic"></span></th><th></th></tr></thead><tbody id="tb-div"></tbody></table>
     <div class="pft">Todo o histórico de proventos, incluindo os ainda a receber (futuro)</div>
   </div>
 </div>
@@ -3613,7 +3627,7 @@ async function atualizarMercadoImoveis(){
       </div>
     </div>
     <div class="sel-bar" id="sel-bar-contas" style="display:none"></div>
-    <table class="tbl-mob-cards"><thead><tr><th class="sel-col" style="display:none"><input type="checkbox" id="sel-all-contas" onclick="selAll('contas',this.checked)"></th><th>Data</th><th>Banco</th><th>Descrição</th><th>Tipo</th><th class="tr">Valor</th><th class="tr">Saldo</th><th></th></tr></thead><tbody id="tb-ext"></tbody></table>
+    <table class="tbl-mob-cards"><thead><tr><th class="sel-col" style="display:none"><input type="checkbox" id="sel-all-contas" onclick="selAll('contas',this.checked)"></th><th class="th-sort" data-tbl="ext" data-key="data" data-render="rcontas" onclick="sortTbl(this)">Data<span class="sort-ic"></span></th><th class="th-sort" data-tbl="ext" data-key="banco" data-render="rcontas" onclick="sortTbl(this)">Banco<span class="sort-ic"></span></th><th class="th-sort" data-tbl="ext" data-key="desc" data-render="rcontas" onclick="sortTbl(this)">Descrição<span class="sort-ic"></span></th><th class="th-sort" data-tbl="ext" data-key="tipo" data-render="rcontas" onclick="sortTbl(this)">Tipo<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="ext" data-key="valor" data-render="rcontas" onclick="sortTbl(this)">Valor<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="ext" data-key="saldo" data-render="rcontas" onclick="sortTbl(this)">Saldo<span class="sort-ic"></span></th><th></th></tr></thead><tbody id="tb-ext"></tbody></table>
     <div class="pft">Lançamentos bancários · Realizados ou Previstos conforme aba selecionada acima</div>
   </div>
 </div>
@@ -3642,12 +3656,12 @@ async function atualizarMercadoImoveis(){
       </div>
     </div>
     <div class="sel-bar" id="sel-bar-cartoes" style="display:none"></div>
-    <table class="tbl-mob-cards"><thead><tr><th class="sel-col" style="display:none"><input type="checkbox" id="sel-all-cartoes" onclick="selAll('cartoes',this.checked)"></th><th>Data</th><th>Cartão</th><th>Descrição</th><th>Categoria</th><th class="tr">Valor</th><th class="tr">Parcelas</th><th></th></tr></thead><tbody id="tb-comp"></tbody></table>
+    <table class="tbl-mob-cards"><thead><tr><th class="sel-col" style="display:none"><input type="checkbox" id="sel-all-cartoes" onclick="selAll('cartoes',this.checked)"></th><th class="th-sort" data-tbl="comp" data-key="data" data-render="rcartoes" onclick="sortTbl(this)">Data<span class="sort-ic"></span></th><th class="th-sort" data-tbl="comp" data-key="cartao" data-render="rcartoes" onclick="sortTbl(this)">Cartão<span class="sort-ic"></span></th><th class="th-sort" data-tbl="comp" data-key="desc" data-render="rcartoes" onclick="sortTbl(this)">Descrição<span class="sort-ic"></span></th><th class="th-sort" data-tbl="comp" data-key="cat" data-render="rcartoes" onclick="sortTbl(this)">Categoria<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="comp" data-key="valor" data-render="rcartoes" onclick="sortTbl(this)">Valor<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="comp" data-key="parcelas" data-render="rcartoes" onclick="sortTbl(this)">Parcelas<span class="sort-ic"></span></th><th></th></tr></thead><tbody id="tb-comp"></tbody></table>
     <div class="pft">Compras no cartão · Realizadas ou Previstas conforme aba selecionada acima</div>
   </div>
   <div class="panel" id="painel-pagfat" style="margin-top:16px;display:none">
     <div class="phd"><div><div class="pt">Pagamentos de Fatura</div><div class="ps">Histórico de pagamentos · editável</div></div></div>
-    <table class="tbl-mob-cards"><thead><tr><th>Data</th><th>Cartão</th><th>Origem</th><th class="tr">Valor Pago</th><th></th></tr></thead><tbody id="tb-pagfat"></tbody></table>
+    <table class="tbl-mob-cards"><thead><tr><th class="th-sort" data-tbl="pagfat" data-key="data" data-render="rcartoes" onclick="sortTbl(this)">Data<span class="sort-ic"></span></th><th class="th-sort" data-tbl="pagfat" data-key="cartao" data-render="rcartoes" onclick="sortTbl(this)">Cartão<span class="sort-ic"></span></th><th class="th-sort" data-tbl="pagfat" data-key="origem" data-render="rcartoes" onclick="sortTbl(this)">Origem<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="pagfat" data-key="valor" data-render="rcartoes" onclick="sortTbl(this)">Valor Pago<span class="sort-ic"></span></th><th></th></tr></thead><tbody id="tb-pagfat"></tbody></table>
     <div class="pft">Histórico de pagamentos de fatura, todos os cartões (ou o filtrado acima)</div>
   </div>
 </div>
@@ -3667,7 +3681,7 @@ async function atualizarMercadoImoveis(){
   </div>
   <div class="panel">
     <div class="phd"><div class="pt">Todos os Lançamentos</div></div>
-    <table class="tbl-mob-cards"><thead><tr><th>Data</th><th>Descrição</th><th>Categoria</th><th>Origem</th><th class="tr">Valor</th><th></th></tr></thead><tbody id="tb-gas"></tbody></table>
+    <table class="tbl-mob-cards"><thead><tr><th class="th-sort" data-tbl="gas" data-key="data" data-render="rgas" onclick="sortTbl(this)">Data<span class="sort-ic"></span></th><th class="th-sort" data-tbl="gas" data-key="desc" data-render="rgas" onclick="sortTbl(this)">Descrição<span class="sort-ic"></span></th><th class="th-sort" data-tbl="gas" data-key="cat" data-render="rgas" onclick="sortTbl(this)">Categoria<span class="sort-ic"></span></th><th class="th-sort" data-tbl="gas" data-key="origem" data-render="rgas" onclick="sortTbl(this)">Origem<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="gas" data-key="valor" data-render="rgas" onclick="sortTbl(this)">Valor<span class="sort-ic"></span></th><th></th></tr></thead><tbody id="tb-gas"></tbody></table>
     <div class="pft">Gastos avulsos · Realizados ou Previstos conforme aba selecionada acima</div>
   </div>
   <div class="panel">
@@ -3824,9 +3838,9 @@ async function atualizarMercadoImoveis(){
     <div class="phd"><div class="pt">Lista Completa de Bens</div></div>
     <table class="tbl-mob-cards">
       <thead><tr>
-        <th>Bem</th><th>Categoria</th><th>Localização</th>
-        <th>Aquisição</th><th class="tr">Valor Aquisição</th>
-        <th class="tr">Valor Atual</th><th class="tr">Variação</th><th></th>
+        <th class="th-sort" data-tbl="bens" data-key="bem" data-render="rbens" onclick="sortTbl(this)">Bem<span class="sort-ic"></span></th><th class="th-sort" data-tbl="bens" data-key="categoria" data-render="rbens" onclick="sortTbl(this)">Categoria<span class="sort-ic"></span></th><th class="th-sort" data-tbl="bens" data-key="localizacao" data-render="rbens" onclick="sortTbl(this)">Localização<span class="sort-ic"></span></th>
+        <th class="th-sort" data-tbl="bens" data-key="aquisicao" data-render="rbens" onclick="sortTbl(this)">Aquisição<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="bens" data-key="valoraquisicao" data-render="rbens" onclick="sortTbl(this)">Valor Aquisição<span class="sort-ic"></span></th>
+        <th class="tr th-sort" data-tbl="bens" data-key="valoratual" data-render="rbens" onclick="sortTbl(this)">Valor Atual<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="bens" data-key="variacao" data-render="rbens" onclick="sortTbl(this)">Variação<span class="sort-ic"></span></th><th></th>
       </tr></thead>
       <tbody id="tb-bens"></tbody>
     </table>
@@ -6138,6 +6152,88 @@ function rdash(){
   // Circulação entre baldes (conta ↔ cartão ↔ investimento)
   renderFluxoBaldes();
 }
+
+// ══════════════════════════════════════════════════════════════════
+// ORDENAÇÃO POR CABEÇALHO — clique num <th> pra ordenar crescente ▲ ou
+// decrescente ▼. Cada tabela guarda seu estado (_sortState[tableId] =
+// {key,dir}) independente das outras. 1º clique numa coluna = crescente;
+// 2º clique na MESMA coluna inverte; clicar em outra coluna reinicia em
+// crescente. Cada render function monta um mapa de "extratores" (como
+// pegar o valor de ordenação de cada linha, já que várias colunas são
+// calculadas — rentabilidade, saldo progressivo etc. — e não existem
+// como campo bruto no objeto) e chama _sortRows(tableId, linhas, mapa)
+// antes de desenhar as linhas. Os <th> ficam com data-tbl/data-key/
+// data-render e onclick="sortTbl(this)"; o cabeçalho não é redesenhado
+// a cada render (só o <tbody>), então a seta (span.sort-ic) persiste.
+// ══════════════════════════════════════════════════════════════════
+const _sortState={};
+function _sortRows(tableId,rows,extractors){
+  const st=_sortState[tableId];
+  if(!st||!extractors[st.key])return rows;
+  const {fn,type}=extractors[st.key],dir=st.dir;
+  const copy=rows.slice();
+  copy.sort((a,b)=>{
+    let va=fn(a),vb=fn(b);
+    if(type==='num'){va=+va;vb=+vb;if(isNaN(va))va=-Infinity;if(isNaN(vb))vb=-Infinity;return (va-vb)*dir;}
+    va=(va==null?'':String(va)).toLowerCase();vb=(vb==null?'':String(vb)).toLowerCase();
+    return va<vb?-dir:va>vb?dir:0;
+  });
+  return copy;
+}
+function sortTbl(th){
+  const tableId=th.dataset.tbl,key=th.dataset.key,fnName=th.dataset.render;
+  if(!tableId||!key)return;
+  const cur=_sortState[tableId];
+  if(cur&&cur.key===key)cur.dir*=-1; else _sortState[tableId]={key,dir:1};
+  if(fnName&&typeof window[fnName]==='function')window[fnName]();
+  _updateSortArrows(tableId);
+}
+function _updateSortArrows(tableId){
+  document.querySelectorAll('th[data-tbl="'+tableId+'"]').forEach(th=>{
+    const ic=th.querySelector('.sort-ic');if(!ic)return;
+    const st=_sortState[tableId];
+    ic.textContent=(st&&st.key===th.dataset.key)?(st.dir===1?' ▲':' ▼'):'';
+  });
+}
+// No celular a linha de cabeçalho fica oculta (tabela virou cards — v74/v75),
+// então não há onde clicar. Gera, uma vez, uma barrinha equivalente por
+// tabela (só visível <768px via CSS) com um <select> de coluna + um botão de
+// inverter direção, reaproveitando o MESMO data-tbl/data-key/data-render que
+// já está nos <th> — não precisa duplicar a lista de colunas na mão.
+const _SORTABLE_TABLES=['ext','comp','pagfat','br','us','aluguel','fii','fundos','rf','sat','div','bens','gas','grao'];
+function _initSortBars(){
+  _SORTABLE_TABLES.forEach(tid=>{
+    const tbody=document.getElementById('tb-'+tid);
+    const table=tbody?tbody.closest('table'):null;
+    if(!table||!table.parentElement)return;
+    if(table.parentElement.querySelector(':scope > .sort-mob-bar[data-for="'+tid+'"]'))return;
+    const ths=[...table.querySelectorAll('th[data-tbl="'+tid+'"]')];
+    if(!ths.length)return;
+    const bar=document.createElement('div');
+    bar.className='sort-mob-bar';bar.dataset.for=tid;
+    const sel=document.createElement('select');
+    sel.innerHTML='<option value="">Ordenar por…</option>'+ths.map(th=>{
+      const label=th.textContent.replace(/[▲▼]/g,'').trim();
+      return `<option value="${th.dataset.key}">${label}</option>`;
+    }).join('');
+    const btnDir=document.createElement('button');
+    btnDir.type='button';btnDir.className='btn btn-ghost';btnDir.style.cssText='font-size:11px;padding:5px 10px';
+    btnDir.textContent='▲▼';
+    const _apply=(resetDir)=>{
+      const key=sel.value;if(!key)return;
+      const th=ths.find(x=>x.dataset.key===key);if(!th)return;
+      const cur=_sortState[tid];
+      if(!resetDir&&cur&&cur.key===key)cur.dir*=-1; else _sortState[tid]={key,dir:1};
+      if(typeof window[th.dataset.render]==='function')window[th.dataset.render]();
+      _updateSortArrows(tid);
+    };
+    sel.addEventListener('change',()=>_apply(true));
+    btnDir.addEventListener('click',()=>_apply(false));
+    bar.appendChild(sel);bar.appendChild(btnDir);
+    table.parentElement.insertBefore(bar,table);
+  });
+}
+
 function rcar(){
   const inv=totInv(),cs=custo(),res=inv-cs,rp=cs>0?res/cs*100:0;
   document.getElementById('c-tot').textContent=brl(inv);
@@ -6147,11 +6243,15 @@ function rcar(){
   document.getElementById('c-rnt').className='kpi-val '+(rp>=0?'cg':'cr');
   document.getElementById('c-num').textContent=S.ativos.length;
   const rowBR=a=>{const p=a.preco||a.pm,r=rent(a),pv=pos(a),rv=pv-a.qtd*a.pm;return`<tr><td data-label="Ticker"><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono" data-label="Qtd">${a.qtd}</td><td class="mono" data-label="PM">${brl(a.pm)}</td><td class="mono" data-label="Atual">${a.preco?brl(a.preco):'—'}${a.varPct!==undefined?`<br><span class="cm" style="font-size:9px">${pct(a.varPct)} hoje</span>`:''}</td><td class="tr mono" data-label="Posição">${brl(pv)}</td><td class="tr mono ${cCls(rv)}" data-label="Resultado">${rv>=0?'+':'-'}${brl(Math.abs(rv))}</td><td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td><td class="td-act"><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`};
-  document.getElementById('tb-br').innerHTML=S.ativos.filter(a=>a.tipo==='BR').map(rowBR).join('');
-  document.getElementById('tb-us').innerHTML=S.ativos.filter(a=>a.tipo==='US').map(a=>{const p=a.preco||a.pm,r=rent(a),pv=pos(a),rv=pv-a.qtd*a.pm*S.usdBrl;return`<tr><td data-label="Ticker"><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono" data-label="Qtd">${a.qtd}</td><td class="mono" data-label="PM (USD)">${usd(a.pm)}</td><td class="mono" data-label="Atual">${a.preco?usd(a.preco):'—'}${a.varPct!==undefined?`<br><span class="cm" style="font-size:9px">${pct(a.varPct)} hoje</span>`:''}</td><td class="tr mono" data-label="Posição BRL">${brl(pv)}</td><td class="tr mono ${cCls(rv)}" data-label="Resultado">${rv>=0?'+':'-'}${brl(Math.abs(rv))}</td><td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td><td class="td-act"><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`}).join('');
-  document.getElementById('tb-fii').innerHTML=S.ativos.filter(a=>a.tipo==='FII').map(a=>{const r=rent(a),dy=a.ticker==='HGLG11'?8.4:13.2;return`<tr><td data-label="Fundo"><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono" data-label="Qtd">${a.qtd}</td><td class="mono" data-label="PM">${brl(a.pm)}</td><td class="mono" data-label="Atual">${a.preco?brl(a.preco):'—'}</td><td class="tr mono cgd" data-label="DY">${dy.toFixed(1)}%</td><td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td><td class="td-act"><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`}).join('');
-  document.getElementById('tb-rf').innerHTML=S.ativos.filter(a=>a.tipo==='RF'&&!a.fundo).map(a=>`<tr><td data-label="Produto"><strong>${a.ticker}</strong></td><td class="cm" data-label="Inst.">${a.inst||'—'}</td><td data-label="Taxa"><span class="badge b-g" style="font-size:9px">${a.taxa||'—'}</span></td><td class="tr mono" data-label="Valor">${brl(a.pm)}</td><td class="tr cm" data-label="Vencimento" style="font-size:11px">${a.venc||'—'}</td><td class="td-act"><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`).join('');
-  const satLista=S.ativos.filter(a=>a.tipo==='SAT');
+  const _sortAtivosBR={ticker:{fn:a=>a.ticker,type:'str'},qtd:{fn:a=>a.qtd,type:'num'},pm:{fn:a=>a.pm,type:'num'},atual:{fn:a=>a.preco||a.pm,type:'num'},posicao:{fn:a=>pos(a),type:'num'},resultado:{fn:a=>pos(a)-a.qtd*a.pm,type:'num'},rent:{fn:a=>rent(a),type:'num'}};
+  document.getElementById('tb-br').innerHTML=_sortRows('br',S.ativos.filter(a=>a.tipo==='BR'),_sortAtivosBR).map(rowBR).join('');
+  const _sortAtivosUS={ticker:{fn:a=>a.ticker,type:'str'},qtd:{fn:a=>a.qtd,type:'num'},pm:{fn:a=>a.pm,type:'num'},atual:{fn:a=>a.preco||a.pm,type:'num'},posicao:{fn:a=>pos(a),type:'num'},resultado:{fn:a=>pos(a)-a.qtd*a.pm*S.usdBrl,type:'num'},rent:{fn:a=>rent(a),type:'num'}};
+  document.getElementById('tb-us').innerHTML=_sortRows('us',S.ativos.filter(a=>a.tipo==='US'),_sortAtivosUS).map(a=>{const p=a.preco||a.pm,r=rent(a),pv=pos(a),rv=pv-a.qtd*a.pm*S.usdBrl;return`<tr><td data-label="Ticker"><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono" data-label="Qtd">${a.qtd}</td><td class="mono" data-label="PM (USD)">${usd(a.pm)}</td><td class="mono" data-label="Atual">${a.preco?usd(a.preco):'—'}${a.varPct!==undefined?`<br><span class="cm" style="font-size:9px">${pct(a.varPct)} hoje</span>`:''}</td><td class="tr mono" data-label="Posição BRL">${brl(pv)}</td><td class="tr mono ${cCls(rv)}" data-label="Resultado">${rv>=0?'+':'-'}${brl(Math.abs(rv))}</td><td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td><td class="td-act"><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`}).join('');
+  const _sortAtivosFII={ticker:{fn:a=>a.ticker,type:'str'},qtd:{fn:a=>a.qtd,type:'num'},pm:{fn:a=>a.pm,type:'num'},atual:{fn:a=>a.preco||a.pm,type:'num'},dy:{fn:a=>a.ticker==='HGLG11'?8.4:13.2,type:'num'},rent:{fn:a=>rent(a),type:'num'}};
+  document.getElementById('tb-fii').innerHTML=_sortRows('fii',S.ativos.filter(a=>a.tipo==='FII'),_sortAtivosFII).map(a=>{const r=rent(a),dy=a.ticker==='HGLG11'?8.4:13.2;return`<tr><td data-label="Fundo"><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono" data-label="Qtd">${a.qtd}</td><td class="mono" data-label="PM">${brl(a.pm)}</td><td class="mono" data-label="Atual">${a.preco?brl(a.preco):'—'}</td><td class="tr mono cgd" data-label="DY">${dy.toFixed(1)}%</td><td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td><td class="td-act"><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`}).join('');
+  const _sortAtivosRF={produto:{fn:a=>a.ticker,type:'str'},inst:{fn:a=>a.inst||'',type:'str'},taxa:{fn:a=>a.taxa||'',type:'str'},valor:{fn:a=>a.pm,type:'num'},vencimento:{fn:a=>a.venc||'',type:'date'}};
+  document.getElementById('tb-rf').innerHTML=_sortRows('rf',S.ativos.filter(a=>a.tipo==='RF'&&!a.fundo),_sortAtivosRF).map(a=>`<tr><td data-label="Produto"><strong>${a.ticker}</strong></td><td class="cm" data-label="Inst.">${a.inst||'—'}</td><td data-label="Taxa"><span class="badge b-g" style="font-size:9px">${a.taxa||'—'}</span></td><td class="tr mono" data-label="Valor">${brl(a.pm)}</td><td class="tr cm" data-label="Vencimento" style="font-size:11px">${a.venc||'—'}</td><td class="td-act"><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`).join('');
+  const satLista=_sortRows('sat',S.ativos.filter(a=>a.tipo==='SAT'),_sortAtivosBR);
   const satVazio=document.getElementById('sat-vazio'),satTab=document.getElementById('sat-tabela');
   if(satVazio&&satTab){satVazio.style.display=satLista.length?'none':'block';satTab.style.display=satLista.length?'':'none';}
   const tbSat=document.getElementById('tb-sat');
@@ -6716,7 +6816,14 @@ function rfundos(){
   }
   if(vazio)vazio.style.display='none';
   if(tabela)tabela.style.display='';
-  const ordenada=_ordAlfa(lista.slice(),a=>a.nome||a.ticker||'');
+  let ordenada=_ordAlfa(lista.slice(),a=>a.nome||a.ticker||'');
+  ordenada=_sortRows('fundos',ordenada,{
+    fundo:{fn:a=>a.nome||a.ticker||'',type:'str'},
+    aplicado:{fn:a=>+a.pm||0,type:'num'},
+    posicao:{fn:a=>(+a.preco||+a.pm||0),type:'num'},
+    rendimento:{fn:a=>(+a.preco||+a.pm||0)-(+a.pm||0),type:'num'},
+    rent:{fn:a=>rent(a),type:'num'}
+  });
   tb.innerHTML=ordenada.map(a=>{
     const aplicado=+a.pm||0, posicao=(+a.preco||+a.pm||0);
     const rend=posicao-aplicado, r=rent(a);
@@ -6759,7 +6866,17 @@ function raluguel(){
   }
   if(vazio)vazio.style.display='none';
   if(tabela)tabela.style.display='';
-  const ordenada=_ordAlfa(lista.slice(),a=>a.ticker||a.nome||'');
+  let ordenada=_ordAlfa(lista.slice(),a=>a.ticker||a.nome||'');
+  ordenada=_sortRows('aluguel',ordenada,{
+    ativo:{fn:a=>a.ticker||a.nome||'',type:'str'},
+    papel:{fn:a=>a.papel||'',type:'str'},
+    qtd:{fn:a=>a.qtd||0,type:'num'},
+    pm:{fn:a=>a.pm||0,type:'num'},
+    preco:{fn:a=>a.preco||0,type:'num'},
+    posicao:{fn:a=>aluguelPos(a),type:'num'},
+    rent:{fn:a=>aluguelRent(a),type:'num'},
+    vencimento:{fn:a=>a.venc||'',type:'date'}
+  });
   tb.innerHTML=ordenada.map(a=>{
     const r=aluguelRent(a), pv=aluguelPos(a);
     const badgePapel=a.papel==='Doador'
@@ -6816,9 +6933,18 @@ function rgraos(){
     }).join('')}</tbody></table>`;
   }
   // Operações
-  const ops=[...(S.graos||[])].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  let ops=[...(S.graos||[])].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
   const tipoLabel={originacao:'Originação',compra:'Compra',venda:'Venda'};
   const tipoBadge={originacao:'b-gd',compra:'b-b',venda:'b-g'};
+  ops=_sortRows('grao',ops,{
+    data:{fn:g=>g.data||'',type:'date'},
+    produto:{fn:g=>GRAO_LABEL[g.produto]||g.produto||'',type:'str'},
+    tipo:{fn:g=>tipoLabel[g.tipo]||g.tipo||'',type:'str'},
+    sacas:{fn:g=>g.qtd||0,type:'num'},
+    precosaca:{fn:g=>g.precoSaca||0,type:'num'},
+    total:{fn:g=>(g.qtd||0)*(g.precoSaca||0),type:'num'},
+    contraparte:{fn:g=>g.contraparte||'',type:'str'}
+  });
   document.getElementById('tb-grao').innerHTML=ops.length?ops.map(g=>{
     const total=g.qtd*g.precoSaca;
     const hm=hedgeMtM(g);
@@ -7164,6 +7290,20 @@ function _mapTipoProvento(raw, ativo){
   if(['Dividendo','JCP','Rendimento FII'].includes(raw)) return raw;
   return /11$/.test((ativo||'').toString().toUpperCase())?'Rendimento FII':'Dividendo';
 }
+// Ordenação estável de Dividendos: usada TANTO pelo render (rdiv) QUANTO por
+// editDividendo/rmDividendo, para que o índice "i" clicado numa linha sempre
+// resolva para o MESMO objeto, mesmo depois de o usuário reordenar por cabeçalho.
+function _dividendosOrdenados(){
+  let arr=[...S.dividendos].sort((a,b)=>b.data.localeCompare(a.data));
+  return _sortRows('div',arr,{
+    data:{fn:d=>d.data||'',type:'date'},
+    ativo:{fn:d=>d.ativo||'',type:'str'},
+    tipo:{fn:d=>d.tipo||'',type:'str'},
+    cotas:{fn:d=>d.qtd||0,type:'num'},
+    valorcota:{fn:d=>d.valorcota||0,type:'num'},
+    total:{fn:d=>d.total||0,type:'num'}
+  });
+}
 function rdiv(){
   const hojeISO=_hojeISO();
   const ano=anoRef();
@@ -7191,7 +7331,7 @@ function rdiv(){
     const _ordDivAt=_ordenarPizzaDesc(_paLabels,_paData,_paLabels.map((_,i)=>_paCores[i%_paCores.length]));
     mkCh('ch-div-at',{type:'doughnut',data:{labels:_ordDivAt.labels,datasets:[{data:_ordDivAt.data,backgroundColor:_ordDivAt.colors,borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:10,font:{size:11}}}}},plugins:[_donutValueLabelPlugin]});
   }
-  document.getElementById('tb-div').innerHTML=[...S.dividendos].sort((a,b)=>b.data.localeCompare(a.data)).map((d,i)=>{
+  document.getElementById('tb-div').innerHTML=_dividendosOrdenados().map((d,i)=>{
     const futuro=(d.data||'')>hojeISO;
     const dataCell=`${fdt(d.data)}${futuro?' <span class="badge b-n" style="font-size:8px">a receber</span>':''}`;
     return `<tr${(d.data||'')<_hojeISO()?' class="lanc-ant"':''}><td class="cm mono" data-label="Data" style="font-size:11px">${dataCell}</td><td data-label="Ativo"><strong class="mono">${d.ativo}</strong></td><td data-label="Tipo"><span class="badge b-gd" style="font-size:9px">${d.tipo}</span></td><td class="mono" data-label="Cotas">${d.qtd||'—'}</td><td class="tr mono" data-label="R$/Cota">${d.valorcota?brl(d.valorcota):'—'}</td><td class="tr mono ${futuro?'cb':'cgd'}" data-label="Total"><strong>${brl(d.total)}</strong></td><td class="td-act"><button class="btn btn-ed" onclick="editDividendo(${i})">✎</button> <button class="btn btn-d" onclick="rmDividendo(${i})">✕</button></td></tr>`;
@@ -7317,8 +7457,7 @@ function rcontas(){
   const sel=document.getElementById('fil-banco');if(sel.options.length<=1)_ordAlfa(S.contas,c=>c.nome).forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nome;sel.appendChild(o)});
   const fb=sel.value,ft=document.getElementById('fil-tipo').value;
   const _prev=_fcTab.contas==='previstos';
-  const ext=[...S.lancamentos].filter(l=>(!fb||l.banco===fb)&&(!ft||l.tipo===ft)&&(_prev?l.forecast:!l.forecast)).sort((a,b)=>b.data.localeCompare(a.data)||(b.id-a.id));
-  const _extPag=ext.slice(0,_tblLim.contas);
+  let ext=[...S.lancamentos].filter(l=>(!fb||l.banco===fb)&&(!ft||l.tipo===ft)&&(_prev?l.forecast:!l.forecast)).sort((a,b)=>b.data.localeCompare(a.data)||(b.id-a.id));
   const ti={credito:{cl:'cg',lb:'Crédito',sy:'+'},debito:{cl:'cr',lb:'Débito',sy:'-'},transferencia:{cl:'cb',lb:'Transf.',sy:'↔'}};
   // ── Alerta de reconciliação: saldo salvo × saldo derivado dos lançamentos ──
   const _div=contasDivergentes();
@@ -7360,6 +7499,15 @@ function rcontas(){
     });
   }
   const _sMap=fb?_saldoApos:_saldoAposG; // conta específica → saldo da conta; "Todos os bancos" → consolidado
+  ext=_sortRows('ext',ext,{
+    data:{fn:l=>l.data,type:'date'},
+    banco:{fn:l=>{const c=S.contas.find(x=>x.id===l.banco);return c?c.nome:(BG(l.banco).nome||'');},type:'str'},
+    desc:{fn:l=>l.desc||'',type:'str'},
+    tipo:{fn:l=>(ti[l.tipo]||{}).lb||l.tipo||'',type:'str'},
+    valor:{fn:l=>l.tipo==='debito'?-l.valor:l.valor,type:'num'},
+    saldo:{fn:l=>l.forecast?0:(_sMap[l.id]!=null?_sMap[l.id]:0),type:'num'}
+  });
+  const _extPag=ext.slice(0,_tblLim.contas);
   document.getElementById('tb-ext').innerHTML=ext.length?_extPag.map(l=>{
     // l.banco guarda o ID da CONTA (não um código de banco) — resolve a conta
     // primeiro para então buscar seu banco/nome. Chamar BG(l.banco) direto
@@ -7527,7 +7675,15 @@ function rcartoes(){
   const sc=document.getElementById('fil-cart');if(sc.options.length<=1)_ordAlfa(S.cartoes,c=>c.nome).forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nome;sc.appendChild(o)});
   const fc=sc.value,fcc=document.getElementById('fil-cc-cat').value;
   const _prevC=_fcTab.cartoes==='previstos';
-  const comp=[...S.compras].filter(cp=>(!fc||cp.cartao===fc)&&(!fcc||cp.cat===fcc)&&(_prevC?cp.forecast:!cp.forecast)).sort((a,b)=>b.data.localeCompare(a.data));
+  let comp=[...S.compras].filter(cp=>(!fc||cp.cartao===fc)&&(!fcc||cp.cat===fcc)&&(_prevC?cp.forecast:!cp.forecast)).sort((a,b)=>b.data.localeCompare(a.data));
+  comp=_sortRows('comp',comp,{
+    data:{fn:cp=>cp.data,type:'date'},
+    cartao:{fn:cp=>{const ct=S.cartoes.find(c=>c.id===cp.cartao);return ct?ct.nome:'';},type:'str'},
+    desc:{fn:cp=>cp.desc||'',type:'str'},
+    cat:{fn:cp=>cp.cat||'',type:'str'},
+    valor:{fn:cp=>cp.valor,type:'num'},
+    parcelas:{fn:cp=>cp.parcelas||1,type:'num'}
+  });
   const _compPag=comp.slice(0,_tblLim.cartoes);
   _injetarFcTabs('cartoes','tb-comp');
   document.getElementById('tb-comp').innerHTML=comp.length?_compPag.map(cp=>{const ct=S.cartoes.find(c=>c.id===cp.cartao),m=ct?BG(ct.banco):BG('outro');const _ant=(cp.data||'')<_hojeISO();return`<tr${_ant?' class="lanc-ant"':''}${cp.forecast&&!_ant?' style="opacity:.92"':''}>${_selModeCartoes?`<td class="sel-col"><input type="checkbox" class="sel-chk" ${_selComp.has(cp.id)?'checked':''} onclick="selToggle('cartoes',${cp.id},this.checked)"></td>`:''}<td class="cm mono" data-label="Data" style="font-size:11px">${fdt(cp.data)}</td><td data-label="Cartão"><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:11px">${ct?.nome||'—'}</span></div></td><td data-label="Descrição">${cp.desc}${cp.forecast?' <span class="fc-badge">previsto</span>':''}</td><td data-label="Categoria"><span class="badge b-n" style="font-size:9px">${cp.cat}</span></td><td class="tr mono cr" data-label="Valor">${brl(cp.valor)}</td><td class="tr" data-label="Parcelas" style="font-size:11px;color:var(--txt3)">${cp.parcelas>1?cp.parcelas+'x de '+brl(cp.valor/cp.parcelas):'À vista'}</td><td class="td-act"><button class="btn btn-ed" onclick="editCompra(${cp.id})">✎</button> <button class="btn btn-d" onclick="rmCompra(${cp.id})">✕</button></td></tr>`}).join('').concat(_tblMaisHTML('cartoes',comp.length,_compPag.length,_selModeCartoes?8:7)):`<tr><td colspan="${_selModeCartoes?8:7}" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prevC?'Nenhuma compra prevista':'Nenhuma compra'}</td></tr>`;
@@ -7543,7 +7699,13 @@ function rcartoes(){
   const bc={};S.compras.filter(cp=>(!fc||cp.cartao===fc)&&cp.data.startsWith(_mesCcCat)&&!cp.forecast&&!_ehCatPagamentoCartao(cp.cat)).forEach(cp=>{bc[cp.cat]=(bc[cp.cat]||0)+cp.valor});
   // Histórico de pagamentos de fatura (respeitando o filtro de cartão)
   const filCartPg=document.getElementById('fil-cart')?.value||'';
-  const pags=[...(S.pagamentosFatura||[])].filter(p=>!filCartPg||p.cartaoId===filCartPg).sort((a,b)=>b.data.localeCompare(a.data));
+  let pags=[...(S.pagamentosFatura||[])].filter(p=>!filCartPg||p.cartaoId===filCartPg).sort((a,b)=>b.data.localeCompare(a.data));
+  pags=_sortRows('pagfat',pags,{
+    data:{fn:p=>p.data,type:'date'},
+    cartao:{fn:p=>{const ct=S.cartoes.find(c=>c.id===p.cartaoId);return ct?ct.nome:'';},type:'str'},
+    origem:{fn:p=>{const conta=p.contaId?S.contas.find(c=>c.id===p.contaId):null;return conta?conta.nome:'Externo';},type:'str'},
+    valor:{fn:p=>p.valor,type:'num'}
+  });
   const painelPg=document.getElementById('painel-pagfat');
   // Pagamento de fatura é sempre efetivado (nunca previsto) — some da tela
   // enquanto a aba "Previstos" estiver selecionada, pra não parecer que o
@@ -7891,6 +8053,19 @@ function aplicarEdicaoMassa(){
 }
 
 // ─── GASTOS
+// Ordenação estável de Gastos Avulsos: usada TANTO pelo render (rgas) QUANTO por
+// editGasto/rmGasto, para que o índice "i" clicado numa linha sempre resolva
+// para o MESMO objeto, mesmo depois de o usuário reordenar por cabeçalho.
+function _gastosOrdenados(){
+  let arr=[...S.gastos].sort((a,b)=>b.data.localeCompare(a.data));
+  return _sortRows('gas',arr,{
+    data:{fn:g=>g.data||'',type:'date'},
+    desc:{fn:g=>g.desc||'',type:'str'},
+    cat:{fn:g=>g.cat||'',type:'str'},
+    origem:{fn:g=>g.forma==='cartao'?(g.origemNome||'Cartão'):g.forma==='conta'?(g.origemNome||'Conta'):'Dinheiro',type:'str'},
+    valor:{fn:g=>g.valor||0,type:'num'}
+  });
+}
 function rgas(){
   const _mgas=mesRefDe(S.gastos);const mes=S.gastos.filter(g=>g.data.startsWith(_mgas)&&!g.forecast),ant=S.gastos.filter(g=>g.data.startsWith(mesAntRef(_mgas))&&!g.forecast);
   const tm=mes.reduce((s,g)=>s+g.valor,0),ta=ant.reduce((s,g)=>s+g.valor,0);
@@ -7902,7 +8077,7 @@ function rgas(){
   mkCh('ch-gas-pie',{type:'doughnut',data:{labels:sorted.map(([k])=>k),datasets:[{data:sorted.map(([,v])=>v),backgroundColor:sorted.map(([k])=>corCat(k)),borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:10,font:{size:11}}}}},plugins:[_donutValueLabelPlugin]});
   const _prevG=_fcTab.gastos==='previstos';
   _injetarFcTabs('gastos','tb-gas');
-  const _linhasG=[...S.gastos].sort((a,b)=>b.data.localeCompare(a.data));
+  const _linhasG=_gastosOrdenados();
   // pares [gasto, índiceGlobal] apenas da aba atual (sem linhas ocultas), paginados
   const _visG=[];
   _linhasG.forEach((g,i)=>{ if(_prevG?g.forecast:!g.forecast)_visG.push([g,i]); });
@@ -9000,7 +9175,7 @@ function addGasto(){
   render('gastos');rdash();
 }
 function editGasto(i){
-  const sorted=[...S.gastos].sort((a,b)=>b.data.localeCompare(a.data));
+  const sorted=_gastosOrdenados();
   const g=sorted[i];if(!g)return;
   openM('m-gasto');
   EDIT.gasto=g;
@@ -9023,7 +9198,7 @@ function editGasto(i){
   }
 }
 function rmGasto(i){
-  const sorted=[...S.gastos].sort((a,b)=>b.data.localeCompare(a.data));
+  const sorted=_gastosOrdenados();
   const g=sorted[i];
   if(!g){return;}
   if(g.recId){
@@ -9078,7 +9253,7 @@ function addDividendo(){
   persistir();closeM('m-dividendo');rdiv();rdash();
 }
 function editDividendo(i){
-  const sorted=[...S.dividendos].sort((a,b)=>b.data.localeCompare(a.data));
+  const sorted=_dividendosOrdenados();
   const d=sorted[i];if(!d)return;
   const idx=S.dividendos.indexOf(d);
   openM('m-dividendo');
@@ -9094,7 +9269,7 @@ function editDividendo(i){
   _popularContasSelect('di-credito-conta',d.contaDestinoId||'');
 }
 function rmDividendo(i){
-  const sorted=[...S.dividendos].sort((a,b)=>b.data.localeCompare(a.data));
+  const sorted=_dividendosOrdenados();
   const d=sorted[i];
   if(d){
     const idx=S.dividendos.indexOf(d);
@@ -9907,7 +10082,17 @@ function rbens(){
   mkCh('ch-bens-bar',{type:'bar',data:{labels:S.bens.map(b=>b.nome.split(' ').slice(0,3).join(' ')),datasets:[{label:'Aquisição',data:S.bens.map(b=>b.vlAq),backgroundColor:'rgba(100,95,80,.2)',borderColor:'rgba(100,95,80,.5)',borderWidth:1,borderRadius:3},{label:'Atual',data:S.bens.map(b=>b.vlAt),backgroundColor:S.bens.map(b=>b.vlAt>=b.vlAq?'rgba(74,122,86,.3)':'rgba(163,58,46,.3)'),borderColor:S.bens.map(b=>b.vlAt>=b.vlAq?C.grn:C.red),borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,indexAxis:'y',plugins:{legend:{position:'top',labels:{color:C.txt,padding:12,font:{size:11}}}},scales:{x:{grid:{color:'rgba(100,95,80,.07)'},ticks:{color:C.muted,font:{size:9},callback:_maskTick(v=>'R$'+(v/1000).toFixed(0)+'k')}},y:{grid:{display:false},ticks:{color:C.txt,font:{size:9}}}}}});
 
   // Tabela completa
-  document.getElementById('tb-bens').innerHTML=S.bens.map((b,i)=>{
+  const _bensOrdenados=_sortRows('bens',S.bens,{
+    bem:{fn:x=>x.nome||'',type:'str'},
+    categoria:{fn:x=>BENS_LABEL[x.cat]||'',type:'str'},
+    localizacao:{fn:x=>x.loc||'',type:'str'},
+    aquisicao:{fn:x=>x.dtAq||'',type:'date'},
+    valoraquisicao:{fn:x=>x.vlAq||0,type:'num'},
+    valoratual:{fn:x=>x.vlAt||0,type:'num'},
+    variacao:{fn:x=>x.vlAq?((x.vlAt-x.vlAq)/x.vlAq):0,type:'num'}
+  });
+  document.getElementById('tb-bens').innerHTML=_bensOrdenados.map(b=>{
+    const i=S.bens.indexOf(b);
     const vr=b.vlAt-b.vlAq,vrp=(vr/b.vlAq*100);const up=vr>=0;
     return`<tr>
       <td data-label="Bem"><strong>${b.nome}</strong><br><span class="cm" style="font-size:10px;font-family:var(--mono)">${b.detalhe}</span></td>
@@ -14260,6 +14445,9 @@ function renderDisrupcao(dis,m){
 
   // Injeta os campos de busca nas seções com listas/tabelas
   if(typeof _injetarBuscaSecoes==='function') _injetarBuscaSecoes();
+  // Injeta o controle de ordenação equivalente pro celular (onde o cabeçalho
+  // da tabela fica oculto pelo layout em cards) — ver _initSortBars().
+  if(typeof _initSortBars==='function') _initSortBars();
   // Carrega bancos personalizados nos selects de conta/cartão
   if(typeof _preencherSelectsBanco==='function') _preencherSelectsBanco();
   // Roda em background; fica pronto quando o usuário abrir a página Briefing.
