@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 76 -->
+<!-- APP_VERSION: 77 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -8066,6 +8066,21 @@ function _gastosOrdenados(){
     valor:{fn:g=>g.valor||0,type:'num'}
   });
 }
+// Extratores para ordenar a lista MISTA [gasto-ou-provisorio, índice] exibida na
+// aba "Previstos" (que combina gastos previstos reais com provisórios automáticos
+// de Bens/Orçamento, os quais não existem em S.gastos). Operam sobre a tupla
+// completa (t[0] é o objeto de dados), não sobre o objeto puro como em _gastosOrdenados.
+const _visGExtractors={
+  data:{fn:t=>t[0].data||'',type:'date'},
+  desc:{fn:t=>t[0].desc||'',type:'str'},
+  cat:{fn:t=>t[0]._pCat||t[0].cat||'',type:'str'},
+  origem:{fn:t=>{
+    const g=t[0];
+    if(g.provisorio)return g._pOrig==='fin'?'FIN · Bens Patrimoniais':g._pOrig==='seg'?'SEG · Bens Patrimoniais':'ORÇ · Orçamento';
+    return g.forma==='cartao'?(g.origemNome||'Cartão'):g.forma==='conta'?(g.origemNome||'Conta'):'Dinheiro';
+  },type:'str'},
+  valor:{fn:t=>t[0].valor||0,type:'num'}
+};
 function rgas(){
   const _mgas=mesRefDe(S.gastos);const mes=S.gastos.filter(g=>g.data.startsWith(_mgas)&&!g.forecast),ant=S.gastos.filter(g=>g.data.startsWith(mesAntRef(_mgas))&&!g.forecast);
   const tm=mes.reduce((s,g)=>s+g.valor,0),ta=ant.reduce((s,g)=>s+g.valor,0);
@@ -8081,7 +8096,20 @@ function rgas(){
   // pares [gasto, índiceGlobal] apenas da aba atual (sem linhas ocultas), paginados
   const _visG=[];
   _linhasG.forEach((g,i)=>{ if(_prevG?g.forecast:!g.forecast)_visG.push([g,i]); });
-  if(_prevG){ _provisorios().forEach(p=>_visG.push([p,-1])); _visG.sort((a,b)=>b[0].data.localeCompare(a[0].data)); }  // provisórios automáticos (Bens + Orçamento)
+  if(_prevG){
+    _provisorios().forEach(p=>_visG.push([p,-1]));  // provisórios automáticos (Bens + Orçamento)
+    // Respeita a ordenação por cabeçalho escolhida pelo usuário (se houver); caso
+    // contrário, mantém o padrão histórico de data decrescente. Sem isso, o clique
+    // no cabeçalho era ignorado nesta aba pois o merge com os provisórios sempre
+    // reordenava tudo por data no final.
+    const _stGas=_sortState.gas;
+    if(_stGas && _visGExtractors[_stGas.key]){
+      const _ordenadoVisG=_sortRows('gas',_visG,_visGExtractors);
+      _visG.length=0;_visG.push(..._ordenadoVisG);
+    } else {
+      _visG.sort((a,b)=>b[0].data.localeCompare(a[0].data));
+    }
+  }
   const _gasPag=_visG.slice(0,_tblLim.gastos);
   document.getElementById('tb-gas').innerHTML=_visG.length?_gasPag.map(([g,i])=>{
     if(g.provisorio){const _og=g._pOrig==='fin'?{ab:'FIN',c:'var(--blu)',bg:'rgba(42,78,140,.12)',sec:'bens',nm:'Bens Patrimoniais'}:g._pOrig==='seg'?{ab:'SEG',c:'#6B7280',bg:'rgba(107,114,128,.14)',sec:'bens',nm:'Bens Patrimoniais'}:{ab:'ORÇ',c:'var(--gld)',bg:'rgba(122,96,32,.12)',sec:'orcamento',nm:'Orçamento'};const _cr=g.tipo==='credito';return `<tr class="provisorio"><td class="cm mono" data-label="Data" style="font-size:11px">${fdt(g.data)}</td><td data-label="Descrição">${g.desc} <span class="badge b-gd" style="font-size:8.5px">provisório ⟳</span></td><td data-label="Categoria"><span class="badge b-n" style="font-size:9px">${g._pCat||'—'}</span></td><td data-label="Origem"><span class="badge" style="background:${_og.bg};color:${_og.c};font-size:8.5px;font-weight:600">${_og.ab} · ${_og.nm}</span></td><td class="tr mono ${_cr?'cg':'cr'}" data-label="Valor">${_cr?'+':'-'}${brl(g.valor)}</td><td class="td-act"><button class="btn btn-ed" onclick="goTo('${_og.sec}')" title="Gerenciar origem">⧉</button></td></tr>`;}
