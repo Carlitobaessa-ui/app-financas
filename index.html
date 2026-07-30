@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 83 -->
+<!-- APP_VERSION: 84 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -10514,7 +10514,7 @@ function authApple(){ /* desativado — botão não dispara clique */ }
 async function authGoogle(){
   try{
     await neonReady;
-    const { error } = await neon.auth.signIn.social({ provider:'google', callbackURL: location.origin + location.pathname });
+    const { error } = await neon.auth.signIn.social({ provider:'google', callbackURL: location.pathname });
     if(error) authMsg(traduzErro(error.message||String(error)),'#7A2828');
   }catch(e){ authMsg('Não foi possível iniciar o login com Google agora.','#7A2828'); }
 }
