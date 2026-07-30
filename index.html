@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 88 -->
+<!-- APP_VERSION: 89 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -5828,6 +5828,37 @@ const _catEvolLabelPlugin={
     ctx.restore();
   }
 };
+// Rótulo de valor em CADA ponto das 3 linhas (Recebimentos/Pagamentos/Investimentos
+// — Dashboard). Só 3 séries e 12 meses fixos, então dá pra rotular todo ponto sem
+// poluir demais (diferente do _catEvolLabelPlugin, que tem até 10 séries e por isso
+// só rotula o último ponto). Cada linha usa um deslocamento vertical um pouco
+// diferente (offsetY) só pra reduzir sobreposição quando duas linhas passam perto.
+const _linhasRecPagInvLabelPlugin={
+  id:'linhasRecPagInvLabels',
+  afterDatasetsDraw(chart){
+    if(chart.canvas.id!=='ch-linhas-recpaginv')return;
+    const ctx=chart.ctx;
+    ctx.save();
+    ctx.font='700 9px Inter, system-ui, sans-serif';
+    ctx.textAlign='center';
+    (chart.data.datasets||[]).forEach((ds,di)=>{
+      const meta=chart.getDatasetMeta(di);
+      if(!meta||meta.hidden||!meta.data||!meta.data.length)return;
+      const offsetY=8+di*11; // escalona as 3 linhas pra não ficarem exatamente na mesma altura
+      const cor=ds.borderColor||((typeof C!=='undefined'&&C.txt)?C.txt:'#2A2A2A');
+      meta.data.forEach((pt,i)=>{
+        const v=ds.data[i];
+        if(v==null||Math.abs(v)<0.005)return; // omite rótulo de mês zerado (não polui à toa)
+        const txt=_lblCompacto(v);
+        ctx.textBaseline='bottom';
+        const y=pt.y-offsetY;
+        ctx.lineWidth=3; ctx.strokeStyle='rgba(245,244,236,.92)'; ctx.strokeText(txt,pt.x,y);
+        ctx.fillStyle=cor; ctx.fillText(txt,pt.x,y);
+      });
+    });
+    ctx.restore();
+  }
+};
 // Rótulo de valor para gráficos de rosca/pizza (Gastos por Categoria da
 // fatura aberta, Composição do Patrimônio, Dividendos por Ativo, Alocação,
 // Saldo por Banco, Distribuição de Gastos/Aportes/Bens). Testamos anexar
@@ -6250,11 +6281,12 @@ function rdash(){
     });
     const labels12=meses12.map(ym=>{const [y,m]=ym.split('-');return NOMES_MES[+m-1]+'/'+y.slice(2);});
     mkCh('ch-linhas-recpaginv',{type:'line',data:{labels:labels12,datasets:[
-      {label:'Recebimentos',data:rec,borderColor:C.grn,backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:2,pointBackgroundColor:C.grn,borderWidth:1.8},
-      {label:'Pagamentos',data:pag,borderColor:C.red,backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:2,pointBackgroundColor:C.red,borderWidth:1.8},
-      // Investimentos com traço mais grosso (pedido explícito) pra se destacar das outras duas.
+      // Recebimentos e Pagamentos tracejadas (borderDash) pra diferenciar visualmente
+      // de Investimentos, que fica sólida e com traço bem mais grosso (pedido explícito).
+      {label:'Recebimentos',data:rec,borderColor:C.grn,backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:2,pointBackgroundColor:C.grn,borderWidth:1.8,borderDash:[5,3]},
+      {label:'Pagamentos',data:pag,borderColor:C.red,backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:2,pointBackgroundColor:C.red,borderWidth:1.8,borderDash:[5,3]},
       {label:'Investimentos',data:invn,borderColor:C.blu,backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:2,pointBackgroundColor:C.blu,borderWidth:3.5}
-    ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:C.txt,padding:14,font:{size:11},usePointStyle:true,pointStyle:'line'}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+brl(ctx.parsed.y)}}},scales:gridOpts(v=>'R$'+(v/1000).toFixed(0)+'k')}});
+    ]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:16}},plugins:{legend:{position:'top',labels:{color:C.txt,padding:14,font:{size:11},usePointStyle:true,pointStyle:'line'}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+brl(ctx.parsed.y)}}},scales:gridOpts(v=>'R$'+(v/1000).toFixed(0)+'k')},plugins:[_linhasRecPagInvLabelPlugin]});
   }
 }
 
