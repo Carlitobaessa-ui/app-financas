@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 86 -->
+<!-- APP_VERSION: 87 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -5863,13 +5863,21 @@ const _donutValueLabelPlugin={
 // cartão), não uma despesa efetiva — usado para excluí-la de gráficos de
 // gastos por categoria, onde contá-la duplicaria o gasto (a compra em si já
 // entra com sua categoria real quando lançada no cartão).
-// Apesar do nome (histórico), este conjunto cobre toda categoria que representa
-// MOVIMENTAÇÃO entre "baldes" do próprio usuário (pagar fatura, transferir entre
-// contas) — não uma despesa real. "Transferência" entrou aqui pelo mesmo motivo
-// do pagamento de cartão: contá-la infla os gráficos de gasto por categoria com
-// dinheiro que só mudou de lugar, não que saiu do patrimônio do usuário.
+// Apesar do nome (histórico), este conjunto/checagem cobre toda categoria que
+// representa MOVIMENTAÇÃO entre "baldes" do próprio usuário (pagar fatura,
+// transferir entre contas, aportar em investimento) — não uma despesa real.
+// "Transferência" entrou pelo mesmo motivo do pagamento de cartão: contá-la
+// infla os gráficos de gasto com dinheiro que só mudou de lugar, não que saiu
+// do patrimônio do usuário. Categorias de investimento (ex.: "Investimentos
+// #ricchezza") entram por prefixo — aportar não é despesa, é realocação de
+// patrimônio (o dinheiro vira um ativo, não desaparece) — e por prefixo pra
+// cobrir qualquer categoria de investimento que o usuário venha a criar,
+// não só o nome exato de hoje.
 const CATS_NAO_DESPESA_CAT=new Set(['pagamento cartão crédito','pagamento cartao credito','pagamento cartão de crédito','pagamento cartao de credito','transferência','transferencia']);
-function _ehCatPagamentoCartao(cat){ return CATS_NAO_DESPESA_CAT.has((cat||'').toLowerCase().trim()); }
+function _ehCatPagamentoCartao(cat){
+  const c=(cat||'').toLowerCase().trim();
+  return CATS_NAO_DESPESA_CAT.has(c)||c.startsWith('investimento');
+}
 // Reordena labels/data/cores de um gráfico de pizza/rosca do maior pro menor
 // valor, sem alterar os arrays originais (que às vezes são reaproveitados em
 // outra parte da tela, ex.: barras de progresso na mesma ordem fixa de
