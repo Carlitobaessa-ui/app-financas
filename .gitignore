@@ -1,0 +1,5 @@
+# Credenciais do git salvas localmente pelo credential.helper (contém o token do GitHub)
+.git-credentials
+
+# Artefato do macOS Finder
+.DS_Store
