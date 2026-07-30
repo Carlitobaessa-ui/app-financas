@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 93 -->
+<!-- APP_VERSION: 94 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -3664,10 +3664,12 @@ async function atualizarMercadoImoveis(){
         <button class="btn btn-ghost" id="sel-btn-contas" style="font-size:11px;padding:4px 10px" onclick="toggleSelMode('contas')">Selecionar</button>
         <select id="fil-banco" onchange="rcontas()" style="font-size:11px;padding:4px 8px;background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:4px;color:var(--txt);font-family:var(--body)"><option value="">Todos os bancos</option></select>
         <select id="fil-tipo" onchange="rcontas()" style="font-size:11px;padding:4px 8px;background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:4px;color:var(--txt);font-family:var(--body)"><option value="">Todos os tipos</option><option value="credito">Crédito</option><option value="debito">Débito</option><option value="transferencia">Transferência</option></select>
+        <select id="fil-ext-cat" onchange="rcontas()" style="font-size:11px;padding:4px 8px;background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:4px;color:var(--txt);font-family:var(--body)"><option value="">Todas as categorias</option></select>
+        <select id="fil-ext-mesano" onchange="rcontas()" style="font-size:11px;padding:4px 8px;background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:4px;color:var(--txt);font-family:var(--body)"></select>
       </div>
     </div>
     <div class="sel-bar" id="sel-bar-contas" style="display:none"></div>
-    <table class="tbl-mob-cards"><thead><tr><th class="sel-col" style="display:none"><input type="checkbox" id="sel-all-contas" onclick="selAll('contas',this.checked)"></th><th class="th-sort" data-tbl="ext" data-key="data" data-render="rcontas" onclick="sortTbl(this)">Data<span class="sort-ic"></span></th><th class="th-sort" data-tbl="ext" data-key="banco" data-render="rcontas" onclick="sortTbl(this)">Banco<span class="sort-ic"></span></th><th class="th-sort" data-tbl="ext" data-key="desc" data-render="rcontas" onclick="sortTbl(this)">Descrição<span class="sort-ic"></span></th><th class="th-sort" data-tbl="ext" data-key="tipo" data-render="rcontas" onclick="sortTbl(this)">Tipo<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="ext" data-key="valor" data-render="rcontas" onclick="sortTbl(this)">Valor<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="ext" data-key="saldo" data-render="rcontas" onclick="sortTbl(this)">Saldo<span class="sort-ic"></span></th><th></th></tr></thead><tbody id="tb-ext"></tbody></table>
+    <table class="tbl-mob-cards"><thead><tr><th class="sel-col" style="display:none"><input type="checkbox" id="sel-all-contas" onclick="selAll('contas',this.checked)"></th><th class="th-sort" data-tbl="ext" data-key="data" data-render="rcontas" onclick="sortTbl(this)">Data<span class="sort-ic"></span></th><th class="th-sort" data-tbl="ext" data-key="banco" data-render="rcontas" onclick="sortTbl(this)">Banco<span class="sort-ic"></span></th><th class="th-sort" data-tbl="ext" data-key="desc" data-render="rcontas" onclick="sortTbl(this)">Descrição<span class="sort-ic"></span></th><th class="th-sort" data-tbl="ext" data-key="cat" data-render="rcontas" onclick="sortTbl(this)">Categoria<span class="sort-ic"></span></th><th class="th-sort" data-tbl="ext" data-key="tipo" data-render="rcontas" onclick="sortTbl(this)">Tipo<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="ext" data-key="valor" data-render="rcontas" onclick="sortTbl(this)">Valor<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="ext" data-key="saldo" data-render="rcontas" onclick="sortTbl(this)">Saldo<span class="sort-ic"></span></th><th></th></tr></thead><tbody id="tb-ext"></tbody></table>
     <div class="pft">Lançamentos bancários · Realizados ou Previstos conforme aba selecionada acima</div>
   </div>
 </div>
@@ -5007,6 +5009,12 @@ function popularCategorias(){
   if(fil){const atual=fil.value;
     fil.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option>${c}</option>`).join('');
     if(atual&&cats.includes(atual))fil.value=atual;
+  }
+  // Filtro de categorias no Extrato Unificado (Contas Correntes) — mesmo padrão
+  const filExt=document.getElementById('fil-ext-cat');
+  if(filExt){const atual=filExt.value;
+    filExt.innerHTML='<option value="">Todas as categorias</option>'+cats.map(c=>`<option>${c}</option>`).join('');
+    if(atual&&cats.includes(atual))filExt.value=atual;
   }
 }
 
@@ -7615,9 +7623,20 @@ function rcontas(){
   const _ordBcPie=_ordenarPizzaDesc(ativos.map(c=>c.nome),ativos.map(c=>c.saldo),ativos.map(c=>BG(c.banco).stripe));
   mkCh('ch-bc-pie',{type:'doughnut',data:{labels:_ordBcPie.labels,datasets:[{data:_ordBcPie.data,backgroundColor:_ordBcPie.colors,borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{position:'bottom',labels:{color:C.txt,padding:10,font:{size:11}}}}},plugins:[_donutValueLabelPlugin]});
   const sel=document.getElementById('fil-banco');if(sel.options.length<=1)_ordAlfa(S.contas,c=>c.nome).forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nome;sel.appendChild(o)});
+  // Filtro Mês/Ano do Extrato Unificado — sem mês padrão (mantém o comportamento
+  // de sempre mostrar tudo, como antes deste filtro existir); só filtra quando o
+  // usuário escolhe um mês específico.
+  const smAnoExt=document.getElementById('fil-ext-mesano');
+  if(smAnoExt&&smAnoExt.options.length===0){
+    const _mesesSet=new Set();
+    S.lancamentos.forEach(l=>{if(l.data&&l.data.length>=7)_mesesSet.add(l.data.slice(0,7));});
+    smAnoExt.innerHTML='<option value="">Todos os meses</option>'+[..._mesesSet].sort((a,b)=>b.localeCompare(a)).map(ym=>`<option value="${ym}">${_MESES_ABREV[parseInt(ym.slice(5,7),10)-1]+'/'+ym.slice(0,4)}</option>`).join('');
+  }
   const fb=sel.value,ft=document.getElementById('fil-tipo').value;
+  const fcatExt=document.getElementById('fil-ext-cat')?.value||'';
+  const fmaExt=smAnoExt?smAnoExt.value:'';
   const _prev=_fcTab.contas==='previstos';
-  let ext=[...S.lancamentos].filter(l=>(!fb||l.banco===fb)&&(!ft||l.tipo===ft)&&(_prev?l.forecast:!l.forecast)).sort((a,b)=>b.data.localeCompare(a.data)||(b.id-a.id));
+  let ext=[...S.lancamentos].filter(l=>(!fb||l.banco===fb)&&(!ft||l.tipo===ft)&&(!fcatExt||l.cat===fcatExt)&&(!fmaExt||(l.data||'').startsWith(fmaExt))&&(_prev?l.forecast:!l.forecast)).sort((a,b)=>b.data.localeCompare(a.data)||(b.id-a.id));
   const ti={credito:{cl:'cg',lb:'Crédito',sy:'+'},debito:{cl:'cr',lb:'Débito',sy:'-'},transferencia:{cl:'cb',lb:'Transf.',sy:'↔'}};
   // ── Alerta de reconciliação: saldo salvo × saldo derivado dos lançamentos ──
   const _div=contasDivergentes();
@@ -7663,6 +7682,7 @@ function rcontas(){
     data:{fn:l=>l.data,type:'date'},
     banco:{fn:l=>{const c=S.contas.find(x=>x.id===l.banco);return c?c.nome:(BG(l.banco).nome||'');},type:'str'},
     desc:{fn:l=>l.desc||'',type:'str'},
+    cat:{fn:l=>l.cat||'',type:'str'},
     tipo:{fn:l=>(ti[l.tipo]||{}).lb||l.tipo||'',type:'str'},
     valor:{fn:l=>l.tipo==='debito'?-l.valor:l.valor,type:'num'},
     saldo:{fn:l=>l.forecast?0:(_sMap[l.id]!=null?_sMap[l.id]:0),type:'num'}
@@ -7673,7 +7693,7 @@ function rcontas(){
     // primeiro para então buscar seu banco/nome. Chamar BG(l.banco) direto
     // (como antes) nunca reconhecia o valor e sempre caía em "Outro Banco".
     const _ctB=S.contas.find(c=>c.id===l.banco);
-    const m=BG(_ctB?_ctB.banco:l.banco),t=ti[l.tipo]||{cl:'',lb:l.tipo,sy:''};const _ant=(l.data||'')<_hojeISO();const _pv=l.forecast&&_ant;const _cls=_pv?'prev-venc':(_ant?'lanc-ant':'');return`<tr${_cls?` class="${_cls}"`:''}${l.forecast&&!_ant?' style="opacity:.92"':''}>${_selModeContas?`<td class="sel-col"><input type="checkbox" class="sel-chk" ${_selLanc.has(l.id)?'checked':''} onclick="selToggle('contas',${l.id},this.checked)"></td>`:''}<td class="cm mono" data-label="Data" style="font-size:11px">${fdt(l.data)}</td><td data-label="Banco"><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:12px">${_ctB?.nome||m.nome}</span></div></td><td data-label="Descrição" style="font-size:12px">${l.desc}${l.forecast?' <span class="fc-badge">previsto</span>':''}</td><td data-label="Tipo"><span class="badge b-n" style="font-size:9px">${t.lb}</span></td><td class="tr mono ${t.cl}" data-label="Valor">${t.sy}${brl(l.valor)}</td><td class="tr mono cm" data-label="Saldo" style="font-size:11px">${l.forecast?'—':brl(_sMap[l.id]!=null?_sMap[l.id]:0)}</td><td class="td-act"><button class="btn btn-ed" onclick="editLanc(${l.id})">✎</button> <button class="btn btn-d" onclick="rmLanc(${l.id})">✕</button></td></tr>`}).join('').concat(_tblMaisHTML('contas',ext.length,_extPag.length,_selModeContas?8:7)):`<tr><td colspan="${_selModeContas?8:7}" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prev?'Nenhum lançamento previsto':'Nenhum lançamento'}</td></tr>`;
+    const m=BG(_ctB?_ctB.banco:l.banco),t=ti[l.tipo]||{cl:'',lb:l.tipo,sy:''};const _ant=(l.data||'')<_hojeISO();const _pv=l.forecast&&_ant;const _cls=_pv?'prev-venc':(_ant?'lanc-ant':'');return`<tr${_cls?` class="${_cls}"`:''}${l.forecast&&!_ant?' style="opacity:.92"':''}>${_selModeContas?`<td class="sel-col"><input type="checkbox" class="sel-chk" ${_selLanc.has(l.id)?'checked':''} onclick="selToggle('contas',${l.id},this.checked)"></td>`:''}<td class="cm mono" data-label="Data" style="font-size:11px">${fdt(l.data)}</td><td data-label="Banco"><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:12px">${_ctB?.nome||m.nome}</span></div></td><td data-label="Descrição" style="font-size:12px">${l.desc}${l.forecast?' <span class="fc-badge">previsto</span>':''}</td><td data-label="Categoria">${l.cat?`<span class="badge b-n" style="font-size:9px">${l.cat}</span>`:'<span style="color:var(--txt3);font-size:11px">—</span>'}</td><td data-label="Tipo"><span class="badge b-n" style="font-size:9px">${t.lb}</span></td><td class="tr mono ${t.cl}" data-label="Valor">${t.sy}${brl(l.valor)}</td><td class="tr mono cm" data-label="Saldo" style="font-size:11px">${l.forecast?'—':brl(_sMap[l.id]!=null?_sMap[l.id]:0)}</td><td class="td-act"><button class="btn btn-ed" onclick="editLanc(${l.id})">✎</button> <button class="btn btn-d" onclick="rmLanc(${l.id})">✕</button></td></tr>`}).join('').concat(_tblMaisHTML('contas',ext.length,_extPag.length,_selModeContas?9:8)):`<tr><td colspan="${_selModeContas?9:8}" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prev?'Nenhum lançamento previsto':'Nenhum lançamento'}</td></tr>`;
   // Aviso de previstos vencidos (apenas na aba Previstos)
   {
     const tabela=document.getElementById('tb-ext').closest('table');
