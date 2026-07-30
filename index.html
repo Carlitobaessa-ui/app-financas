@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 91 -->
+<!-- APP_VERSION: 92 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1576,7 +1576,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     </div>
     <div class="pbd">
       <div class="chart-l"><canvas id="ch-linhas-recpaginv"></canvas></div>
-      <div class="pft">Só transações já efetivadas (sem previstos) · Investimentos = créditos menos débitos lançados direto na(s) conta(s) de investimento (não depende de categoria) · Pagamentos não inclui "Pagamento cartão crédito"/"Transferência" nem aportes por categoria (movimentação entre contas, não é receita nem despesa)</div>
+      <div class="pft">Só transações já efetivadas (sem previstos) · Investimentos = aportes menos resgates (créditos/débitos da carteira, via os lançamentos de aporte/resgate) · Pagamentos não inclui "Pagamento cartão crédito"/"Transferência" nem aportes (movimentação entre contas/carteira, não é receita nem despesa)</div>
     </div>
   </div>
 
@@ -6246,17 +6246,22 @@ function rdash(){
   // ═══ RECEBIMENTOS × PAGAMENTOS × INVESTIMENTOS — ÚLTIMOS 12 MESES ═══
   // Só transações JÁ EFETIVADAS (!forecast em todas as fontes) — histórico fixo,
   // sem projeção, diferente do gráfico "Fluxo de Caixa" acima.
-  // Investimentos (linha #3) = créditos menos débitos lançados diretamente nas
-  // CONTAS do tipo "investimento" (S.contas com tipo==='investimento', ex.: conta
-  // XP) — não depende mais de categoria, e sim da conta de destino/origem do
-  // lançamento (l.banco). É o fluxo líquido que entrou/saiu da conta de
-  // investimento no mês (aporte, resgate, rendimento creditado direto na conta).
+  // Investimentos (linha #3) = "créditos menos débitos da carteira de investimento",
+  // só que na prática o app NÃO tem uma conta bancária que recebe esse crédito: ao
+  // adicionar um ativo com "debitar aporte de uma conta" (ou ao registrar um
+  // resgate/provento), _criarLancInv() grava um único lançamento na CONTA DE
+  // ORIGEM/DESTINO (ex.: Banco do Brasil) com a flag origemInv — não existe uma
+  // segunda perna numa "conta investimento". Por isso a linha usa origemInv como
+  // sinal principal (aporte = saída da conta de origem, entra na carteira = soma
+  // positivo; resgate = volta pra conta de origem, sai da carteira = soma negativo),
+  // e soma também, se um dia alguma conta em S.contas vier a ser marcada com
+  // tipo==='investimento' e movimentada direto, os créditos/débitos lançados nela.
+  // Dividendo (origemInv='dividendo') fica de fora de propósito — já entra em
+  // Recebimentos (é receita), contá-lo aqui também duplicaria o valor.
   // Pagamentos continua sendo o restante dos débitos (todas as contas), excluindo
-  // categorias neutras (transferência/pagamento de fatura) e categorias de
-  // investimento via _ehCatPagamentoCartao — assim um aporte lançado na conta
-  // corrente com categoria "Investimentos #x" (padrão origemInv='aporte') continua
-  // sem contar como despesa real, mesmo não alimentando mais a linha de
-  // Investimentos diretamente (que agora olha só a conta de destino/origem).
+  // categorias neutras (transferência/pagamento de fatura) e a categoria
+  // "Investimento" (padrão de _criarLancInv) via _ehCatPagamentoCartao — assim um
+  // aporte não conta como despesa real nem aqui nem na linha de Investimentos duas vezes.
   {
     const meses12=[];
     for(let k=11;k>=0;k--){
@@ -6273,10 +6278,13 @@ function rdash(){
       const lcDeb=S.lancamentos.filter(l=>!l.forecast&&l.tipo==='debito'&&l.data.startsWith(ym));
       const gastosDeb=S.gastos.filter(g=>!g.forecast&&(!g.forma||g.forma==='dinheiro')&&g.data.startsWith(ym));
       const comprasDeb=S.compras.filter(c=>!c.forecast&&c.data.startsWith(ym));
+      const lancMes=S.lancamentos.filter(l=>!l.forecast&&l.data.startsWith(ym));
 
-      const credInvConta=S.lancamentos.filter(l=>!l.forecast&&l.tipo==='credito'&&_idsContaInv.has(l.banco)&&l.data.startsWith(ym)).reduce((s,l)=>s+l.valor,0);
-      const debInvConta=S.lancamentos.filter(l=>!l.forecast&&l.tipo==='debito'&&_idsContaInv.has(l.banco)&&l.data.startsWith(ym)).reduce((s,l)=>s+l.valor,0);
-      invn.push(+(credInvConta-debInvConta).toFixed(2));
+      const entraCarteira=lancMes.filter(l=>l.origemInv==='aporte').reduce((s,l)=>s+l.valor,0)
+        +lancMes.filter(l=>l.tipo==='credito'&&_idsContaInv.has(l.banco)&&l.origemInv!=='resgate'&&l.origemInv!=='dividendo').reduce((s,l)=>s+l.valor,0);
+      const saiCarteira=lancMes.filter(l=>l.origemInv==='resgate').reduce((s,l)=>s+l.valor,0)
+        +lancMes.filter(l=>l.tipo==='debito'&&_idsContaInv.has(l.banco)&&l.origemInv!=='aporte').reduce((s,l)=>s+l.valor,0);
+      invn.push(+(entraCarteira-saiCarteira).toFixed(2));
 
       pag.push(+(
          lcDeb.filter(l=>!_ehCatPagamentoCartao(l.cat)).reduce((s,l)=>s+l.valor,0)
