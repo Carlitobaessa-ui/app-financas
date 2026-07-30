@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 85 -->
+<!-- APP_VERSION: 86 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -3671,8 +3671,8 @@ async function atualizarMercadoImoveis(){
   </div>
   <div class="cc-grid" id="cc-grid"></div>
   <div class="g2 mb">
-    <div class="panel"><div class="phd"><div><div class="pt">Gastos por Categoria</div></div><span class="badge b-gd">Fatura aberta</span></div><div class="pbd"><div class="chart-m"><canvas id="ch-cc-cat"></canvas></div><div class="pft">Compras no cartão, só realizadas (sem previstos) · mês da fatura aberta · não inclui "Pagamento cartão crédito" (meio de pagamento, não despesa) · clique numa categoria para filtrar a tabela abaixo</div></div></div>
-    <div class="panel"><div class="phd"><div class="pt">Utilização de Limite</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-cc-uso"></canvas></div><div class="pft">Comprometido = realizado (fatura + parcelas futuras) + previstos · Limite = total do cartão</div></div></div>
+    <div class="panel"><div class="phd"><div><div class="pt">Gastos por Categoria</div></div><span class="badge b-gd" id="cc-cat-badge">Fatura aberta</span></div><div class="pbd"><div class="chart-m"><canvas id="ch-cc-cat"></canvas></div><div class="pft" id="cc-cat-sub">Compras no cartão, só realizadas (sem previstos) · mês da fatura aberta · não inclui "Pagamento cartão crédito" (meio de pagamento, não despesa) · clique numa categoria para filtrar a tabela abaixo</div></div></div>
+    <div class="panel"><div class="phd"><div class="pt">Utilização de Limite</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-cc-uso"></canvas></div><div class="pft" id="cc-uso-sub">Comprometido = realizado (fatura + parcelas futuras) + previstos · Limite = total do cartão</div></div></div>
   </div>
   <div class="panel">
     <div class="phd">
@@ -3681,6 +3681,7 @@ async function atualizarMercadoImoveis(){
         <button class="btn btn-ghost" id="sel-btn-cartoes" style="font-size:11px;padding:4px 10px" onclick="toggleSelMode('cartoes')">Selecionar</button>
         <select id="fil-cart" onchange="rcartoes()" style="font-size:11px;padding:4px 8px;background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:4px;color:var(--txt);font-family:var(--body)"><option value="">Todos os cartões</option></select>
         <select id="fil-cc-cat" onchange="rcartoes()" style="font-size:11px;padding:4px 8px;background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:4px;color:var(--txt);font-family:var(--body)"><option value="">Todas as categorias</option></select>
+        <select id="fil-mesano" onchange="rcartoes()" style="font-size:11px;padding:4px 8px;background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:4px;color:var(--txt);font-family:var(--body)"></select>
       </div>
     </div>
     <div class="sel-bar" id="sel-bar-cartoes" style="display:none"></div>
@@ -5862,7 +5863,12 @@ const _donutValueLabelPlugin={
 // cartão), não uma despesa efetiva — usado para excluí-la de gráficos de
 // gastos por categoria, onde contá-la duplicaria o gasto (a compra em si já
 // entra com sua categoria real quando lançada no cartão).
-const CATS_NAO_DESPESA_CAT=new Set(['pagamento cartão crédito','pagamento cartao credito','pagamento cartão de crédito','pagamento cartao de credito']);
+// Apesar do nome (histórico), este conjunto cobre toda categoria que representa
+// MOVIMENTAÇÃO entre "baldes" do próprio usuário (pagar fatura, transferir entre
+// contas) — não uma despesa real. "Transferência" entrou aqui pelo mesmo motivo
+// do pagamento de cartão: contá-la infla os gráficos de gasto por categoria com
+// dinheiro que só mudou de lugar, não que saiu do patrimônio do usuário.
+const CATS_NAO_DESPESA_CAT=new Set(['pagamento cartão crédito','pagamento cartao credito','pagamento cartão de crédito','pagamento cartao de credito','transferência','transferencia']);
 function _ehCatPagamentoCartao(cat){ return CATS_NAO_DESPESA_CAT.has((cat||'').toLowerCase().trim()); }
 // Reordena labels/data/cores de um gráfico de pizza/rosca do maior pro menor
 // valor, sem alterar os arrays originais (que às vezes são reaproveitados em
@@ -7705,8 +7711,28 @@ function rcartoes(){
   }).join('')+`<div><div class="add-cc" onclick="openM('m-cartao')"><div class="ai">＋</div><div class="at">Adicionar<br>novo cartão</div></div></div>`;
   const sc=document.getElementById('fil-cart');if(sc.options.length<=1)_ordAlfa(S.cartoes,c=>c.nome).forEach(c=>{const o=document.createElement('option');o.value=c.id;o.textContent=c.nome;sc.appendChild(o)});
   const fc=sc.value,fcc=document.getElementById('fil-cc-cat').value;
+  // Mês de referência = mês da fatura aberta (mesmo cálculo de antes, mas agora vira
+  // o valor PADRÃO do novo filtro Mês/Ano — não mais fixo. Só compras REAIS (não-
+  // forecast), senão uma compra prevista futura podia "puxar" o padrão pra um mês
+  // sem nenhum lançamento real ainda.
+  const _mesCcCat=mesRefDe(S.compras.filter(cp=>!cp.forecast));
+  const smAno=document.getElementById('fil-mesano');
+  if(smAno.options.length===0){
+    // Lista de meses com pelo menos 1 lançamento (real ou previsto), mais recente
+    // primeiro. Sempre inclui o mês da fatura aberta mesmo se ele ainda não tiver
+    // nenhuma compra (evita a lista ficar sem a opção padrão).
+    const _mesesSet=new Set([_mesCcCat]);
+    S.compras.forEach(cp=>{if(cp.data&&cp.data.length>=7)_mesesSet.add(cp.data.slice(0,7));});
+    [..._mesesSet].sort((a,b)=>b.localeCompare(a)).forEach(ym=>{
+      const o=document.createElement('option');o.value=ym;
+      o.textContent=_MESES_ABREV[parseInt(ym.slice(5,7),10)-1]+'/'+ym.slice(0,4);
+      smAno.appendChild(o);
+    });
+    smAno.value=_mesCcCat; // padrão: fatura atual
+  }
+  const fma=smAno.value||_mesCcCat;
   const _prevC=_fcTab.cartoes==='previstos';
-  let comp=[...S.compras].filter(cp=>(!fc||cp.cartao===fc)&&(!fcc||cp.cat===fcc)&&(_prevC?cp.forecast:!cp.forecast)).sort((a,b)=>b.data.localeCompare(a.data));
+  let comp=[...S.compras].filter(cp=>(!fc||cp.cartao===fc)&&(!fcc||cp.cat===fcc)&&(!cp.data||cp.data.startsWith(fma))&&(_prevC?cp.forecast:!cp.forecast)).sort((a,b)=>b.data.localeCompare(a.data));
   comp=_sortRows('comp',comp,{
     data:{fn:cp=>cp.data,type:'date'},
     cartao:{fn:cp=>{const ct=S.cartoes.find(c=>c.id===cp.cartao);return ct?ct.nome:'';},type:'str'},
@@ -7720,14 +7746,10 @@ function rcartoes(){
   document.getElementById('tb-comp').innerHTML=comp.length?_compPag.map(cp=>{const ct=S.cartoes.find(c=>c.id===cp.cartao),m=ct?BG(ct.banco):BG('outro');const _ant=(cp.data||'')<_hojeISO();return`<tr${_ant?' class="lanc-ant"':''}${cp.forecast&&!_ant?' style="opacity:.92"':''}>${_selModeCartoes?`<td class="sel-col"><input type="checkbox" class="sel-chk" ${_selComp.has(cp.id)?'checked':''} onclick="selToggle('cartoes',${cp.id},this.checked)"></td>`:''}<td class="cm mono" data-label="Data" style="font-size:11px">${fdt(cp.data)}</td><td data-label="Cartão"><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:11px">${ct?.nome||'—'}</span></div></td><td data-label="Descrição">${cp.desc}${cp.forecast?' <span class="fc-badge">previsto</span>':''}</td><td data-label="Categoria"><span class="badge b-n" style="font-size:9px">${cp.cat}</span></td><td class="tr mono cr" data-label="Valor">${brl(cp.valor)}</td><td class="tr" data-label="Parcelas" style="font-size:11px;color:var(--txt3)">${cp.parcelas>1?cp.parcelas+'x de '+brl(cp.valor/cp.parcelas):'À vista'}</td><td class="td-act"><button class="btn btn-ed" onclick="editCompra(${cp.id})">✎</button> <button class="btn btn-d" onclick="rmCompra(${cp.id})">✕</button></td></tr>`}).join('').concat(_tblMaisHTML('cartoes',comp.length,_compPag.length,_selModeCartoes?8:7)):`<tr><td colspan="${_selModeCartoes?8:7}" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prevC?'Nenhuma compra prevista':'Nenhuma compra'}</td></tr>`;
   // Respeita o filtro de cartão selecionado (fc) — antes somava todos os cartões
   // juntos mesmo com um cartão específico escolhido no filtro acima.
-  // Mês de referência só das compras REAIS (não-forecast) pro gráfico "Gastos por
-  // Categoria · Fatura aberta" — mesRefDe(S.compras) sem filtro podia apontar pra
-  // um mês futuro de compra prevista, e o filtro !cp.forecast abaixo não encontrava
-  // nada nesse mês, deixando o gráfico vazio.
-  const _mesCcCat=mesRefDe(S.compras.filter(cp=>!cp.forecast));
-  // "Pagamento cartão crédito" fica fora: é meio de pagamento/transferência entre
-  // contas (a conta pagando a fatura), não uma despesa efetiva desta fatura.
-  const bc={};S.compras.filter(cp=>(!fc||cp.cartao===fc)&&cp.data.startsWith(_mesCcCat)&&!cp.forecast&&!_ehCatPagamentoCartao(cp.cat)).forEach(cp=>{bc[cp.cat]=(bc[cp.cat]||0)+cp.valor});
+  // "Pagamento cartão crédito"/"Transferência" ficam fora: são meio de pagamento ou
+  // movimentação entre contas do próprio usuário, não uma despesa efetiva desta fatura.
+  // Usa fma (mês escolhido no filtro Mês/Ano acima — padrão: fatura aberta).
+  const bc={};S.compras.filter(cp=>(!fc||cp.cartao===fc)&&cp.data.startsWith(fma)&&!cp.forecast&&!_ehCatPagamentoCartao(cp.cat)).forEach(cp=>{bc[cp.cat]=(bc[cp.cat]||0)+cp.valor});
   // Histórico de pagamentos de fatura (respeitando o filtro de cartão)
   const filCartPg=document.getElementById('fil-cart')?.value||'';
   let pags=[...(S.pagamentosFatura||[])].filter(p=>!filCartPg||p.cartaoId===filCartPg).sort((a,b)=>b.data.localeCompare(a.data));
@@ -7752,15 +7774,34 @@ function rcartoes(){
     }).join('');
   }
   const cs=Object.entries(bc).sort((a,b)=>b[1]-a[1]);
+  // Rótulo do mês selecionado (ex.: "Jul/2026") e se é a fatura aberta (mês atual)
+  // ou um mês passado escolhido no filtro — usado nos dois textos abaixo e no badge.
+  const _ehMesAtual=fma===_mesCcCat;
+  const _lblMes=_MESES_ABREV[parseInt(fma.slice(5,7),10)-1]+'/'+fma.slice(0,4);
+  const _badgeEl=document.getElementById('cc-cat-badge');if(_badgeEl)_badgeEl.textContent=_ehMesAtual?'Fatura aberta':_lblMes;
+  const _subCatEl=document.getElementById('cc-cat-sub');if(_subCatEl)_subCatEl.textContent=`Compras no cartão, só realizadas (sem previstos) · ${_ehMesAtual?'mês da fatura aberta':'mês selecionado: '+_lblMes} · não inclui "Pagamento cartão crédito"/"Transferência" (movimentação, não despesa) · clique numa categoria para filtrar a tabela abaixo`;
   // Clique numa fatia OU num item da legenda filtra a tabela "Todas as Compras"
   // abaixo pela categoria clicada (via filtrarComprasPorCategoria). O onHover
   // troca o cursor pra "pointer" só quando o ponteiro está sobre uma fatia.
   mkCh('ch-cc-cat',{type:'doughnut',data:{labels:cs.map(([k])=>k),datasets:[{data:cs.map(([,v])=>v),backgroundColor:cs.map(([k])=>corCat(k)),borderWidth:2,borderColor:'#FAFCF8'}]},options:{responsive:true,maintainAspectRatio:false,cutout:'58%',onClick:(evt,els,chart)=>{if(els&&els.length){const cat=chart.data.labels[els[0].index];filtrarComprasPorCategoria(cat);}},onHover:(evt,els)=>{if(evt.native&&evt.native.target)evt.native.target.style.cursor=(els&&els.length)?'pointer':'default';},plugins:{legend:{position:'right',labels:{color:C.txt,padding:10,font:{size:11}},onClick:(evt,item)=>{if(item&&item.text)filtrarComprasPorCategoria(item.text);}},tooltip:{callbacks:{label:ctx=>ctx.label+': '+brl(ctx.parsed)}}}},plugins:[_donutValueLabelPlugin]});
-  // "Comprometido" aqui = realizado (fatura + parcelas futuras reais) + previsto
-  // (compras forecast do cartão) — o gráfico quer refletir TODO lançamento em
-  // aberto, não só o que já é real. Os cards individuais de cada cartão acima
-  // (Comprometido/Disponível) continuam só com o realizado, sem mudança.
-  mkCh('ch-cc-uso',{type:'bar',data:{labels:S.cartoes.map(c=>c.nome.split(' ').slice(0,2).join(' ')),datasets:[{label:'Comprometido',data:S.cartoes.map(c=>limiteComprometido(c)+comprometidoPrevistoCartao(c.id)),backgroundColor:'rgba(163,58,46,.28)',borderColor:C.red,borderWidth:1,borderRadius:3},{label:'Limite',data:S.cartoes.map(c=>c.limite),backgroundColor:'rgba(74,122,86,.14)',borderColor:C.grn,borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:C.txt,padding:12,font:{size:11}}}},scales:gridOpts(v=>'R$'+(v/1000).toFixed(0)+'k')}});
+  // "Comprometido" no mês ATUAL (fatura aberta, padrão) = realizado (fatura + parcelas
+  // futuras reais) + previsto — reflete TODO lançamento em aberto, não só o que já é
+  // real (mesma lógica de antes, sem mudança nos cards individuais acima). Para um mês
+  // PASSADO escolhido no filtro, esse conceito de "parcelas futuras/previstos" não se
+  // aplica mais (é histórico fechado) — ali, Comprometido vira simplesmente o total
+  // realizado no cartão naquele mês específico. Limite não tem histórico guardado no
+  // app, então sempre usa o limite atual do cartão (única info disponível).
+  const comprMes={};
+  S.cartoes.forEach(c=>{
+    comprMes[c.id]=_ehMesAtual
+      ?limiteComprometido(c)+comprometidoPrevistoCartao(c.id)
+      :S.compras.filter(cp=>cp.cartao===c.id&&!cp.forecast&&cp.data.startsWith(fma)).reduce((s,cp)=>s+cp.valor,0);
+  });
+  const _subUsoEl=document.getElementById('cc-uso-sub');
+  if(_subUsoEl)_subUsoEl.textContent=_ehMesAtual
+    ?'Comprometido = realizado (fatura + parcelas futuras) + previstos · Limite = total do cartão'
+    :`Comprometido = total realizado no cartão em ${_lblMes} · Limite = total do cartão (atual)`;
+  mkCh('ch-cc-uso',{type:'bar',data:{labels:S.cartoes.map(c=>c.nome.split(' ').slice(0,2).join(' ')),datasets:[{label:'Comprometido',data:S.cartoes.map(c=>comprMes[c.id]),backgroundColor:'rgba(163,58,46,.28)',borderColor:C.red,borderWidth:1,borderRadius:3},{label:'Limite',data:S.cartoes.map(c=>c.limite),backgroundColor:'rgba(74,122,86,.14)',borderColor:C.grn,borderWidth:1,borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:C.txt,padding:12,font:{size:11}}}},scales:gridOpts(v=>'R$'+(v/1000).toFixed(0)+'k')}});
 }
 function verFatCart(id){document.getElementById('fil-cart').value=id;document.getElementById('tb-comp').closest('.panel').scrollIntoView({behavior:'smooth',block:'start'});rcartoes()}
 // Clique numa fatia/legenda do gráfico "Gastos por Categoria" (painel Cartões)
