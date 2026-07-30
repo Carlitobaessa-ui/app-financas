@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 89 -->
+<!-- APP_VERSION: 90 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1576,7 +1576,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     </div>
     <div class="pbd">
       <div class="chart-l"><canvas id="ch-linhas-recpaginv"></canvas></div>
-      <div class="pft">Só transações já efetivadas (sem previstos) · Investimentos = aportes em categoria de investimento, contados à parte dos demais pagamentos · não inclui "Pagamento cartão crédito"/"Transferência" (movimentação entre contas, não é receita nem despesa)</div>
+      <div class="pft">Só transações já efetivadas (sem previstos) · Investimentos = créditos menos débitos lançados direto na(s) conta(s) de investimento (não depende de categoria) · Pagamentos não inclui "Pagamento cartão crédito"/"Transferência" nem aportes por categoria (movimentação entre contas, não é receita nem despesa)</div>
     </div>
   </div>
 
@@ -4378,7 +4378,7 @@ async function atualizarMercadoImoveis(){
 <div class="fgrid"><div class="fg"><label>Data</label><input id="lc-dt" type="date"></div><div class="fg"><label>Banco</label><select id="lc-bk"></select></div></div>
 <div class="fgrid"><div class="fg"><label>Tipo</label><select id="lc-tp" onchange="onLcTipo()"><option value="credito">Crédito</option><option value="debito">Débito</option><option value="transferencia">Transferência</option></select></div><div class="fg"><label>Valor (R$)</label><input id="lc-vl" type="number" placeholder="0.00" step="0.01"></div></div>
 <div class="fg" style="margin-bottom:12px"><label>Descrição</label><input id="lc-dc" type="text" placeholder="Salário, Pix…"></div>
-<div class="fg" id="lc-cat-wr" style="margin-bottom:12px"><label>Categoria de orçamento <span style="font-weight:400;color:var(--txt3);font-size:10px">(débitos — opcional)</span></label><select id="lc-cat-m"></select><div style="font-size:10px;color:var(--txt3);margin-top:3px">Se preenchida, o débito entra no realizado do orçamento dessa categoria.</div></div>
+<div class="fg" id="lc-cat-wr" style="margin-bottom:12px"><label>Categoria <span style="font-weight:400;color:var(--txt3);font-size:10px">(débitos e créditos — opcional)</span></label><select id="lc-cat-m"></select><div style="font-size:10px;color:var(--txt3);margin-top:3px">Débito: entra no realizado do orçamento dessa categoria. Crédito: só classificação (ex.: identificar um resgate/provento recebido), não afeta orçamento.</div></div>
 <div class="fg" id="lc-dest-wr" style="display:none;margin-bottom:12px"><label>Banco Destino</label><select id="lc-dest"></select></div>
 <div class="rec-block" data-prefix="lc"></div>
 <div class="rec-scope" id="lc-scope" style="display:none">
@@ -6245,18 +6245,25 @@ function rdash(){
 
   // ═══ RECEBIMENTOS × PAGAMENTOS × INVESTIMENTOS — ÚLTIMOS 12 MESES ═══
   // Só transações JÁ EFETIVADAS (!forecast em todas as fontes) — histórico fixo,
-  // sem projeção, diferente do gráfico "Fluxo de Caixa" acima. Investimentos sai
-  // de dentro dos débitos e vira linha própria (categoria com prefixo "investimento",
-  // ex.: "Investimentos #ricchezza" — _catInvestimento); Pagamentos é o restante dos
-  // débitos, exceto categorias neutras (transferência/pagamento de fatura, via
-  // _ehCatPagamentoCartao) que não são nem receita nem despesa nem aporte — só
-  // dinheiro trocando de bolso do próprio usuário.
+  // sem projeção, diferente do gráfico "Fluxo de Caixa" acima.
+  // Investimentos (linha #3) = créditos menos débitos lançados diretamente nas
+  // CONTAS do tipo "investimento" (S.contas com tipo==='investimento', ex.: conta
+  // XP) — não depende mais de categoria, e sim da conta de destino/origem do
+  // lançamento (l.banco). É o fluxo líquido que entrou/saiu da conta de
+  // investimento no mês (aporte, resgate, rendimento creditado direto na conta).
+  // Pagamentos continua sendo o restante dos débitos (todas as contas), excluindo
+  // categorias neutras (transferência/pagamento de fatura) e categorias de
+  // investimento via _ehCatPagamentoCartao — assim um aporte lançado na conta
+  // corrente com categoria "Investimentos #x" (padrão origemInv='aporte') continua
+  // sem contar como despesa real, mesmo não alimentando mais a linha de
+  // Investimentos diretamente (que agora olha só a conta de destino/origem).
   {
     const meses12=[];
     for(let k=11;k>=0;k--){
       const dt=new Date(_hojeDt.getFullYear(),_hojeDt.getMonth()-k,1);
       meses12.push(dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0'));
     }
+    const _idsContaInv=new Set(S.contas.filter(c=>c.tipo==='investimento').map(c=>c.id));
     const rec=[],pag=[],invn=[];
     meses12.forEach(ym=>{
       const lcCred=S.lancamentos.filter(l=>!l.forecast&&l.tipo==='credito'&&l.data.startsWith(ym)).reduce((s,l)=>s+l.valor,0);
@@ -6267,11 +6274,9 @@ function rdash(){
       const gastosDeb=S.gastos.filter(g=>!g.forecast&&(!g.forma||g.forma==='dinheiro')&&g.data.startsWith(ym));
       const comprasDeb=S.compras.filter(c=>!c.forecast&&c.data.startsWith(ym));
 
-      invn.push(+(
-         lcDeb.filter(l=>_catInvestimento(l.cat)).reduce((s,l)=>s+l.valor,0)
-        +gastosDeb.filter(g=>_catInvestimento(g.cat)).reduce((s,g)=>s+g.valor,0)
-        +comprasDeb.filter(c=>_catInvestimento(c.cat)).reduce((s,c)=>s+c.valor,0)
-      ).toFixed(2));
+      const credInvConta=S.lancamentos.filter(l=>!l.forecast&&l.tipo==='credito'&&_idsContaInv.has(l.banco)&&l.data.startsWith(ym)).reduce((s,l)=>s+l.valor,0);
+      const debInvConta=S.lancamentos.filter(l=>!l.forecast&&l.tipo==='debito'&&_idsContaInv.has(l.banco)&&l.data.startsWith(ym)).reduce((s,l)=>s+l.valor,0);
+      invn.push(+(credInvConta-debInvConta).toFixed(2));
 
       pag.push(+(
          lcDeb.filter(l=>!_ehCatPagamentoCartao(l.cat)).reduce((s,l)=>s+l.valor,0)
@@ -9564,7 +9569,7 @@ function editLanc(id){
   document.getElementById('lc-tp').value=ehTransf?'transferencia':l.tipo;
   document.getElementById('lc-vl').value=l.valor;
   document.getElementById('lc-dc').value=ehTransf?(l.desc||'').replace(/^Transf\. recebida · /,''):l.desc;
-  // Categoria de orçamento (só débito)
+  // Categoria (débito ou crédito — onLcTipo() logo abaixo decide se mostra o campo)
   const catSel=document.getElementById('lc-cat-m');
   if(catSel){catSel.value=l.cat||'';}
   onLcTipo(); // ajusta visibilidade de destino e categoria conforme o tipo
@@ -9609,7 +9614,7 @@ function addLancamento(){
     const estorna=x=>{if(x.forecast)return;const c=S.contas.find(c=>c.id===x.banco);if(c){if(x.tipo==='credito')c.saldo-=x.valor;if(x.tipo==='debito')c.saldo+=x.valor;}};
     const aplica=x=>{if(fcNovo)return;const c=S.contas.find(c=>c.id===bk);if(c){if(tp==='credito')c.saldo+=x.valor;if(tp==='debito')c.saldo-=x.valor;}};
     const alvos=escopo==='all'&&l.recId?S.lancamentos.filter(x=>x.recId===l.recId&&x.tipo!=='transferencia'&&!/Transf\. recebida/.test(x.desc||'')):[l];
-    const catLcE=(tp==='debito'&&document.getElementById('lc-cat-m'))?document.getElementById('lc-cat-m').value||undefined:undefined;
+    const catLcE=((tp==='debito'||tp==='credito')&&document.getElementById('lc-cat-m'))?document.getElementById('lc-cat-m').value||undefined:undefined;
     alvos.forEach(x=>{
       estorna(x);
       x.banco=bk;x.tipo=tp;x.valor=vl;x.desc=dc;x.cat=catLcE;
@@ -9627,7 +9632,7 @@ function addLancamento(){
   const recId=cfg?'rec-'+Date.now():null;
   const db=tp==='transferencia'?document.getElementById('lc-dest').value:null;
   const fc=isForecast('lc');
-  const catLc=(tp==='debito'&&document.getElementById('lc-cat-m'))?document.getElementById('lc-cat-m').value||undefined:undefined;
+  const catLc=((tp==='debito'||tp==='credito')&&document.getElementById('lc-cat-m'))?document.getElementById('lc-cat-m').value||undefined:undefined;
   datas.forEach(d=>{
     const nid=Math.max(0,...S.lancamentos.map(l=>l.id))+1;
     S.lancamentos.push({id:nid,data:d,banco:bk,tipo:tp,valor:vl,desc:dc,cat:catLc,recId,forecast:fc||undefined,transfPar:tp==='transferencia'?('tp'+nid):undefined});
@@ -9875,7 +9880,7 @@ function removerBancoCustom(id){
   _renderListaBancos();
   toast('Banco excluído');
 }
-function onLcTipo(){const tp=document.getElementById('lc-tp').value;document.getElementById('lc-dest-wr').style.display=tp==='transferencia'?'block':'none';const cw=document.getElementById('lc-cat-wr');if(cw)cw.style.display=tp==='debito'?'block':'none'}
+function onLcTipo(){const tp=document.getElementById('lc-tp').value;document.getElementById('lc-dest-wr').style.display=tp==='transferencia'?'block':'none';const cw=document.getElementById('lc-cat-wr');if(cw)cw.style.display=(tp==='debito'||tp==='credito')?'block':'none'}
 
 // Limpa os campos de texto/número/data de um modal de cadastro ao abri-lo.
 // As funções edit* chamam openM ANTES de preencher, então isto não afeta a edição.
