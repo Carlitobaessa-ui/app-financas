@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 80 -->
+<!-- APP_VERSION: 81 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1025,7 +1025,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
 </head>
 <body>
 
-<!-- ═══ INTEGRAÇÃO SUPABASE — tela de login + badge de sincronização (ver 03-guia.md) ═══ -->
+<!-- ═══ INTEGRAÇÃO NEON — tela de login + badge de sincronização (ver 03-guia.md) ═══ -->
 <div id="auth-overlay" style="position:fixed;inset:0;z-index:99999;background:#F7F6F1;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;padding:20px">
   <div style="background:#FAFAF8;border:0.5px solid #E4E0D5;border-radius:14px;padding:38px 34px;width:360px;max-width:100%;box-shadow:0 20px 60px rgba(0,0,0,.08)">
     <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:#2E2A20;margin-bottom:4px">Finanças</div>
@@ -1037,8 +1037,8 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
         <svg width="16" height="16" viewBox="0 0 814 1000" fill="#fff"><path d="M788.1 340.9c-5.8 4.5-108.2 62.2-108.2 190.5 0 148.4 130.3 200.9 134.2 202.2-.6 3.2-20.7 71.9-68.7 141.9-42.8 61.6-87.5 123.1-155.5 123.1s-85.5-39.5-164-39.5c-76.5 0-103.7 40.8-165.9 40.8s-105.6-57-155.5-127C46.7 790.7 0 663 0 541.8c0-194.4 126.4-297.5 250.8-297.5 66.1 0 121.2 43.4 162.7 43.4 39.5 0 101.1-46 176.3-46 28.5 0 130.9 2.6 198.3 98.2zm-234-181.5c31.1-36.9 53.1-88.1 53.1-139.3 0-7.1-.6-14.3-1.9-20.1-50.6 1.9-110.8 33.7-147.1 75.8-28.5 32.4-55.1 83.6-55.1 135.5 0 7.8 1.3 15.6 1.9 18.1 3.2.6 8.4 1.3 13.6 1.3 45.4 0 102.5-30.4 135.5-71.3z"/></svg>
         Continuar com a Apple
       </button>
-      <button id="auth-btn-google" onclick="authGoogle()"
-        style="display:flex;align-items:center;justify-content:center;gap:8px;background:#fff;color:#2E2A20;border:0.5px solid #D8D3C4;border-radius:8px;padding:11px;font-size:14px;font-weight:500;cursor:pointer">
+      <button id="auth-btn-google" onclick="authGoogle()" title="Login com Google ainda não está disponível"
+        style="display:flex;align-items:center;justify-content:center;gap:8px;background:#fff;color:#2E2A20;border:0.5px solid #D8D3C4;border-radius:8px;padding:11px;font-size:14px;font-weight:500;cursor:pointer;opacity:.55">
         <svg width="16" height="16" viewBox="0 0 18 18"><path fill="#4285F4" d="M17.64 9.2c0-.637-.057-1.251-.164-1.84H9v3.481h4.844c-.209 1.125-.843 2.078-1.796 2.717v2.258h2.908c1.702-1.567 2.684-3.874 2.684-6.615z"/><path fill="#34A853" d="M9 18c2.43 0 4.467-.806 5.956-2.18l-2.908-2.259c-.806.54-1.837.86-3.048.86-2.344 0-4.328-1.584-5.036-3.711H.957v2.332C2.438 15.983 5.482 18 9 18z"/><path fill="#FBBC05" d="M3.964 10.71c-.18-.54-.282-1.117-.282-1.71s.102-1.17.282-1.71V4.958H.957C.348 6.173 0 7.548 0 9s.348 2.827.957 4.042l3.007-2.332z"/><path fill="#EA4335" d="M9 3.58c1.321 0 2.508.454 3.44 1.345l2.582-2.58C13.463.891 11.426 0 9 0 5.482 0 2.438 2.017.957 4.958L3.964 7.29C4.672 5.163 6.656 3.58 9 3.58z"/></svg>
         Continuar com o Google
       </button>
@@ -4698,18 +4698,21 @@ async function atualizarMercadoImoveis(){
 
 <div class="toast" id="toast"></div>
 
-<!-- ═══ INTEGRAÇÃO SUPABASE — SDK + credenciais (ver 03-guia.md) ═══ -->
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<!-- ═══ INTEGRAÇÃO NEON — Auth + Data API (persistência na nuvem, ver 03-guia.md) ═══ -->
 <script>
-  // Projeto: Carlitobaessa-ui (Settings → API Keys no Supabase)
-  const SUPABASE_URL = 'https://ehjrmtbbebyleezlaoau.supabase.co';
-  const SUPABASE_ANON_KEY = 'sb_publishable_-QP36gei5OjKVX4m5TJOXg_qktlxJcp';
-  // A chave anon é pública por design — o RLS protege os dados. Nunca use a service_role aqui.
-  // experimental.passkey habilita Face ID / Touch ID / biometria Android (inclusive Samsung) via WebAuthn.
-  // Recurso em beta na Supabase (lançado em 05/2026) — requer configurar "Passkeys" no Dashboard do projeto.
-  const sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
-    auth: { experimental: { passkey: true } }
-  });
+  // Projeto Neon: appfinancas-portfolio (org efinanza) — região AWS São Paulo
+  const NEON_AUTH_URL = 'https://ep-dry-forest-acf5o6jw.neonauth.sa-east-1.aws.neon.tech/neondb/auth';
+  const NEON_DATA_API_URL = 'https://ep-dry-forest-acf5o6jw.apirest.sa-east-1.aws.neon.tech/neondb/rest/v1';
+  // A Data API é protegida por Row-Level Security no Postgres (tabela app_state) —
+  // cada usuário só enxerga/grava a própria linha. Nenhuma credencial secreta fica no front-end.
+  let neon = null;
+  // Carregado via import() dinâmico (funciona em <script> comum, sem precisar type="module",
+  // o que preserva a ordem síncrona de execução que o resto do app depende).
+  const neonReady = (async () => {
+    const { createClient } = await import('https://esm.sh/@neondatabase/neon-js');
+    neon = createClient({ auth: { url: NEON_AUTH_URL }, dataApi: { url: NEON_DATA_API_URL } });
+    window.neon = neon;
+  })().catch(e => console.error('Falha ao carregar Neon SDK:', e));
 </script>
 
 <script>
@@ -10306,7 +10309,7 @@ function persistir(){
   }catch(e){console.warn('persistir falhou:',e)}
   // Rede de segurança: tenta um snapshot automático (respeita intervalo/teto internamente)
   try{ if(typeof _talvezSnapshotAuto==='function' && !window._bootBackup)_talvezSnapshotAuto('automático'); }catch(_){}
-  if (typeof syncPush === 'function') syncPush(); // ═══ INTEGRAÇÃO SUPABASE — sobe para a nuvem também
+  if (typeof syncPush === 'function') syncPush(); // ═══ INTEGRAÇÃO NEON — sobe para a nuvem também
 }
 function restaurar(){
   try{
@@ -10370,11 +10373,14 @@ function restaurar(){
   }catch(e){console.warn('restaurar falhou:',e);return false}
 }
 
-// ═══ INTEGRAÇÃO SUPABASE — autenticação (Apple, Google, e-mail) e sincronização (ver 03-guia.md) ═══
+// ═══ INTEGRAÇÃO NEON — autenticação (e-mail) e sincronização (ver 03-guia.md) ═══
+// Login social (Google) e Face ID/Touch ID (passkey) ficam desativados por enquanto —
+// exigem configurar um provedor OAuth / plugin de passkey à parte no projeto Neon Auth.
+// E-mail + senha funciona normalmente e já cobre login/sincronização entre dispositivos.
 let _uid = null;          // id do usuário logado
 let _syncTimer = null;    // debounce de gravação
 let _syncing = false;
-let _authTratado = false; // evita processar onLogin duas vezes (getSession + onAuthStateChange)
+let _authTratado = false; // evita processar onLogin duas vezes
 
 // ─── UI helpers do badge de sync ───
 function setSync(state){ // 'ok' | 'saving' | 'error' | 'offline'
@@ -10388,9 +10394,16 @@ function setSync(state){ // 'ok' | 'saving' | 'error' | 'offline'
 function snapshotState(){
   return {
     ativos:S.ativos,gastos:S.gastos,dividendos:S.dividendos,
-    metas:S.metas,orc:S.orc,receita:S.receita,objetivos:S.objetivos,
+    metas:S.metas,metasFaixa:S.metasFaixa,orc:S.orc,receita:S.receita,objetivos:S.objetivos,
     contas:S.contas,lancamentos:S.lancamentos,
     cartoes:S.cartoes,compras:S.compras,bens:S.bens,usdBrl:S.usdBrl,
+    cotWatch:S.cotWatch,
+    categorias:S.categorias,
+    catCores:CC,
+    bancosCustom:S.bancosCustom,
+    pagamentosFatura:S.pagamentosFatura,
+    graos:S.graos,
+    aluguel:S.aluguel,
   };
 }
 
@@ -10401,6 +10414,7 @@ function aplicarSnapshot(d){
   if(d.gastos)     S.gastos=d.gastos;
   if(d.dividendos) S.dividendos=d.dividendos;
   if(d.metas)      S.metas=d.metas;
+  if(d.metasFaixa) S.metasFaixa=d.metasFaixa;
   if(d.orc)        S.orc=d.orc;
   if(d.receita!=null) S.receita=d.receita;
   if(d.objetivos)  S.objetivos=d.objetivos;
@@ -10410,19 +10424,34 @@ function aplicarSnapshot(d){
   if(d.compras)    S.compras=d.compras;
   if(d.bens)       S.bens=d.bens;
   if(d.usdBrl)     S.usdBrl=d.usdBrl;
+  if(d.cotWatch)   S.cotWatch=d.cotWatch;
+  if(Array.isArray(d.categorias))   S.categorias=d.categorias;
+  if(Array.isArray(d.bancosCustom)) S.bancosCustom=d.bancosCustom;
+  if(d.catCores&&typeof d.catCores==='object') Object.assign(CC,d.catCores);
+  if(d.pagamentosFatura) S.pagamentosFatura=d.pagamentosFatura;
+  if(d.graos)      S.graos=d.graos;
+  if(d.aluguel)    S.aluguel=d.aluguel;
 }
 
 // ─── Grava na nuvem (com debounce para não gravar a cada tecla) ───
+// A tabela app_state tem 1 linha por usuário (user_id = chave primária), então
+// "upsert" aqui é feito manualmente: tenta UPDATE; se nenhuma linha foi afetada
+// (1ª vez do usuário), faz INSERT — o user_id é preenchido sozinho pelo Postgres
+// via DEFAULT (auth.user_id()), a partir do token de quem está logado.
 function syncPush(){
   if(!_uid)return;
   clearTimeout(_syncTimer);
   setSync('saving');
   _syncTimer=setTimeout(async()=>{
     try{
-      const { error } = await sb.from('portfolios').upsert({
-        user_id:_uid, data:snapshotState(), device:navigator.userAgent.slice(0,80)
-      });
-      if(error)throw error;
+      await neonReady;
+      const payload=snapshotState();
+      const upd=await neon.from('app_state').update({data:payload,updated_at:new Date().toISOString()}).eq('user_id',_uid).select();
+      if(upd.error)throw upd.error;
+      if(!upd.data||!upd.data.length){
+        const ins=await neon.from('app_state').insert({data:payload}).select();
+        if(ins.error)throw ins.error;
+      }
       setSync('ok');
     }catch(e){ console.warn('syncPush falhou:',e); setSync('error'); }
   }, 1200);
@@ -10432,9 +10461,10 @@ function syncPush(){
 async function syncPull(){
   if(!_uid)return null;
   try{
-    const { data, error } = await sb.from('portfolios').select('data,updated_at').eq('user_id',_uid).maybeSingle();
+    await neonReady;
+    const { data, error } = await neon.from('app_state').select('data,updated_at').eq('user_id',_uid);
     if(error)throw error;
-    return data; // {data:{...}, updated_at} ou null
+    return (data && data[0]) ? data[0] : null; // {data:{...}, updated_at} ou null
   }catch(e){ console.warn('syncPull falhou:',e); setSync('error'); return null; }
 }
 
@@ -10455,7 +10485,8 @@ async function authLogin(){
   const pass=document.getElementById('auth-pass').value;
   if(!email||!pass){authMsg('Preencha e-mail e senha');return}
   authBusy(true); authMsg('');
-  const { data, error } = await sb.auth.signInWithPassword({email,password:pass});
+  await neonReady;
+  const { data, error } = await neon.auth.signIn.email({email,password:pass});
   authBusy(false);
   if(error){authMsg(traduzErro(error.message));return}
   await onLogin(data.user);
@@ -10466,71 +10497,40 @@ async function authSignup(){
   const pass=document.getElementById('auth-pass').value;
   if(!email||pass.length<6){authMsg('E-mail válido e senha de 6+ caracteres');return}
   authBusy(true); authMsg('');
-  const { data, error } = await sb.auth.signUp({email,password:pass});
+  await neonReady;
+  const { data, error } = await neon.auth.signUp.email({email,password:pass,name:email.split('@')[0]});
   authBusy(false);
   if(error){authMsg(traduzErro(error.message));return}
   if(data.user && !data.session){ authMsg('Conta criada! Confirme o e-mail e depois entre.','#2E6B3A'); return; }
   await onLogin(data.user);
 }
 
-// ─── Fluxo de autenticação social (Apple / Google) — redireciona e volta autenticado ───
-async function authOAuth(provider){
-  authMsg('');
-  const { error } = await sb.auth.signInWithOAuth({
-    provider,
-    options:{ redirectTo: window.location.origin + window.location.pathname }
-  });
-  // Em caso de sucesso o navegador é redirecionado para o provedor — este código
-  // só roda de fato se der erro ANTES do redirecionamento (ex: provedor não habilitado no Supabase).
-  if(error){ authMsg(traduzErro(error.message)); }
-}
-// Login com Apple fica visível na tela (design consistente), mas desabilitado:
-// o provedor "apple" ainda não está habilitado no projeto Supabase, então em
-// vez de tentar o OAuth (que falharia), só avisamos o usuário.
-function authApple(){ authMsg('Login com Apple ainda não está disponível — use e-mail ou Google por enquanto.','#8A6D1F'); }
-function authGoogle(){ authOAuth('google'); }
+// ─── Login social (Apple / Google) — desativado por enquanto ───
+// Exige registrar um app OAuth à parte (Google Cloud / Apple Developer) e configurar
+// as credenciais no projeto Neon Auth. Os botões ficam visíveis (design consistente)
+// mas só avisam o usuário, em vez de tentar um fluxo que falharia.
+function authApple(){ authMsg('Login com Apple ainda não está disponível — use e-mail por enquanto.','#8A6D1F'); }
+function authGoogle(){ authMsg('Login com Google ainda não está disponível — use e-mail por enquanto.','#8A6D1F'); }
 
-// ─── Login rápido por Passkey (Face ID / Touch ID na Apple, biometria nativa no Android — inclusive Samsung) ───
-// Um único fluxo WebAuthn cobre todas as plataformas: a Samsung expõe sua biometria pela mesma
-// API padrão do Android (Biometric/FIDO2) que o Chrome usa, então não existe implementação separada a fazer.
+// ─── Login rápido por Passkey (Face ID / Touch ID / biometria) — desativado por enquanto ───
+// Exige habilitar o plugin de passkey no projeto Neon Auth. passkeySuportado() sempre
+// retorna false, então o botão fica oculto (mesmo comportamento de antes em navegadores sem suporte).
 function passkeySuportado(){
-  return !!(window.PublicKeyCredential && sb.auth.signInWithPasskey);
+  return false;
 }
 
 async function authPasskeySignIn(){
-  authMsg('');
-  authBusy(true);
-  try{
-    const { data, error } = await sb.auth.signInWithPasskey();
-    authBusy(false);
-    if(error){ authMsg(traduzErro(error.message)); return; }
-    if(data && data.user){ await onLogin(data.user); }
-  }catch(e){
-    authBusy(false);
-    authMsg(traduzErro(e.message||String(e)));
-  }
+  authMsg('Login rápido (passkey) ainda não está disponível — use e-mail por enquanto.','#8A6D1F');
 }
 
-// Registra uma passkey no dispositivo atual — só funciona com usuário já autenticado
-// (a Supabase exige uma conta confirmada e não-anônima antes de vincular uma passkey a ela).
 async function authPasskeyRegister(){
-  if(!_uid){ toast('Entre na sua conta antes de ativar o login rápido'); return; }
-  try{
-    const { data, error } = await sb.auth.registerPasskey();
-    if(error){ toast('Não foi possível ativar: '+traduzErro(error.message)); return; }
-    toast('Login rápido (Face ID / biometria) ativado neste dispositivo ✓');
-  }catch(e){
-    toast('Não foi possível ativar: '+(e.message||String(e)));
-  }
+  toast('Login rápido (passkey) ainda não está disponível neste app');
 }
 
 function traduzErro(m){
-  if(/Invalid login/i.test(m))return'E-mail ou senha incorretos';
-  if(/already registered/i.test(m))return'Este e-mail já tem conta — faça login';
+  if(/Invalid login|invalid.*credential/i.test(m))return'E-mail ou senha incorretos';
+  if(/already.*(registered|exist)/i.test(m))return'Este e-mail já tem conta — faça login';
   if(/rate limit/i.test(m))return'Muitas tentativas, aguarde um instante';
-  if(/provider is not enabled/i.test(m))return'Esse login social ainda não foi habilitado no projeto Supabase';
-  if(/passkey.*not.*enabled|passkeys? feature/i.test(m))return'Login rápido (passkey) ainda não foi habilitado no projeto Supabase';
-  if(/No.*credential|NotAllowedError|not allowed/i.test(m))return'Nenhum login rápido configurado neste dispositivo ainda — use e-mail ou login social';
   return m;
 }
 
@@ -10556,21 +10556,20 @@ async function onLogin(user){
 }
 
 async function authLogout(){
-  await sb.auth.signOut(); _uid=null; _authTratado=false; location.reload();
+  await neonReady;
+  await neon.auth.signOut(); _uid=null; _authTratado=false; location.reload();
 }
 
-// ─── Verifica sessão existente ao abrir o app + escuta login social/e-mail em qualquer momento ───
+// ─── Verifica sessão existente ao abrir o app ───
 async function bootAuth(){
-  // Mostra o botão de Face ID/biometria só se o navegador suportar WebAuthn e a Supabase tiver passkeys habilitado no client.
+  // Mostra o botão de Face ID/biometria só se houver suporte (hoje sempre false — ver passkeySuportado).
   if(passkeySuportado()){
     const w=document.getElementById('auth-passkey-wrap');
     if(w) w.style.display='flex';
   }
-  sb.auth.onAuthStateChange((event, session) => {
-    if(event==='SIGNED_IN' && session){ onLogin(session.user); }
-  });
-  const { data } = await sb.auth.getSession();
-  if(data.session){ await onLogin(data.session.user); }
+  await neonReady;
+  const { data } = await neon.auth.getSession();
+  if(data && data.session){ await onLogin(data.session.user); }
   else { document.getElementById('auth-overlay').style.display='flex'; }
 }
 
@@ -14459,7 +14458,7 @@ function renderDisrupcao(dis,m){
 
 // ─── INIT
 (function init(){
-  bootAuth(); // ═══ INTEGRAÇÃO SUPABASE — mostra login / restaura sessão
+  bootAuth(); // ═══ INTEGRAÇÃO NEON — mostra login / restaura sessão
   // Síntese III — restaura dados persistidos
   const restaurado=restaurar();
   if(!restaurado){
