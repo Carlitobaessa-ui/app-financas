@@ -1,11 +1,39 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 84 -->
+<!-- APP_VERSION: 85 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
+<!-- CSP: restringe para onde o app pode enviar dados e de onde pode carregar scripts.
+     'unsafe-inline' em script-src é necessário pq o app usa atributos onclick="" inline
+     (sem isso, todos os botões quebrariam). O ganho real de segurança aqui está no
+     connect-src: mesmo que um script malicioso seja injetado, ele não consegue enviar
+     (fetch/XHR) a chave da Anthropic, os tokens de cotação ou os dados da carteira para
+     nenhum domínio fora desta lista — bloqueia a exfiltração, que era o risco prioritário. -->
+<meta http-equiv="Content-Security-Policy" content="
+  default-src 'self';
+  script-src 'self' 'unsafe-inline' https://esm.sh;
+  style-src 'self' 'unsafe-inline' https://fonts.googleapis.com;
+  font-src 'self' https://fonts.gstatic.com data:;
+  img-src 'self' data: blob:;
+  manifest-src 'self' data:;
+  connect-src 'self'
+    https://api.anthropic.com
+    https://brapi.dev
+    https://financialmodelingprep.com
+    https://economia.awesomeapi.com.br
+    https://api.coingecko.com
+    https://api.bcb.gov.br
+    https://ep-dry-forest-acf5o6jw.neonauth.sa-east-1.aws.neon.tech
+    https://ep-dry-forest-acf5o6jw.apirest.sa-east-1.aws.neon.tech
+    https://esm.sh;
+  frame-ancestors 'none';
+  base-uri 'self';
+  form-action 'self';
+  object-src 'none';
+">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
