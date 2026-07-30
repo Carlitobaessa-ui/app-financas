@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 90 -->
+<!-- APP_VERSION: 91 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -6287,10 +6287,10 @@ function rdash(){
     const labels12=meses12.map(ym=>{const [y,m]=ym.split('-');return NOMES_MES[+m-1]+'/'+y.slice(2);});
     mkCh('ch-linhas-recpaginv',{type:'line',data:{labels:labels12,datasets:[
       // Recebimentos e Pagamentos tracejadas (borderDash) pra diferenciar visualmente
-      // de Investimentos, que fica sólida e com traço bem mais grosso (pedido explícito).
+      // de Investimentos, que fica sólida (sem tracejado) mas com a mesma espessura das outras.
       {label:'Recebimentos',data:rec,borderColor:C.grn,backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:2,pointBackgroundColor:C.grn,borderWidth:1.8,borderDash:[5,3]},
       {label:'Pagamentos',data:pag,borderColor:C.red,backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:2,pointBackgroundColor:C.red,borderWidth:1.8,borderDash:[5,3]},
-      {label:'Investimentos',data:invn,borderColor:C.blu,backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:2,pointBackgroundColor:C.blu,borderWidth:3.5}
+      {label:'Investimentos',data:invn,borderColor:C.blu,backgroundColor:'transparent',fill:false,tension:0.35,pointRadius:2,pointBackgroundColor:C.blu,borderWidth:1.8}
     ]},options:{responsive:true,maintainAspectRatio:false,layout:{padding:{top:16}},plugins:{legend:{position:'top',labels:{color:C.txt,padding:14,font:{size:11},usePointStyle:true,pointStyle:'line'}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+brl(ctx.parsed.y)}}},scales:gridOpts(v=>'R$'+(v/1000).toFixed(0)+'k')},plugins:[_linhasRecPagInvLabelPlugin]});
   }
 }
@@ -9934,13 +9934,13 @@ function openM(id){
   if(id==='m-dividendo'){document.getElementById('di-dt').value=now;_popularContasSelect('di-credito-conta','');}
   if(id==='m-lancamento'){
     document.getElementById('lc-dt').value=now;
+    document.getElementById('lc-tp').value='credito';
     const opts=_ordAlfa(S.contas,c=>c.nome).map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
     document.getElementById('lc-bk').innerHTML=opts;document.getElementById('lc-dest').innerHTML=opts;
-    document.getElementById('lc-dest-wr').style.display='none';
-    // Categoria de orçamento (opcional, p/ débitos) — inclui opção vazia
+    // Categoria (débitos e créditos, opcional) — inclui opção vazia
     const catSel=document.getElementById('lc-cat-m');
     if(catSel)catSel.innerHTML='<option value="">Sem categoria</option>'+_ordAlfa(S.categorias||[]).map(c=>`<option>${c}</option>`).join('');
-    const cw=document.getElementById('lc-cat-wr');if(cw)cw.style.display='none'; // começa como crédito
+    onLcTipo(); // mostra/esconde destino e categoria conforme o tipo (crédito já entra com o campo de categoria visível)
     resetRec('lc');resetForecast('lc');
     const rb=document.querySelector('#m-lancamento .rec-block');if(rb)rb.style.display='';
     const sc=document.getElementById('lc-scope');if(sc)sc.style.display='none';
