@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 81 -->
+<!-- APP_VERSION: 82 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -10569,7 +10569,7 @@ async function bootAuth(){
   }
   await neonReady;
   const { data } = await neon.auth.getSession();
-  if(data && data.session){ await onLogin(data.session.user); }
+  if(data && data.session && data.user){ await onLogin(data.user); }
   else { document.getElementById('auth-overlay').style.display='flex'; }
 }
 
