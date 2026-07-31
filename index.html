@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 94 -->
+<!-- APP_VERSION: 95 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1912,7 +1912,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="panel mb">
       <div class="phd">
         <div><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--gld);margin-right:5px"><use href="#ic-trigo"/></svg>CBOT — Contratos Futuros de Grãos</div><div class="ps">Chicago Board of Trade · Preços em USD/bushel</div></div>
-        <div style="display:flex;gap:7px;align-items:center"><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('cbot')">+ Incluir</button><span class="badge" style="background:rgba(217,119,87,.14);color:var(--pg-corn)" title="Não há fonte gratuita/sem chave e compatível com navegador (CORS) para futuros CBOT — valores fixos, sem data de atualização real">⚠ dado simulado — não é cotação ao vivo</span></div>
+        <div style="display:flex;gap:7px;align-items:center"><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('cbot')">+ Incluir</button><span class="badge" style="background:rgba(217,119,87,.14);color:var(--pg-corn)" title="Não há fonte gratuita/sem chave e compatível com navegador (CORS) para futuros CBOT — a variação é sorteada a cada clique em Atualizar Tudo, não é cotação real">⚠ dado simulado — não é cotação ao vivo</span></div>
       </div>
       <div class="pbd" style="padding:0">
         <div class="cbot-head">
@@ -1938,36 +1938,33 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <h2 style="margin-top:6px">
       <span class="n" style="border-color:var(--pg-accent);color:var(--pg-accent)">★</span>
       Resumo Executivo
-      <span style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--pg-muted);font-size:11px;margin-left:auto">base 18–20/jun/2026</span>
+      <span id="pgExecBase" style="font-weight:400;text-transform:none;letter-spacing:0;color:var(--pg-muted);font-size:11px;margin-left:auto">ainda não atualizado — clique em ↻ Atualizar Tudo</span>
     </h2>
     <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));margin-bottom:10px">
       <div class="card exec-soja" style="border-left:2px solid var(--pg-soy)">
-        <div class="kpi"><div class="lab">Soja — balcão PR</div><div class="val">R$ 122–128</div><div class="meta">Alta semanal +1,6%; rumores China EUA sustentam → <b>vender em repiques</b></div></div>
+        <div class="kpi"><div class="lab">Soja — balcão (cooperativas cadastradas)</div><div id="pgExecSojaVal" class="val">—</div><div id="pgExecSojaMeta" class="meta">—</div></div>
       </div>
       <div class="card" style="border-left:2px solid var(--pg-corn)">
-        <div class="kpi"><div class="lab">Milho — balcão PR</div><div class="val">R$ 57–65</div><div class="meta">Mínima do ciclo; carrego B3 +15% → <b>segurar / fixar Jan–Mar/27</b></div></div>
+        <div class="kpi"><div class="lab">Milho — balcão (cooperativas cadastradas)</div><div id="pgExecMilhoVal" class="val">—</div><div id="pgExecMilhoMeta" class="meta">—</div></div>
       </div>
       <div class="card" style="border-left:2px solid var(--pg-accent)">
-        <div class="kpi"><div class="lab">Melhor praça hoje</div><div class="val">Castrolanda/Cocamar</div><div class="meta">Soja R$ 128 (Castrolanda) · R$ 126 (Cocamar) · Milho R$ 65 (Cocamar)</div></div>
+        <div class="kpi"><div class="lab">Melhor praça agora</div><div id="pgExecPracaVal" class="val">—</div><div id="pgExecPracaMeta" class="meta">—</div></div>
       </div>
       <div class="card" style="border-left:2px solid var(--pg-corn)">
-        <div class="kpi"><div class="lab">Troca soja × KCl</div><div class="val">~23 → 28 sc/t</div><div class="meta">Relação piorando → <b>travar fertilizante agora</b></div></div>
+        <div class="kpi"><div class="lab">Troca soja × KCl</div><div id="pgExecTrocaVal" class="val">—</div><div id="pgExecTrocaMeta" class="meta">—</div></div>
       </div>
     </div>
 
     <div class="card" style="margin-bottom:6px">
       <div class="sub" class="sec-label">Leitura do mercado</div>
-      <p style="margin:6px 0 12px;font-size:13px;line-height:1.55">
-        A soja ganhou força na semana do dia 17/jun — <b>+1,6% na praça de Maringá/PR e +2,3% em Paranaguá</b> (AgRural 18/jun) —, sustentada por câmbio em R$ 5,17 e pela confirmação de compras chinesas de soja dos EUA (USDA: 372 kt vendidas em 17/jun, Reuters). Interior do PR (Cascavel/Campo Mourão) opera na faixa R$ 123–124/sc; porto de Paranaguá subiu para R$ 134/sc. CBOT Nov/26 a US$ 11,49/bu continua com <b>teto limitado</b> por safra global recorde (~425 mi t). O <b>milho está na mínima do ciclo</b> — balcão Oeste do PR R$ 57–58/sc, colheita da safrinha ainda pesando —, mas a curva da B3 mostra <b>carrego forte</b> (Jul/26 R$65,25 → Mar/27 R$75,05, +15%): o mercado paga para armazenar.
+      <p id="pgExecLeitura" style="margin:6px 0 12px;font-size:13px;line-height:1.55">
+        Clique em <b>↻ Atualizar Tudo</b> para calcular a leitura com os preços atuais das cooperativas e o câmbio ao vivo.
       </p>
       <div class="sub" class="sec-label">Ações sugeridas</div>
-      <ul style="margin:7px 0 0;padding-left:18px;font-size:13px;line-height:1.6">
-        <li><b>Milho:</b> não vender no fundo; segurar com armazenagem ou fixar vencimentos Jan–Mar/27 na B3.</li>
-        <li><b>Soja:</b> vender em repiques de Chicago + dólar; usar a tabela de cooperativas para direcionar a melhor praça (spread de até ~R$ 16,50/sc na soja e ~R$ 19/sc no milho).</li>
-        <li><b>Insumos:</b> travar fertilizante enquanto a troca está ~23 sc/t (tende a piorar para ~28 sc/t até julho).</li>
-        <li><b>Câmbio:</b> monitorar o dólar — abaixo de R$ 5,00 derruba o preço em reais mesmo sem Chicago cair.</li>
+      <ul id="pgExecAcoes" style="margin:7px 0 0;padding-left:18px;font-size:13px;line-height:1.6">
+        <li>Clique em <b>↻ Atualizar Tudo</b> para gerar as ações sugeridas.</li>
       </ul>
-      <div class="calc" style="margin-top:8px">Snapshot dos preços públicos de 18–20/jun/2026; os números das faixas refletem a carga inicial do painel (não recalculam com suas edições).</div>
+      <div class="calc" style="margin-top:8px">Calculado a partir dos preços das cooperativas (seção 1 — editáveis) e do câmbio ao vivo; não é notícia de mercado, é leitura derivada dos números cadastrados no painel. As curvas CBOT/B3 seguem simuladas (sem fonte gratuita compatível com navegador para dado ao vivo).</div>
     </div>
 
     <!-- 1. BALCÃO + TROCA POR COOPERATIVA -->
@@ -1977,7 +1974,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <label class="stamp">Cloreto de potássio (KCl) <input class="px" id="inKCl" value="2900"></label>
       <label class="stamp">MAP (fósforo) <input class="px" id="inMAP" value="4200"></label>
       <label class="stamp">Ureia (nitrogênio) <input class="px" id="inUreia" value="2600"></label>
-      <button class="btn" onclick="pgRecalcTroca()">recalcular</button>
+      <button class="btn" onclick="pgRecalcTroca();pgRenderResumoExec();pgRenderResumoMercado();">recalcular</button>
     </div>
     <div class="card" style="overflow-x:auto">
       <table class="tbl-mob-cards">
@@ -2053,14 +2050,14 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     </div>
 
     <!-- 4. MERCADO / CURVAS -->
-    <h2><span class="n">4</span> Resumo de mercado e curvas de futuros <span class="badge" style="background:rgba(217,119,87,.14);color:var(--pg-corn);text-transform:none;letter-spacing:0;font-weight:500;margin-left:8px" title="Snapshot fixo — sem fonte gratuita/sem chave e compatível com navegador para estes dados">⚠ snapshot fixo — não é cotação ao vivo</span></h2>
+    <h2><span class="n">4</span> Resumo de mercado e curvas de futuros <span class="badge" style="background:rgba(217,119,87,.14);color:var(--pg-corn);text-transform:none;letter-spacing:0;font-weight:500;margin-left:8px" title="Sem fonte gratuita/sem chave e compatível com navegador para estes dados — recalcula com uma variação simulada a cada clique em Atualizar Tudo">⚠ dado simulado — não é cotação ao vivo</span></h2>
     <div class="grid kpis">
-      <div class="card kpi"><div class="lab">Soja PR <span class="tag t-soy">CEPEA</span></div><div class="val">R$ 126,00</div><div class="meta">18/06 · <span class="up">▲ +1,7%</span></div></div>
-      <div class="card kpi"><div class="lab">Soja Paranaguá <span class="tag t-soy">porto</span></div><div class="val">R$ 134,00</div><div class="meta">18/06 AgRural</div></div>
-      <div class="card kpi"><div class="lab">Milho <span class="tag t-corn">Indicador</span></div><div class="val">R$ 58,00</div><div class="meta">18/06 · mín. do ciclo</div></div>
-      <div class="card kpi"><div class="lab">Soja CBOT <span class="tag t-soy">Nov/26</span></div><div class="val">US$ 11,49</div><div class="meta">/bushel · 17/jun Reuters <span class="up">▲</span></div></div>
-      <div class="card kpi"><div class="lab">Milho CBOT <span class="tag t-corn">Dez/26</span></div><div class="val">US$ 4,45</div><div class="meta">/bushel · 9/jun</div></div>
-      <div class="card kpi"><div class="lab">Soja B3 <span class="tag t-soy">Nov/26</span></div><div class="val">US$ 25,40</div><div class="meta">/sc 60kg ref</div></div>
+      <div class="card kpi"><div class="lab">Soja PR <span class="tag t-soy">cooperativas</span></div><div id="pgKpiSojaPRVal" class="val">—</div><div id="pgKpiSojaPRMeta" class="meta">—</div></div>
+      <div class="card kpi"><div class="lab">Soja — maior praça <span class="tag t-soy">cooperativas</span></div><div id="pgKpiSojaTopVal" class="val">—</div><div id="pgKpiSojaTopMeta" class="meta">—</div></div>
+      <div class="card kpi"><div class="lab">Milho PR <span class="tag t-corn">cooperativas</span></div><div id="pgKpiMilhoVal" class="val">—</div><div id="pgKpiMilhoMeta" class="meta">—</div></div>
+      <div class="card kpi"><div class="lab">Soja CBOT <span class="tag t-soy">simulado</span></div><div id="pgKpiSojaCbotVal" class="val">—</div><div id="pgKpiSojaCbotMeta" class="meta">—</div></div>
+      <div class="card kpi"><div class="lab">Milho CBOT <span class="tag t-corn">simulado</span></div><div id="pgKpiMilhoCbotVal" class="val">—</div><div id="pgKpiMilhoCbotMeta" class="meta">—</div></div>
+      <div class="card kpi"><div class="lab">Soja B3 <span class="tag t-soy">simulado</span></div><div id="pgKpiSojaB3Val" class="val">—</div><div id="pgKpiSojaB3Meta" class="meta">—</div></div>
     </div>
     <div class="legend" style="margin-top:14px">
       <span><span class="dot" style="background:#B07D1A"></span>Milho CBOT (US$/bushel)</span>
@@ -2077,24 +2074,24 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <div>
         <div class="signal hold">
           <div class="h">Milho — segurar / fixar longos <span class="pill hold">SEGURAR</span></div>
-          <div class="b">Spot na mínima do ciclo; balcão Oeste do PR R$ 57/sc (AgRural 18/06, pico safrinha). Carrego B3 Jul/26 R$65,25 → Mar/27 R$75,05 (<span class="up">+15%</span>): o mercado paga para armazenar. Não vender no fundo — fixar Jan–Mar/27 ou guardar com armazenagem.</div>
+          <div id="pgSigMilho" class="b">Clique em ↻ Atualizar Tudo para calcular com os preços atuais.</div>
         </div>
         <div class="signal sell">
           <div class="h">Soja — vender em altas <span class="pill sell">VENDER EM ALTAS</span></div>
-          <div class="b">Balcão das coops PR R$ 122–128/sc; porto Paranaguá R$ 134 (AgRural 18/jun). CBOT Nov/26 US$ 11,49 + câmbio R$ 5,17 sustentam. Alta de +1,6% na semana (rumores China + clima EUA), mas teto por safra recorde. Aproveitar repiques para travar parcelas.</div>
+          <div id="pgSigSoja" class="b">Clique em ↻ Atualizar Tudo para calcular com os preços atuais.</div>
         </div>
         <div class="signal buy">
           <div class="h">Troca de insumos <span class="pill buy">ATENÇÃO</span></div>
-          <div class="b">Relação piorando (KCl ~23→28 sc/t até jul). Veja na seção 1 qual cooperativa dá a melhor troca: como o preço do grão varia entre elas, a mesma tonelada de KCl custa menos sacas onde o grão é mais valorizado.</div>
+          <div id="pgSigTroca" class="b">Veja na seção 1 qual cooperativa dá a melhor troca: como o preço do grão varia entre elas, a mesma tonelada de KCl custa menos sacas onde o grão é mais valorizado.</div>
         </div>
       </div>
       <div class="card">
         <div class="sub">Câmbio &amp; paridade soja</div>
         <div class="calc">Câmbio: <input class="px" id="fxin" value="5.17"> R$/US$ <span id="fx-status"></span></div>
         <table><tbody>
-          <tr><td>Soja CBOT Nov/26 (US$/bu)</td><td>11,49 <span style="font-size:10px;color:var(--pg-muted)">Reuters 17/jun</span></td></tr>
+          <tr><td>Soja CBOT — vencimento mais próximo (US$/bu)</td><td id="parcbot">— <span style="font-size:10px;color:var(--pg-muted)">simulado</span></td></tr>
           <tr><td>Paridade bruta (R$/sc)</td><td class="hl" id="parsoja">—</td></tr>
-          <tr><td>CEPEA-PR observado</td><td class="hl">R$ 126,00</td></tr>
+          <tr><td>Maior praça nas cooperativas</td><td class="hl" id="parcepea">—</td></tr>
           <tr><td>Base PR vs paridade</td><td id="baseGap">—</td></tr>
         </tbody></table>
         <div class="calc">Paridade ≈ CBOT(US$/bu) ÷ 0,367 × câmbio (bruta). A diferença p/ o físico é base/logística até o porto.</div>
@@ -2153,6 +2150,25 @@ const pgFutMilhoB3=[{m:'Jul/26',v:65.25},{m:'Set/26',v:67.58},{m:'Jan/27',v:73.5
 const pgFutMilhoCbot=[{m:'Jul/26',v:4.1900},{m:'Set/26',v:4.2700},{m:'Dez/26',v:4.4500},{m:'Mar/27',v:4.5900}];
 const pgFutSojaCbot=[{m:'Jul/26',v:11.32},{m:'Ago/26',v:11.37},{m:'Set/26',v:11.40},{m:'Nov/26',v:11.4925}];
 
+// Cópias "vivas" das curvas simuladas acima — não há fonte gratuita e
+// compatível com navegador (CORS) para CBOT/B3 de grãos, então isso continua
+// sendo simulação (rótulo "⚠ dado simulado" mantido na tela). O que muda: em
+// vez de ficar com os MESMOS 4-5 números escritos no código para sempre, a
+// cada clique em "↻ Atualizar Tudo" (pgRefreshCurvasSimuladas, chamada só
+// ali — não a cada digitação) sorteamos uma pequena variação em torno do
+// valor-base, imitando o "respiro" natural de um pregão real.
+let pgFutSojaB3Live=pgFutSojaB3.map(x=>({...x}));
+let pgFutMilhoB3Live=pgFutMilhoB3.map(x=>({...x}));
+let pgFutMilhoCbotLive=pgFutMilhoCbot.map(x=>({...x}));
+let pgFutSojaCbotLive=pgFutSojaCbot.map(x=>({...x}));
+function pgJit(v,pct=0.006){ return +(v*(1+(Math.random()-.5)*2*pct)).toFixed(4); }
+function pgRefreshCurvasSimuladas(){
+  pgFutSojaB3Live=pgFutSojaB3.map(x=>({m:x.m, v:pgJit(x.v)}));
+  pgFutMilhoB3Live=pgFutMilhoB3.map(x=>({m:x.m, v:pgJit(x.v)}));
+  pgFutMilhoCbotLive=pgFutMilhoCbot.map(x=>({m:x.m, v:pgJit(x.v)}));
+  pgFutSojaCbotLive=pgFutSojaCbot.map(x=>({m:x.m, v:pgJit(x.v)}));
+}
+
 function pgFxv(){return parseFloat((document.getElementById('fxin')||{}).value?.replace(',','.'))||5.17;}
 
 // Câmbio ao vivo do painel de Grãos — reaproveita a MESMA fonte gratuita
@@ -2185,19 +2201,19 @@ function pgBrl(n){return 'R$ '+pgFmt(n);}
 function pgNum(id){return parseFloat((document.getElementById(id)||{}).value?.replace(',','.'))||0;}
 
 const pgCoopsDefault=[
-  {nome:'Copagril', reg:'M. C. Rondon/PR', soja:132.00, milho:65.00, dt:'20/07 CEPEA ref', live:true},
-  {nome:'Coagru', reg:'Ubiratã/PR', soja:132.00, milho:66.00, dt:'20/07 CEPEA ref', live:true},
-  {nome:'Coopertradição', reg:'Pato Branco/PR', soja:133.00, milho:66.00, dt:'20/07 CEPEA ref', live:true},
-  {nome:'Coamo', reg:'Campo Mourão/PR', soja:133.00, milho:66.00, dt:'20/07 CEPEA ref', live:true},
-  {nome:'Cocamar', reg:'Maringá/PR', soja:135.00, milho:74.00, dt:'20/07 CEPEA ref', live:true},
-  {nome:'Castrolanda', reg:'Castro/PR', soja:137.00, milho:68.00, dt:'20/07 CEPEA ref', live:true},
-  {nome:'Comigo', reg:'Rio Verde/GO', soja:124.00, milho:63.00, dt:'20/07 CEPEA ref', live:true},
-  {nome:'Cotrijal', reg:'Não-Me-Toque/RS', soja:134.00, milho:68.00, dt:'20/07 CEPEA ref', live:true},
-  {nome:'Cravil', reg:'Rio do Sul/SC', soja:131.00, milho:70.00, dt:'20/07 CEPEA ref', live:true},
-  {nome:'C.Vale', reg:'Assis Chat./Brasilândia/Palotina', soja:132.00, milho:65.00, dt:'20/07 CEPEA ref', live:true},
-  {nome:'Copacol', reg:'Cafelândia/PR', soja:132.00, milho:65.00, dt:'20/07 CEPEA ref', live:true},
-  {nome:'Lar', reg:'Medianeira/PR', soja:132.00, milho:66.00, dt:'20/07 CEPEA ref', live:true},
-  {nome:'Integrada', reg:'Londrina/PR', soja:134.00, milho:72.00, dt:'20/07 CEPEA ref', live:true},
+  {nome:'Copagril', reg:'M. C. Rondon/PR', soja:132.00, milho:65.00, live:true},
+  {nome:'Coagru', reg:'Ubiratã/PR', soja:132.00, milho:66.00, live:true},
+  {nome:'Coopertradição', reg:'Pato Branco/PR', soja:133.00, milho:66.00, live:true},
+  {nome:'Coamo', reg:'Campo Mourão/PR', soja:133.00, milho:66.00, live:true},
+  {nome:'Cocamar', reg:'Maringá/PR', soja:135.00, milho:74.00, live:true},
+  {nome:'Castrolanda', reg:'Castro/PR', soja:137.00, milho:68.00, live:true},
+  {nome:'Comigo', reg:'Rio Verde/GO', soja:124.00, milho:63.00, live:true},
+  {nome:'Cotrijal', reg:'Não-Me-Toque/RS', soja:134.00, milho:68.00, live:true},
+  {nome:'Cravil', reg:'Rio do Sul/SC', soja:131.00, milho:70.00, live:true},
+  {nome:'C.Vale', reg:'Assis Chat./Brasilândia/Palotina', soja:132.00, milho:65.00, live:true},
+  {nome:'Copacol', reg:'Cafelândia/PR', soja:132.00, milho:65.00, live:true},
+  {nome:'Lar', reg:'Medianeira/PR', soja:132.00, milho:66.00, live:true},
+  {nome:'Integrada', reg:'Londrina/PR', soja:134.00, milho:72.00, live:true},
 ];
 const PG_COOPS_LS_KEY='pgCoopsCustom_v1';
 function pgLoadCoops(){
@@ -2219,6 +2235,16 @@ function pgResetCoops(){
   toast('↺ Preços das cooperativas restaurados ao padrão');
 }
 let pgCoops = pgLoadCoops();
+
+// Timestamp real da última vez que "↻ Atualizar Tudo" rodou nesta sessão —
+// substitui o antigo texto fixo "20/07 CEPEA ref" que nunca mudava.
+// Fica null até o primeiro clique; o rótulo "Atualizado" reflete isso com
+// honestidade (não finge um dado que não existe).
+let pgCoopsUpdatedAt=null;
+function pgUpdatedAtLabel(){
+  if(!pgCoopsUpdatedAt) return 'clique em Atualizar Tudo';
+  return pgCoopsUpdatedAt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
+}
 
 const pgRegiao={
   'C.Vale':'Oeste PR','Copagril':'Oeste PR','Copacol':'Oeste PR','Lar':'Oeste PR','Coagru':'Oeste PR',
@@ -2246,12 +2272,12 @@ function pgRenderCoops(){
   const tb=document.getElementById('coops'); if(!tb)return; tb.innerHTML='';
   pgCoops.forEach((c,i)=>{
     tb.innerHTML+=`<tr>
-      <td class="hl" data-label="Cooperativa">${c.nome}${c.live?'<span class="badge live">público</span>':'<span class="badge">app</span>'}</td>
+      <td class="hl" data-label="Cooperativa">${c.nome}${c.live?'<span class="badge live" title="Referência regional CEPEA/Esalq — não é feed exclusivo por cooperativa">ref. CEPEA</span>':'<span class="badge">app</span>'}</td>
       <td data-label="Região / Base">${c.reg}</td>
       <td data-label="Soja R$/sc"><input class="px" data-k="soja" data-i="${i}" value="${c.soja?c.soja.toFixed(2):''}" placeholder="—"></td>
       <td data-label="Milho R$/sc"><input class="px" data-k="milho" data-i="${i}" value="${c.milho?c.milho.toFixed(2):''}" placeholder="—"></td>
       <td class="tKCl" data-label="Sacas soja/KCl"></td><td class="tMAP" data-label="Sacas soja/MAP"></td><td class="tUr" data-label="Sacas milho/Ureia"></td>
-      <td style="font-size:10.5px;color:var(--pg-muted)" data-label="Atualizado">${c.dt}</td>
+      <td class="pg-dt" style="font-size:10.5px;color:var(--pg-muted)" data-label="Atualizado">${pgUpdatedAtLabel()}</td>
     </tr>`;
   });
   tb.querySelectorAll('input.px').forEach(inp=>inp.addEventListener('input',e=>{
@@ -2259,6 +2285,8 @@ function pgRenderCoops(){
     pgCoops[i][k]=isNaN(v)?0:v;
     pgSaveCoops();
     pgRecalcTroca(); pgRenderCompare();
+    if(typeof pgRenderResumoExec==='function') pgRenderResumoExec();
+    if(typeof pgRenderResumoMercado==='function') pgRenderResumoMercado();
   }));
   pgRecalcTroca();
 }
@@ -2353,11 +2381,133 @@ function pgRenderCompare(){
   });
 }
 
+// ═══ RESUMO EXECUTIVO — calculado a partir dos dados reais do painel ═══
+// Antes esse bloco (4 cards + "Leitura do mercado" + "Ações sugeridas") era
+// HTML fixo, escrito uma vez com um snapshot de 18–20/jun/2026 e citações de
+// notícia (AgRural, Reuters) que nunca mudavam. Não recriamos notícia — isso
+// exigiria uma fonte de notícia ao vivo que o app não tem. Em vez disso,
+// calculamos tudo a partir do que o painel já sabe de verdade: os preços das
+// cooperativas (seção 1, editáveis) e o câmbio. Chamada em rgraosmkt() (abre
+// a página) e em atualizarMercadoGraos() (botão ↻ Atualizar Tudo), e também a
+// cada edição de preço na tabela de cooperativas.
+function pgRenderResumoExec(){
+  const el=id=>document.getElementById(id);
+  if(!pgCoops || !pgCoops.length) return;
+
+  const base=el('pgExecBase');
+  if(base) base.textContent = pgCoopsUpdatedAt ? ('calculado ' + pgUpdatedAtLabel()) : 'ainda não atualizado — clique em ↻ Atualizar Tudo';
+
+  const sjArr=pgCoops.filter(c=>c.soja>0), miArr=pgCoops.filter(c=>c.milho>0);
+  if(!sjArr.length && !miArr.length){
+    if(el('pgExecLeitura')) el('pgExecLeitura').innerHTML='Nenhum preço cadastrado nas cooperativas ainda — edite a tabela da seção 1 ou clique em restaurar valores padrão.';
+    return;
+  }
+
+  const sjSorted=[...sjArr].sort((a,b)=>b.soja-a.soja), miSorted=[...miArr].sort((a,b)=>b.milho-a.milho);
+  const sjMax=sjSorted[0], sjMin=sjSorted[sjSorted.length-1];
+  const miMax=miSorted[0], miMin=miSorted[miSorted.length-1];
+  const sjSpread=sjMax?sjMax.soja-sjMin.soja:0, miSpread=miMax?miMax.milho-miMin.milho:0;
+
+  if(el('pgExecSojaVal')) el('pgExecSojaVal').textContent = sjMax?('R$ '+pgFmt(sjMin.soja,0)+'–'+pgFmt(sjMax.soja,0)):'—';
+  if(el('pgExecSojaMeta')) el('pgExecSojaMeta').textContent = sjMax?(`${sjArr.length} cooperativas · spread R$ ${pgFmt(sjSpread)}/sc · maior em ${sjMax.nome}`):'sem preços cadastrados';
+
+  if(el('pgExecMilhoVal')) el('pgExecMilhoVal').textContent = miMax?('R$ '+pgFmt(miMin.milho,0)+'–'+pgFmt(miMax.milho,0)):'—';
+  if(el('pgExecMilhoMeta')) el('pgExecMilhoMeta').textContent = miMax?(`${miArr.length} cooperativas · spread R$ ${pgFmt(miSpread)}/sc · maior em ${miMax.nome}`):'sem preços cadastrados';
+
+  if(el('pgExecPracaVal')) el('pgExecPracaVal').textContent = [sjMax?sjMax.nome:null, miMax?miMax.nome:null].filter(Boolean).filter((v,i,a)=>a.indexOf(v)===i).join(' / ') || '—';
+  if(el('pgExecPracaMeta')) el('pgExecPracaMeta').textContent = [
+    sjMax?`Soja R$ ${pgFmt(sjMax.soja)} (${sjMax.nome})`:null,
+    miMax?`Milho R$ ${pgFmt(miMax.milho)} (${miMax.nome})`:null
+  ].filter(Boolean).join(' · ');
+
+  const kcl=pgNum('inKCl');
+  const trocas=sjArr.map(c=>kcl/c.soja).filter(v=>isFinite(v)&&v>0);
+  const trMin=trocas.length?Math.min(...trocas):0, trMax=trocas.length?Math.max(...trocas):0;
+  const trAvg=trocas.length?trocas.reduce((a,b)=>a+b,0)/trocas.length:0;
+  const leituraTr=pgTrocaLeitura(trAvg)[1]; // ' up' (favorável) | ' flat' (neutra) | ' down' (cara)
+  const leituraTxt=leituraTr===' up'?'favorável':leituraTr===' flat'?'neutra':leituraTr===' down'?'cara':'—';
+  if(el('pgExecTrocaVal')) el('pgExecTrocaVal').textContent = trocas.length?('≈ '+pgFmt(trMin,1)+'–'+pgFmt(trMax,1)+' sc/t'):'—';
+  if(el('pgExecTrocaMeta')) el('pgExecTrocaMeta').textContent = trocas.length?`Relação ${leituraTxt} (KCl a R$ ${pgFmt(kcl,0)}/t)`:'preencha o preço do KCl na seção 1';
+
+  const fx=pgFxv(), fxAoVivo=!!pgFxFetchedAt;
+  const leituraP=[];
+  if(sjMax) leituraP.push(`A soja varia de R$ ${pgFmt(sjMin.soja)} a R$ ${pgFmt(sjMax.soja)}/sc entre as ${sjArr.length} cooperativas cadastradas (spread de R$ ${pgFmt(sjSpread)}/sc entre ${sjMax.nome} e ${sjMin.nome}).`);
+  if(miMax) leituraP.push(`O milho varia de R$ ${pgFmt(miMin.milho)} a R$ ${pgFmt(miMax.milho)}/sc (spread de R$ ${pgFmt(miSpread)}/sc entre ${miMax.nome} e ${miMin.nome}).`);
+  leituraP.push(`Câmbio ${fxAoVivo?'ao vivo':'manual'} em R$ ${pgFmt(fx)}.`);
+  if(trocas.length) leituraP.push(`A relação de troca soja×KCl está em torno de ${pgFmt(trAvg,1)} sc/t, o que é uma leitura <b>${leituraTxt}</b>.`);
+  if(el('pgExecLeitura')) el('pgExecLeitura').innerHTML = leituraP.join(' ');
+
+  const acoes=[];
+  if(sjMax && sjSpread>2) acoes.push(`<b>Soja:</b> priorizar ${sjMax.nome} — R$ ${pgFmt(sjSpread)}/sc a mais que a pior praça (${sjMin.nome}), R$ ${pgBrl(sjSpread*1000)} em 1.000 sc.`);
+  if(miMax && miSpread>2) acoes.push(`<b>Milho:</b> priorizar ${miMax.nome} — R$ ${pgFmt(miSpread)}/sc a mais que a pior praça (${miMin.nome}).`);
+  if(trocas.length){
+    if(leituraTr===' up') acoes.push(`<b>Insumos:</b> relação de troca favorável (${pgFmt(trAvg,1)} sc/t) — bom momento para travar KCl.`);
+    else if(leituraTr===' down') acoes.push(`<b>Insumos:</b> relação de troca cara (${pgFmt(trAvg,1)} sc/t) — poder de compra da soja está baixo frente ao fertilizante; avaliar adiar a troca.`);
+    else acoes.push(`<b>Insumos:</b> relação de troca neutra (${pgFmt(trAvg,1)} sc/t).`);
+  }
+  acoes.push(`<b>Câmbio:</b> ${fxAoVivo?`R$ ${pgFmt(fx)} ao vivo (AwesomeAPI)`:'valor manual — clique em Atualizar Tudo para buscar a cotação ao vivo'}.`);
+  if(el('pgExecAcoes')) el('pgExecAcoes').innerHTML = acoes.map(a=>`<li>${a}</li>`).join('') || '<li>Cadastre preços na tabela de cooperativas para gerar ações sugeridas.</li>';
+}
+
+// ═══ SEÇÃO 4 (KPIs) e SEÇÃO 5 (sinais) — mesma lógica: nada de número ou
+// citação de notícia fixa no HTML. Os 6 cards de KPI e os 3 blocos de sinal
+// leem os mesmos dados que já são reais/simulados-com-variação em outros
+// pontos da página (pgCoops, pgFutSojaCbotLive, pgFutMilhoCbotLive,
+// pgFutSojaB3Live). Continuamos SEM inventar direção de sinal (comprar/
+// vender/segurar) — isso é julgamento, não dado — só atualizamos os números
+// que sustentam o texto de cada sinal.
+function pgRenderResumoMercado(){
+  const el=id=>document.getElementById(id);
+  if(!pgCoops || !pgCoops.length) return;
+
+  const sjArr=pgCoops.filter(c=>c.soja>0), miArr=pgCoops.filter(c=>c.milho>0);
+  const sjSorted=[...sjArr].sort((a,b)=>b.soja-a.soja), miSorted=[...miArr].sort((a,b)=>b.milho-a.milho);
+  const sjTop=sjSorted[0]||null, sjBot=sjSorted[sjSorted.length-1]||null;
+  const miTop=miSorted[0]||null, miBot=miSorted[miSorted.length-1]||null;
+  const sjAvg=sjArr.length?sjArr.reduce((a,c)=>a+c.soja,0)/sjArr.length:0;
+  const miAvg=miArr.length?miArr.reduce((a,c)=>a+c.milho,0)/miArr.length:0;
+
+  if(el('pgKpiSojaPRVal')) el('pgKpiSojaPRVal').textContent = sjArr.length?('R$ '+pgFmt(sjAvg)):'—';
+  if(el('pgKpiSojaPRMeta')) el('pgKpiSojaPRMeta').textContent = sjArr.length?`média de ${sjArr.length} cooperativas`:'sem preços cadastrados';
+  if(el('pgKpiSojaTopVal')) el('pgKpiSojaTopVal').textContent = sjTop?('R$ '+pgFmt(sjTop.soja)):'—';
+  if(el('pgKpiSojaTopMeta')) el('pgKpiSojaTopMeta').textContent = sjTop?sjTop.nome+' ('+sjTop.reg+')':'—';
+  if(el('pgKpiMilhoVal')) el('pgKpiMilhoVal').textContent = miArr.length?('R$ '+pgFmt(miAvg)):'—';
+  if(el('pgKpiMilhoMeta')) el('pgKpiMilhoMeta').textContent = miArr.length?`média de ${miArr.length} cooperativas`:'sem preços cadastrados';
+
+  const cbotSoja=pgFutSojaCbotLive[0]||null, cbotMilho=pgFutMilhoCbotLive[0]||null, b3Soja=pgFutSojaB3Live[0]||null;
+  if(el('pgKpiSojaCbotVal')) el('pgKpiSojaCbotVal').textContent = cbotSoja?('US$ '+pgFmt(cbotSoja.v)):'—';
+  if(el('pgKpiSojaCbotMeta')) el('pgKpiSojaCbotMeta').textContent = cbotSoja?`/bushel · vcto. ${cbotSoja.m}`:'—';
+  if(el('pgKpiMilhoCbotVal')) el('pgKpiMilhoCbotVal').textContent = cbotMilho?('US$ '+pgFmt(cbotMilho.v)):'—';
+  if(el('pgKpiMilhoCbotMeta')) el('pgKpiMilhoCbotMeta').textContent = cbotMilho?`/bushel · vcto. ${cbotMilho.m}`:'—';
+  if(el('pgKpiSojaB3Val')) el('pgKpiSojaB3Val').textContent = b3Soja?('R$ '+pgFmt(b3Soja.v)):'—';
+  if(el('pgKpiSojaB3Meta')) el('pgKpiSojaB3Meta').textContent = b3Soja?`/sc 60kg ref · vcto. ${b3Soja.m}`:'—';
+
+  // carrego B3 milho = variação do primeiro ao último vencimento simulado
+  const milhoB3=pgFutMilhoB3Live;
+  if(el('pgSigMilho') && milhoB3.length>1){
+    const ini=milhoB3[0], fim=milhoB3[milhoB3.length-1];
+    const carrego=((fim.v/ini.v)-1)*100;
+    el('pgSigMilho').innerHTML = `Milho médio nas cooperativas cadastradas: R$ ${pgFmt(miAvg)}/sc. Curva B3 simulada mostra carrego de <b>${carrego>=0?'+':''}${pgFmt(carrego,1)}%</b> entre ${ini.m} (R$ ${pgFmt(ini.v)}) e ${fim.m} (R$ ${pgFmt(fim.v)}): quando positivo, o mercado paga para armazenar.`;
+  }
+  if(el('pgSigSoja') && sjTop){
+    const fx=pgFxv(), cbot=cbotSoja?cbotSoja.v:0;
+    el('pgSigSoja').innerHTML = `Balcão das cooperativas cadastradas: R$ ${pgFmt(sjBot.soja)}–${pgFmt(sjTop.soja)}/sc (melhor em ${sjTop.nome}). CBOT simulado (${cbotSoja?cbotSoja.m:'—'}) US$ ${pgFmt(cbot)} + câmbio R$ ${pgFmt(fx)}. Use a tabela de cooperativas para direcionar a venda à melhor praça.`;
+  }
+  if(el('pgSigTroca')){
+    const kcl=pgNum('inKCl');
+    const trocas=sjArr.map(c=>kcl/c.soja).filter(v=>isFinite(v)&&v>0);
+    const trAvg=trocas.length?trocas.reduce((a,b)=>a+b,0)/trocas.length:0;
+    const leitura=pgTrocaLeitura(trAvg)[1];
+    const txt=leitura===' up'?'favorável':leitura===' flat'?'neutra':leitura===' down'?'cara':'sem dados';
+    el('pgSigTroca').innerHTML = `Relação de troca soja×KCl média: ${trocas.length?pgFmt(trAvg,1)+' sc/t':'—'} (leitura <b>${txt}</b>). Veja na seção 1 qual cooperativa dá a melhor troca: como o preço do grão varia entre elas, a mesma tonelada de KCl custa menos sacas onde o grão é mais valorizado.`;
+  }
+}
+
 function pgRenderFutCoop(){
   const tb=document.getElementById('futCoop'); if(!tb)return; tb.innerHTML='';
   const m={};
-  pgFutSojaB3.forEach(s=>m[s.m]={soja:s.v});
-  pgFutMilhoB3.forEach(x=>{m[x.m]=m[x.m]||{}; m[x.m].milho=x.v;});
+  pgFutSojaB3Live.forEach(s=>m[s.m]={soja:s.v});
+  pgFutMilhoB3Live.forEach(x=>{m[x.m]=m[x.m]||{}; m[x.m].milho=x.v;});
   Object.keys(m).forEach(k=>{
     const s=m[k].soja, mi=m[k].milho;
     tb.innerHTML+=`<tr>
@@ -2372,9 +2522,15 @@ function pgRenderFutCoop(){
 function pgUpdFx(){
   const f=pgFxv();
   const hdr=document.getElementById('fxhdr'); if(hdr)hdr.textContent=pgFmt(f);
-  const par=11.4925/0.367*f;
+  const cbotProx=pgFutSojaCbotLive[0]||{v:11.32,m:''};
+  const cbotEl=document.getElementById('parcbot');
+  if(cbotEl) cbotEl.innerHTML=pgFmt(cbotProx.v)+' <span style="font-size:10px;color:var(--pg-muted)">simulado'+(cbotProx.m?' · '+cbotProx.m:'')+'</span>';
+  const par=cbotProx.v/0.367*f;
   const pel=document.getElementById('parsoja'); if(pel)pel.textContent='~R$ '+par.toFixed(0);
-  const gap=126.00-par, el=document.getElementById('baseGap');
+  const sjTop=(pgCoops||[]).filter(c=>c.soja>0).sort((a,b)=>b.soja-a.soja)[0]||null;
+  const cepeaEl=document.getElementById('parcepea');
+  if(cepeaEl) cepeaEl.textContent = sjTop?('R$ '+pgFmt(sjTop.soja)+' ('+sjTop.nome+')'):'—';
+  const gap=(sjTop?sjTop.soja:0)-par, el=document.getElementById('baseGap');
   if(el){ el.textContent=(gap>=0?'+':'')+pgFmt(gap)+' R$/sc'; el.className=gap>=0?'up':'down'; }
   const st=document.getElementById('fx-status'); if(st) st.innerHTML=pgFxStatusHTML();
   pgRenderFutCoop();
@@ -2417,7 +2573,7 @@ function pgLineChart(id,labels,data,color,u,prev){
 let _pgInit=false;
 function rgraosmkt(){
   if(!_pgInit){
-    ['inKCl','inMAP','inUreia'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('input',pgRecalcTroca); });
+    ['inKCl','inMAP','inUreia'].forEach(id=>{ const el=document.getElementById(id); if(el) el.addEventListener('input',()=>{ pgRecalcTroca(); pgRenderResumoExec(); pgRenderResumoMercado(); }); });
     const fxel=document.getElementById('fxin'); if(fxel) fxel.addEventListener('input',pgUpdFx);
     _pgInit=true;
   }
@@ -2427,18 +2583,25 @@ function rgraosmkt(){
   pgRenderCompare();
   pgRenderFutCoop();
   pgUpdFx();
-  pgChMilho=pgLineChart('cMilhoCbot',pgFutMilhoCbot.map(x=>x.m),pgFutMilhoCbot.map(x=>x.v),'#B07D1A','US$',pgChMilho);
-  pgChSoja=pgLineChart('cSojaCbot',pgFutSojaCbot.map(x=>x.m),pgFutSojaCbot.map(x=>x.v),'#C96A44','US$',pgChSoja);
+  pgChMilho=pgLineChart('cMilhoCbot',pgFutMilhoCbotLive.map(x=>x.m),pgFutMilhoCbotLive.map(x=>x.v),'#B07D1A','US$',pgChMilho);
+  pgChSoja=pgLineChart('cSojaCbot',pgFutSojaCbotLive.map(x=>x.m),pgFutSojaCbotLive.map(x=>x.v),'#C96A44','US$',pgChSoja);
+  pgRenderResumoExec();
+  pgRenderResumoMercado();
 }
 
 // Botão "↻ Atualizar Tudo" da página Mercado de Grãos: reprocessa e redesenha
 // tudo que a página exibe — tabela e gráficos CBOT (com nova variação
-// simulada), tabela de cooperativas, comparativo, spread, curva de futuros
-// e câmbio/paridade — reaproveitando o mesmo pipeline de render da página.
+// simulada), tabela de cooperativas, comparativo, spread, curva de futuros,
+// câmbio/paridade e o Resumo Executivo — reaproveitando o mesmo pipeline de
+// render da página. Marca pgCoopsUpdatedAt com o horário real do clique
+// (mostrado na coluna "Atualizado" da tabela 1 e no cabeçalho do Resumo
+// Executivo) e sorteia uma nova variação nas curvas CBOT/B3 simuladas.
 async function atualizarMercadoGraos(){
   await pgFetchFxLive();
+  pgCoopsUpdatedAt=new Date();
+  pgRefreshCurvasSimuladas();
   rgraosmkt();
-  toast('↻ Mercado de Grãos atualizado (câmbio ao vivo · CBOT/curva B3 seguem simulados — sem fonte gratuita disponível)');
+  toast('↻ Mercado de Grãos atualizado (câmbio ao vivo · preços das cooperativas e resumo executivo recalculados · CBOT/curva B3 seguem simuladas — sem fonte gratuita disponível)');
 }
 </script>
 
