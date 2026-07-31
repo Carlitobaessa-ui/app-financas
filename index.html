@@ -2438,7 +2438,7 @@ function pgRenderResumoExec(){
   if(el('pgExecLeitura')) el('pgExecLeitura').innerHTML = leituraP.join(' ');
 
   const acoes=[];
-  if(sjMax && sjSpread>2) acoes.push(`<b>Soja:</b> priorizar ${sjMax.nome} — R$ ${pgFmt(sjSpread)}/sc a mais que a pior praça (${sjMin.nome}), R$ ${pgBrl(sjSpread*1000)} em 1.000 sc.`);
+  if(sjMax && sjSpread>2) acoes.push(`<b>Soja:</b> priorizar ${sjMax.nome} — R$ ${pgFmt(sjSpread)}/sc a mais que a pior praça (${sjMin.nome}), ${pgBrl(sjSpread*1000)} em 1.000 sc.`);
   if(miMax && miSpread>2) acoes.push(`<b>Milho:</b> priorizar ${miMax.nome} — R$ ${pgFmt(miSpread)}/sc a mais que a pior praça (${miMin.nome}).`);
   if(trocas.length){
     if(leituraTr===' up') acoes.push(`<b>Insumos:</b> relação de troca favorável (${pgFmt(trAvg,1)} sc/t) — bom momento para travar KCl.`);
