@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 95 -->
+<!-- APP_VERSION: 96 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -26,6 +26,7 @@
     https://economia.awesomeapi.com.br
     https://api.coingecko.com
     https://api.bcb.gov.br
+    https://servicodados.ibge.gov.br
     https://ep-dry-forest-acf5o6jw.neonauth.sa-east-1.aws.neon.tech
     https://ep-dry-forest-acf5o6jw.apirest.sa-east-1.aws.neon.tech
     https://esm.sh;
@@ -2099,21 +2100,22 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     </div>
 
     <!-- 6. SAFRAS -->
-    <h2><span class="n">6</span> Previsão de safra 2025/26</h2>
+    <h2><span class="n">6</span> Produção de grãos <span class="badge" style="background:rgba(90,127,175,.12);color:#5A7FAF;text-transform:none;letter-spacing:0;font-weight:500;margin-left:8px" title="IBGE Produção Agrícola Municipal (PAM) — pesquisa oficial anual. Mostra o último ano-safra JÁ FECHADO, não a previsão em andamento da safra atual (isso é o que a CONAB publica mensalmente, mas a CONAB não tem API pública). Atualiza de verdade a cada clique em Atualizar Tudo.">🟢 IBGE · último ano fechado</span></h2>
     <div class="grid two">
       <div class="card">
-        <div class="sub">Brasil — CONAB (9º levantamento, jun/26)</div>
+        <div class="sub" id="pgSafraBrLab">Brasil — IBGE (PAM) · clique em ↻ Atualizar Tudo</div>
         <table class="tbl-mob-cards">
-          <thead><tr><th>Cultura</th><th>mi t</th><th>vs 24/25</th></tr></thead>
-          <tbody>
-            <tr><td data-label="Cultura">Soja <span class="tag t-soy">recorde</span></td><td data-label="mi t">180,25</td><td class="up" data-label="vs 24/25">+8,8</td></tr>
-            <tr><td data-label="Cultura">Milho (3 safras)</td><td data-label="mi t">140,46</td><td class="up" data-label="vs 24/25">alta</td></tr>
-            <tr><td class="hl" data-label="Cultura">Total grãos</td><td class="hl" data-label="mi t">358,64</td><td class="up" data-label="vs 24/25">+1,8%</td></tr>
+          <thead><tr><th>Cultura</th><th>mi t</th><th>vs ano anterior</th></tr></thead>
+          <tbody id="pgSafraBrTbody">
+            <tr><td data-label="Cultura">Soja</td><td data-label="mi t">—</td><td data-label="vs ano anterior">—</td></tr>
+            <tr><td data-label="Cultura">Milho</td><td data-label="mi t">—</td><td data-label="vs ano anterior">—</td></tr>
+            <tr class="hl"><td data-label="Cultura">Total (soja + milho)</td><td data-label="mi t">—</td><td data-label="vs ano anterior">—</td></tr>
           </tbody>
         </table>
+        <div class="calc" id="pgSafraBrNote">Fonte: IBGE, Produção Agrícola Municipal (PAM) — servicodados.ibge.gov.br, sem chave. É o total do último ano-safra fechado, não uma previsão da safra em andamento.</div>
       </div>
       <div class="card">
-        <div class="sub">EUA (USDA 2026/27) &amp; Mundo 25/26</div>
+        <div class="sub">EUA (USDA) &amp; Mundo <span class="badge" style="background:rgba(217,119,87,.14);color:var(--pg-corn);text-transform:none;letter-spacing:0;font-weight:500;margin-left:6px" title="Não encontramos API gratuita e sem chave para WASDE/FAS PSD (EUA, Argentina, Mundo) — número de referência, fixo">⚠ referência fixa</span></div>
         <table class="tbl-mob-cards">
           <thead><tr><th>Item</th><th>Soja</th><th>Milho</th></tr></thead>
           <tbody>
@@ -2122,7 +2124,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
             <tr><td data-label="Item">Mundo (mi t)</td><td data-label="Soja">~425,8 rec.</td><td data-label="Milho">~1.283</td></tr>
           </tbody>
         </table>
-        <div class="calc">Oferta global de soja recorde = teto estrutural. Milho EUA −6% dá suporte relativo.</div>
+        <div class="calc">Referência de safra 25/26 (USDA WASDE) — sem fonte gratuita/sem chave e compatível com navegador para manter isto ao vivo.</div>
       </div>
     </div>
 
@@ -2188,6 +2190,51 @@ async function pgFetchFxLive(){
       pgFxFetchedAt=new Date();
     }
   }catch(e){ /* mantém valor manual em caso de falha de rede/CORS */ }
+}
+
+// Produção de grãos do Brasil — IBGE, Produção Agrícola Municipal (PAM),
+// tabela 1612, variável 214 (Quantidade produzida, toneladas), categorias
+// 2713=soja / 2711=milho, nível Brasil (N1). API pública, sem chave — testada
+// ao vivo (fetch de origem cruzada) antes de entrar no código: retorna 200 e
+// dado real. É o total do ÚLTIMO ANO-SAFRA JÁ FECHADO (ex.: 2024), não a
+// previsão em andamento da safra atual — a CONAB publica isso mensalmente,
+// mas não tem API pública, só PDFs de boletim. pgIbgeUpdatedAt fica null até
+// o primeiro clique em Atualizar Tudo, igual ao padrão do câmbio.
+let pgIbgeUpdatedAt=null;
+async function pgFetchIbgeSafra(){
+  const lab=document.getElementById('pgSafraBrLab'), note=document.getElementById('pgSafraBrNote'), tb=document.getElementById('pgSafraBrTbody');
+  try{
+    const url='https://servicodados.ibge.gov.br/api/v3/agregados/1612/periodos/-2/variaveis/214?localidades=N1[all]&classificacao=81[2713,2711]';
+    const r=await fetch(url);
+    if(!r.ok) throw new Error('IBGE HTTP '+r.status);
+    const j=await r.json();
+    const porCategoria={};
+    j[0].resultados.forEach(res=>{
+      const cod=Object.keys(res.classificacoes[0].categoria)[0];
+      porCategoria[cod]=res.series[0].serie;
+    });
+    const serieSoja=porCategoria['2713']||{}, serieMilho=porCategoria['2711']||{};
+    const anos=Object.keys(serieSoja).sort();
+    if(!anos.length) throw new Error('IBGE sem série');
+    const anoAtual=anos[anos.length-1], anoAnt=anos.length>1?anos[anos.length-2]:null;
+    const sojaAtual=parseFloat(serieSoja[anoAtual])/1e6;
+    const milhoAtual=parseFloat(serieMilho[anoAtual])/1e6;
+    const sojaAnt=anoAnt?parseFloat(serieSoja[anoAnt])/1e6:null;
+    const milhoAnt=anoAnt?parseFloat(serieMilho[anoAnt])/1e6:null;
+    const varPct=(atual,ant)=>(ant&&ant>0)?((atual/ant-1)*100):null;
+    const sojaVar=varPct(sojaAtual,sojaAnt), milhoVar=varPct(milhoAtual,milhoAnt);
+    const fmtVar=v=>v==null?'—':(v>=0?'+':'')+pgFmt(v,1)+'%';
+    if(tb) tb.innerHTML=`
+      <tr><td data-label="Cultura">Soja</td><td data-label="mi t">${pgFmt(sojaAtual,1)}</td><td class="${sojaVar>=0?'up':'down'}" data-label="vs ano anterior">${fmtVar(sojaVar)}</td></tr>
+      <tr><td data-label="Cultura">Milho</td><td data-label="mi t">${pgFmt(milhoAtual,1)}</td><td class="${milhoVar>=0?'up':'down'}" data-label="vs ano anterior">${fmtVar(milhoVar)}</td></tr>
+      <tr class="hl"><td data-label="Cultura">Total (soja + milho)</td><td data-label="mi t">${pgFmt(sojaAtual+milhoAtual,1)}</td><td data-label="vs ano anterior">—</td></tr>`;
+    pgIbgeUpdatedAt=new Date();
+    if(lab) lab.textContent=`Brasil — IBGE (PAM) · ano-safra ${anoAtual} · atualizado ${pgIbgeUpdatedAt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`;
+    if(note) note.textContent=`Fonte: IBGE, Produção Agrícola Municipal — servicodados.ibge.gov.br, sem chave. Total do ano-safra ${anoAtual} (último fechado pelo IBGE)${anoAnt?', comparado a '+anoAnt:''} — não é a previsão da safra em andamento.`;
+  }catch(e){
+    if(lab) lab.textContent='Brasil — IBGE (PAM) · falha ao buscar (rede/CORS) — tente Atualizar Tudo de novo';
+    if(note) note.textContent='Não foi possível buscar o IBGE agora. Os valores acima ficam como estavam na última busca bem-sucedida (ou "—" se nunca buscou).';
+  }
 }
 function pgFxStatusHTML(){
   if(pgFxFetchedAt){
@@ -2592,16 +2639,17 @@ function rgraosmkt(){
 // Botão "↻ Atualizar Tudo" da página Mercado de Grãos: reprocessa e redesenha
 // tudo que a página exibe — tabela e gráficos CBOT (com nova variação
 // simulada), tabela de cooperativas, comparativo, spread, curva de futuros,
-// câmbio/paridade e o Resumo Executivo — reaproveitando o mesmo pipeline de
-// render da página. Marca pgCoopsUpdatedAt com o horário real do clique
-// (mostrado na coluna "Atualizado" da tabela 1 e no cabeçalho do Resumo
-// Executivo) e sorteia uma nova variação nas curvas CBOT/B3 simuladas.
+// câmbio/paridade, o Resumo Executivo e a produção de grãos do Brasil
+// (IBGE) — reaproveitando o mesmo pipeline de render da página. Marca
+// pgCoopsUpdatedAt com o horário real do clique (mostrado na coluna
+// "Atualizado" da tabela 1 e no cabeçalho do Resumo Executivo) e sorteia uma
+// nova variação nas curvas CBOT/B3 simuladas.
 async function atualizarMercadoGraos(){
-  await pgFetchFxLive();
+  await Promise.all([pgFetchFxLive(), pgFetchIbgeSafra()]);
   pgCoopsUpdatedAt=new Date();
   pgRefreshCurvasSimuladas();
   rgraosmkt();
-  toast('↻ Mercado de Grãos atualizado (câmbio ao vivo · preços das cooperativas e resumo executivo recalculados · CBOT/curva B3 seguem simuladas — sem fonte gratuita disponível)');
+  toast('↻ Mercado de Grãos atualizado (câmbio e produção de grãos do Brasil ao vivo · preços das cooperativas e resumo executivo recalculados · CBOT/curva B3 seguem simuladas — sem fonte gratuita disponível)');
 }
 </script>
 
