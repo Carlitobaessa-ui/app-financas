@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 97 -->
+<!-- APP_VERSION: 98 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -11254,21 +11254,86 @@ function _arquivoParaBase64(file){
 async function _extrairDocumentoIA(b64, mediaType, modo){
   const cats=(S.categorias||[]).join(', ')||'Alimentação, Transporte, Moradia, Saúde, Lazer, Educação, Serviços, Outros';
   const prompts={
-    extrato:`Você recebe um EXTRATO BANCÁRIO brasileiro (PDF ou imagem). Faça uma análise COMPLETA do documento: identifique de qual conta ele é E extraia todas as transações, categorizando cada uma. Responda APENAS com um objeto JSON válido, sem markdown, sem crases, sem texto antes ou depois. Formato EXATO:
-{"meta":{"banco":"<nome do banco, ex: Banco do Brasil, Nubank, Itaú>","agencia":"<agência, ou vazio>","numero":"<número da conta, ou vazio>","titular":"<titular, ou vazio>"},"itens":[{"data":"AAAA-MM-DD","desc":"<descrição curta>","valor":<número positivo, ponto decimal>,"tipo":"<'debito' saída | 'credito' entrada>","cat":"<categoria mais provável dentre: ${cats}>"}]}
-Regras:
-- Uma linha por transação. Ignore saldos, subtotais, cabeçalhos e totais.
-- "valor" sempre POSITIVO; o sinal vai no "tipo".
-- "cat": escolha a categoria mais provável pela descrição (ex.: "iFood"→Alimentação, "posto"→Transporte, "farmácia"→Saúde). Se nenhuma servir, use "Outros".
-- Preencha "meta" com o que estiver no documento; campos ausentes = "".
-- Nunca invente transações. Sem transações legíveis, use "itens":[].`,
-    fatura:`Você recebe uma FATURA DE CARTÃO DE CRÉDITO brasileira (PDF ou imagem). Faça uma análise COMPLETA: identifique de qual cartão é E extraia todas as compras, categorizando cada uma. Responda APENAS com um objeto JSON válido, sem markdown, sem crases, sem texto antes ou depois. Formato EXATO:
-{"meta":{"banco":"<emissor, ex: Banco do Brasil, Nubank>","bandeira":"<Visa | Mastercard | Elo | Amex | Hipercard, se houver>","final":"<4 últimos dígitos do cartão, se houver>","titular":"<titular, ou vazio>","vencimento":"<dia do vencimento, número, se houver>"},"itens":[{"data":"AAAA-MM-DD","desc":"<estabelecimento curto>","valor":<número positivo, ponto decimal>,"parcelas":<número de parcelas; 1 se à vista>,"cat":"<categoria mais provável dentre: ${cats}>"}]}
-Regras:
-- Uma linha por compra. Ignore pagamentos da fatura anterior, encargos de resumo, saldos e totais.
-- Se aparecer "PARC 03/12", "parcelas" é 12 e mantenha "03/12" na descrição.
-- "cat": categorize pela descrição do estabelecimento. Se nenhuma servir, "Outros".
-- Preencha "meta"; campos ausentes = "". Nunca invente. Sem compras, "itens":[].`,
+    extrato:`Você recebe um EXTRATO BANCÁRIO brasileiro (PDF ou imagem). Seu trabalho é:
+1. Identificar com precisão qual BANCO emitiu este extrato
+2. Extrair TODAS as transações, respeitando o layout específico
+3. Validar cada transação antes de incluir
+4. Retornar um JSON estruturado com meta, itens e informações de confiança
+
+IMPORTANTE: Responda APENAS com JSON válido. Sem markdown, sem crases, sem texto antes/depois.
+
+Bancos suportados e suas características:
+
+BANCO DO BRASIL: Cabeçalho "EXTRATO BANCÁRIO", colunas Data|Descrição|Débito|Crédito, verde/amarelo
+NUBANK: Logo roxo, layout sem colunas, datas em português "X de [mês]", emoji, seção RESUMO
+CAIXA: Cabeçalho "EXTRATO DE CONTA CORRENTE", azul, colunas Data|Operação|Descrição|Débito|Crédito
+ITAÚ: Logo laranja/vermelho, colunas Data|Operação|Valor|Saldo, agrupamento por dia
+BRADESCO: Logo vermelho/pink, colunas Data|Histórico|Débito|Crédito, totalizadores por dia
+INTER: Logo laranja, layout moderno em cards, Data+Descrição+Sinal+Valor
+C6: Logo cinza, minimalista, Data|Descrição|Valor (com sinal), sem coluna Débito/Crédito
+BTG: Logo azul escuro, colunas Data|Operação|Débito|Crédito|Saldo, seções por produto
+XP: Logo preta/branca, corporativo, Data|Descrição|Débito|Crédito|Saldo
+SANTANDER: Logo vermelho, colunas Data|Descrição|Valor (com sinal), agrupamento por dia
+SICREDI: Logo verde/azul, pode ser conta ou financiamento, Data|Descrição|Débito|Crédito
+SICOOB: Logo azul, cooperativa, Data|Histórico|Débito|Crédito|Saldo
+
+Formato JSON esperado (RESPOSTA COMPACTA — não repita chaves de validação por item, isso é crítico para caber documentos longos):
+{"meta":{"banco":"<nome detectado>","confiancaBanco":<0.0-1.0>,"agencia":"<ou vazio>","numero":"<ou vazio>","titular":"<ou vazio>","periodo":"<ou vazio>","debug":{"layoutDetectado":"<descrição curta>","avisos":["aviso1"],"totalTransacoes":<número>}},"itens":[{"data":"AAAA-MM-DD","desc":"<transação>","valor":<número positivo>,"tipo":"<'debito' ou 'credito'>","cat":"<categoria>","confianca":<0.0-1.0>}]}
+
+REGRAS CRÍTICAS:
+- Uma transação por linha (não para saldos, totalizadores, cabeçalhos)
+- IGNORE: SALDO, TOTAL, RESUMO, SUBTOTAL, SALDO ANTERIOR, SALDO DISPONÍVEL, LIMITE
+- Valor sempre POSITIVO, tipo define direção (débito/crédito)
+- Data: converta para AAAA-MM-DD (suporte: DD/MM/AAAA, "X de [mês]", AAAA-MM-DD já pronto)
+- Categorias: Alimentação, Transporte, Moradia, Saúde, Lazer, Educação, Serviços, Viagem, Vestuário, Outros
+- Confiança: 1.0 (claro/certo) a <0.5 (incerto); itens <0.3 não retornar
+- Debug: registre problemas em avisos, mas mantenha "avisos" curto (poucas frases, não uma por item)
+- DOCUMENTOS LONGOS (muitas transações): seja direto e conciso na descrição (máx. 40 caracteres) para caber TODAS as transações na resposta. NUNCA pare de extrair no meio do documento — processe até a última página.
+
+Agora analise e extraia. RETORNE APENAS JSON.`,
+    fatura:`Você recebe uma FATURA DE CARTÃO DE CRÉDITO brasileira (PDF ou imagem). Seu trabalho é:
+1. Identificar qual BANCO/EMISSOR emitiu este cartão
+2. Extrair TODAS as compras, respeitando o layout específico
+3. Diferenciar compras à vista de parceladas (crítico!)
+4. Validar dados com confiança
+5. Retornar JSON estruturado
+
+IMPORTANTE: Responda APENAS com JSON válido. Sem markdown, sem crases, sem texto antes/depois.
+
+Bancos e características:
+
+BANCO DO BRASIL: Logo verde/amarelo, seção "COMPRAS NACIONAIS", colunas Data|Estabelecimento|Parcela|Valor, parcela formato "01/12" ou "À VISTA"
+NUBANK: Logo roxo, layout moderno em cards, Data|Estabelecimento|Valor, parcela como "3x de R$ 50", Mastercard
+CAIXA: Logo azul, seção "DEMONSTRATIVO", colunas Data|Descrição|Parcela|Valor
+ITAÚ: Logo laranja/vermelho, seção "COMPRAS COM CRÉDITO", colunas Data|Descrição|Valor|Parcela, bandeira Visa/Mastercard/Elo/Amex
+BRADESCO: Logo vermelho/pink, seção "COMPRAS DO PERÍODO", colunas Data|Estabelecimento|Parcela|Valor
+INTER: Logo laranja, layout moderno em cards, Data|Estabelecimento|Valor|Parcela
+C6: Logo cinza, minimalista, Data|Descrição|Valor|Parcela, Mastercard
+BTG: Logo azul escuro, seção "EXTRATO DE CARTÃO", colunas Data|Histórico|Débito|Crédito|Saldo
+XP: Logo preta/branca, seção "EXTRATO DO CARTÃO", colunas Data|Descrição|Valor|Parcela
+SANTANDER: Logo vermelho, seção "COMPRAS", colunas Data|Descrição|Valor|Parcela
+SICREDI/SICOOB: Logo verde/azul, seção "COMPRAS", colunas Data|Histórico|Débito|Crédito
+
+Formato JSON esperado (RESPOSTA COMPACTA — não repita chaves de validação por item, isso é crítico para caber documentos longos):
+{"meta":{"banco":"<emissor>","confiancaBanco":<0.0-1.0>,"bandeira":"<Visa|Mastercard|Elo|Amex|Hipercard|Desconhecida>","final":"<4 dígitos ou vazio>","titular":"<ou vazio>","vencimento":"<dia 01-31 ou vazio>","periodoFatura":"<ou vazio>","debug":{"layoutDetectado":"<descrição curta>","avisos":["aviso1"],"totalCompras":<número>}},"itens":[{"data":"AAAA-MM-DD","desc":"<estabelecimento>","valor":<número positivo>,"parcelas":<número total; 1 se à vista>,"cat":"<categoria>","confianca":<0.0-1.0>}]}
+
+REGRAS CRÍTICAS PARA PARCELAS:
+- "parcelas": número TOTAL de parcelas (ex: 12 para "3/12")
+- Notação comum: "01/12" → parcelas=12
+- "À VISTA" ou sem indicação de parcelamento → parcelas=1
+- Se "3x de R$ 50" → parcelas=3
+
+REGRAS GERAIS:
+- Uma compra por linha (não ajustes, taxas, juros, pagamentos)
+- IGNORE (não inclua no "itens"): PAGAMENTO RECEBIDO, PAGAMENTO DA FATURA, AJUSTE, COMPRA ANTERIOR, TAXA, JUROS, ANUIDADE, SEGURO, TARIFA, IOF (mesmo "IOF de compra internacional"), ESTORNO/DEVOLUÇÃO/ESTORNO DE COMPRA (valores negativos/créditos não são compras)
+- Valor sempre POSITIVO (compras só; nunca inclua valores negativos)
+- Data: converta para AAAA-MM-DD (se já vier nesse formato, apenas repita)
+- Categorias: Alimentação, Transporte, Moradia, Saúde, Lazer, Educação, Serviços, Viagem, Vestuário, Outros
+- Confiança: baseada em legibilidade; <0.3 não retornar
+- Debug: registre problemas em avisos, mas mantenha curto
+- DOCUMENTOS LONGOS (muitas compras, múltiplas páginas): seja direto e conciso na descrição (máx. 40 caracteres) para caber TODAS as compras na resposta. NUNCA pare de extrair no meio do documento — processe TODAS as páginas até o final.
+
+Agora analise e extraia. RETORNE APENAS JSON.`,
     dividendos:`Você recebe um INFORME/EXTRATO/AGENDA DE PROVENTOS de corretora ou B3 brasileira (PDF ou imagem). Pode ser (a) um informe com quantidade e valor por cota, OU (b) uma tela de "Proventos" onde cada CARTÃO tem um TICKER no título (ex.: ABEV3, VIVT3, BBDC4), um valor em "Posição" (total do provento), um campo "Ativo" com o TIPO do provento (ex.: JURO, JUROS SOBRE CAPITAL PROPRIO, DIVIDENDO, DIVI, REST CAP DIN) e uma "Data de pagamento". Faça uma análise COMPLETA e extraia todos os proventos. Responda APENAS com um objeto JSON válido, sem markdown, sem crases, sem texto antes ou depois. Formato EXATO:
 {"meta":{"corretora":"<nome da corretora/fonte, ou vazio>","periodo":"<período, ou vazio>"},"itens":[{"data":"AAAA-MM-DD","ativo":"<TICKER do título do cartão, ex: ABEV3, VIVT3>","nome":"","tipo":"<'Dividendo' | 'JCP' | 'Rendimento FII'>","qtd":<quantidade se houver, senão 0>,"valorcota":<valor por cota se houver, senão 0>,"total":<valor em "Posição" ou total, ponto decimal>}]}
 Regras:
@@ -11307,13 +11372,85 @@ Regras:
   };
   const prompt = prompts[modo] || prompts.extrato;
 
+  // Função de validação para os novos prompts bank-aware
+  function validarRespotaPromptRefatorado(jsonStr, modo) {
+    const erros = [];
+    let data = null;
+    try {
+      data = JSON.parse(jsonStr);
+    } catch (e) {
+      erros.push(`Erro ao parsear JSON: ${e.message}`);
+      return { meta: {}, itens: [], erros };
+    }
+    if (!data.meta) data.meta = {};
+    if (!Array.isArray(data.itens)) data.itens = [];
+    const meta = data.meta || {};
+    if (!meta.debug) meta.debug = { avisos: [] };
+
+    const itensNormalizados = (data.itens || []).map((item, idx) => {
+      const errosItem = [];
+      if (!item.data || !/^\d{4}-\d{2}-\d{2}$/.test(item.data)) {
+        errosItem.push('Data inválida');
+        item.data = new Date().toISOString().slice(0, 10);
+      }
+      if (typeof item.valor !== 'number' || item.valor <= 0) {
+        errosItem.push('Valor inválido');
+        item.valor = 0;
+      } else {
+        item.valor = +item.valor.toFixed(2);
+      }
+      if (modo === 'extrato' && !['debito', 'credito'].includes(item.tipo)) {
+        errosItem.push(`Tipo inválido: ${item.tipo}`);
+        item.tipo = 'debito';
+      }
+      if (modo === 'fatura') {
+        if (typeof item.parcelas !== 'number' || item.parcelas < 1) {
+          errosItem.push('Parcelas inválido');
+          item.parcelas = 1;
+        }
+        item.parcelas = Math.floor(item.parcelas);
+      }
+      if (!item.desc || typeof item.desc !== 'string') {
+        errosItem.push('Descrição ausente');
+        item.desc = '(ilegível)';
+      } else {
+        item.desc = item.desc.trim().slice(0, 100);
+      }
+      const cats = ['Alimentação', 'Transporte', 'Moradia', 'Saúde', 'Lazer', 'Educação', 'Serviços', 'Viagem', 'Vestuário', 'Outros'];
+      if (!cats.includes(item.cat)) {
+        errosItem.push(`Categoria inválida: ${item.cat}`);
+        item.cat = 'Outros';
+      }
+      if (typeof item.confianca !== 'number' || item.confianca < 0 || item.confianca > 1) {
+        item.confianca = 0.8;
+      }
+      if (item.confianca < 0.3) {
+        errosItem.push('Confiança muito baixa');
+      }
+      if (errosItem.length > 0) {
+        if (!meta.debug.avisos) meta.debug.avisos = [];
+        meta.debug.avisos.push(`Item ${idx + 1}: ${errosItem.join('; ')}`);
+      }
+      return item;
+    });
+
+    return {
+      meta,
+      itens: itensNormalizados.filter(i => i.confianca >= 0.3),
+      erros
+    };
+  }
+
   const bloco = mediaType==='application/pdf'
     ? { type:'document', source:{ type:'base64', media_type:'application/pdf', data:b64 } }
     : { type:'image', source:{ type:'base64', media_type:mediaType, data:b64 } };
 
+  // Extrato/fatura podem ter dezenas de transações; o schema bank-aware é mais verboso
+  // (confianca, validacoes, parcelas) então precisa de mais tokens de saída para não truncar o JSON.
+  const maxTok = (modo==='extrato' || modo==='fatura') ? 8000 : 4000;
   const body={
     model:'claude-sonnet-4-6',
-    max_tokens:4000,
+    max_tokens:maxTok,
     messages:[{ role:'user', content:[ bloco, { type:'text', text:prompt } ] }]
   };
   const r=await chamarClaudeAPI(body);
@@ -11330,7 +11467,19 @@ Regras:
     try{ parsed=JSON.parse(txt.slice(oi,of+1)); }catch(_){}
   }
   if(parsed && typeof parsed==='object' && Array.isArray(parsed.itens)){
-    meta=parsed.meta||{}; arr=parsed.itens;
+    // Para os novos prompts bank-aware (extrato e fatura), valida com a função específica
+    if((modo==='extrato' || modo==='fatura') && typeof validarRespotaPromptRefatorado==='function'){
+      const validacao = validarRespotaPromptRefatorado(JSON.stringify(parsed), modo);
+      meta = validacao.meta || {};
+      arr = validacao.itens || [];
+      // Registra avisos de validação
+      if(validacao.erros && validacao.erros.length > 0){
+        if(!meta.debug) meta.debug = { avisos: [] };
+        meta.debug.avisos = (meta.debug.avisos || []).concat(validacao.erros);
+      }
+    } else {
+      meta=parsed.meta||{}; arr=parsed.itens;
+    }
   } else if(ai>=0 && af>ai){
     try{ arr=JSON.parse(txt.slice(ai,af+1)); }catch(_){ throw new Error('Resposta da IA em formato inesperado. Tente novamente.'); }
   } else {
