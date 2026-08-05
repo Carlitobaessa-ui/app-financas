@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 105 -->
+<!-- APP_VERSION: 106 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -6526,7 +6526,12 @@ function rdash(){
     };
     const rec=[],pag=[],invn=[];
     meses12.forEach(ym=>{
-      const lancMes=S.lancamentos.filter(l=>!l.forecast&&l.data.startsWith(ym));
+      // Exclui lançamentos de aplicação automática de saldo (BB Rende Fácil, RF Simples
+      // Ágil e similares): o banco varre o saldo pra um fundo todo dia e devolve no dia
+      // seguinte, gerando um débito+crédito artificial diário que não é receita, despesa
+      // nem aporte de verdade — e inflava as três linhas do gráfico. Mantemos esses
+      // lançamentos no extrato (não apagamos os dados), só ignoramos aqui no cálculo.
+      const lancMes=S.lancamentos.filter(l=>!l.forecast&&l.data.startsWith(ym)&&!_ehAplicacaoAutomatica(l));
 
       // Recebimentos = só crédito que é receita de verdade. Qualquer crédito ligado à
       // carteira (resgate chegando na conta corrente OU aporte chegando na conta de
@@ -7900,8 +7905,8 @@ function rcontas(){
         const _ctsAuto=new Set(_auto.map(l=>l.banco)).size;
         _aa.style.display='flex';
         _aa.innerHTML=`<span class="recon-ic">↻</span>
-          <div class="recon-txt"><strong>${_auto.length} lançamento${_auto.length>1?'s':''} de aplicação automática de saldo</strong> em ${_ctsAuto} conta${_ctsAuto>1?'s':''} — o banco aplica e resgata o saldo todo dia (BB Rende Fácil, RF Simples Ágil e similares). Não são receita, despesa nem aporte: só poluem o extrato e inflam a linha de Investimentos.</div>
-          <button class="btn btn-g" style="font-size:11px;padding:5px 12px;flex-shrink:0" onclick="limparAplicacoesAutomaticas()">Limpar</button>`;
+          <div class="recon-txt"><strong>${_auto.length} lançamento${_auto.length>1?'s':''} de aplicação automática de saldo</strong> em ${_ctsAuto} conta${_ctsAuto>1?'s':''} — o banco aplica e resgata o saldo todo dia (BB Rende Fácil, RF Simples Ágil e similares). Não são receita, despesa nem aporte, e já são ignorados nos gráficos automaticamente. Só continuam no extrato porque fazem parte do histórico real da conta — se preferir uma visão mais limpa, dá pra removê-los.</div>
+          <button class="btn btn-g" style="font-size:11px;padding:5px 12px;flex-shrink:0" onclick="limparAplicacoesAutomaticas()">Limpar do extrato</button>`;
       } else { _aa.style.display='none'; }
     }
   }
