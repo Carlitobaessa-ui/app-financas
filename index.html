@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 108 -->
+<!-- APP_VERSION: 109 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -95,8 +95,8 @@
   --bdr-em:   rgba(60,54,42,.22);
   --bdr-bl:   rgba(193,95,60,.26);
   --txt:      #1F1E1C;
-  --txt2:     #57534A;
-  --txt3:     #928D80;
+  --txt2:     #3E3A31;
+  --txt3:     #6B655A;
   --grn:      #4A7A56;
   --grn-lt:   #CBE0CE;
   --grn-dim:  #EDF4EC;
@@ -1058,7 +1058,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
 <div id="auth-overlay" style="position:fixed;inset:0;z-index:99999;background:#F7F6F1;display:flex;align-items:center;justify-content:center;font-family:Inter,sans-serif;padding:20px">
   <div style="background:#FAFAF8;border:0.5px solid #E4E0D5;border-radius:14px;padding:38px 34px;width:360px;max-width:100%;box-shadow:0 20px 60px rgba(0,0,0,.08)">
     <div style="font-family:'Playfair Display',serif;font-size:24px;font-weight:700;color:#2E2A20;margin-bottom:4px">Finanças</div>
-    <div style="font-size:12.5px;color:#8A8470;margin-bottom:24px">Acesse sua conta para sincronizar os dados</div>
+    <div style="font-size:12.5px;color:var(--txt2);margin-bottom:24px">Acesse sua conta para sincronizar os dados</div>
 
     <div style="display:flex;flex-direction:column;gap:10px">
       <button id="auth-btn-apple" disabled title="Login com Apple ainda não está disponível"
@@ -1075,7 +1075,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
 
     <div style="display:flex;align-items:center;gap:10px;margin:20px 0">
       <div style="flex:1;height:1px;background:#E4E0D5"></div>
-      <span style="font-size:11px;color:#9A9382">ou com e-mail</span>
+      <span style="font-size:11px;color:var(--txt3)">ou com e-mail</span>
       <div style="flex:1;height:1px;background:#E4E0D5"></div>
     </div>
 
@@ -1090,11 +1090,11 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <button id="auth-btn-signup" onclick="authSignup()"
         style="background:transparent;color:#2A4E8C;border:0.5px solid #C3CBDB;border-radius:8px;padding:11px;font-size:13px;font-weight:500;cursor:pointer">Criar conta</button>
     </div>
-    <div id="auth-loading" style="display:none;text-align:center;font-size:12px;color:#8A8470;margin-top:14px">Conectando…</div>
+    <div id="auth-loading" style="display:none;text-align:center;font-size:12px;color:var(--txt2);margin-top:14px">Conectando…</div>
   </div>
 </div>
 <div id="sync-badge" onclick="syncManual()" title="Sincronizar agora"
-  style="position:fixed;bottom:14px;right:14px;z-index:9000;background:#FAFAF8;border:0.5px solid #E4E0D5;border-radius:20px;padding:6px 13px;font-family:Inter,sans-serif;font-size:11px;color:#8A8470;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.06);display:none;align-items:center;gap:6px">
+  style="position:fixed;bottom:14px;right:14px;z-index:9000;background:#FAFAF8;border:0.5px solid #E4E0D5;border-radius:20px;padding:6px 13px;font-family:Inter,sans-serif;font-size:11px;color:var(--txt2);cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,.06);display:none;align-items:center;gap:6px">
   <span id="sync-dot" style="width:7px;height:7px;border-radius:50%;background:#2E6B3A"></span>
   <span id="sync-txt">Sincronizado</span>
 </div>
@@ -5186,7 +5186,7 @@ const CG={
 const TI={};
 
 // ─── CORES PALETA
-const C={grn:'#4A7A56',grnlt:'#CBE0CE',blu:'#4A6DA0',blult:'#C9D6EC',gld:'#C15F3C',gldlt:'#E9C7B4',red:'#A33A2E',redlt:'#EFCFC9',txt:'#1F1E1C',muted:'#9A9382'};
+const C={grn:'#4A7A56',grnlt:'#CBE0CE',blu:'#4A6DA0',blult:'#C9D6EC',gld:'#C15F3C',gldlt:'#E9C7B4',red:'#A33A2E',redlt:'#EFCFC9',txt:'#1F1E1C',muted:'#6B655A'};
 const CC={Alimentação:'#4A7A56',Transporte:'#4A6DA0',Saúde:'#A33A2E',Lazer:'#9C6B4F',Moradia:'#C15F3C',Educação:'#2A6E7A',Vestuário:'#7A3828',Serviços:'#3A6E2A',Outros:'#8A9E84',Viagem:'#3A5A8C'};
 // Cor da categoria: usa a cor fixa se existir, senão gera uma cor estável a
 // partir do nome (para categorias novas criadas pelo usuário).
@@ -10861,7 +10861,7 @@ let _authTratado = false; // evita processar onLogin duas vezes
 function setSync(state){ // 'ok' | 'saving' | 'error' | 'offline'
   const dot=document.getElementById('sync-dot'), txt=document.getElementById('sync-txt');
   if(!dot)return;
-  const map={ok:['#2E6B3A','Sincronizado'],saving:['#7A6020','Salvando…'],error:['#7A2828','Erro — clique p/ tentar'],offline:['#8A8470','Offline']};
+  const map={ok:['#2E6B3A','Sincronizado'],saving:['#7A6020','Salvando…'],error:['#7A2828','Erro — clique p/ tentar'],offline:['#6B655A','Offline']};
   const [c,t]=map[state]||map.ok; dot.style.background=c; txt.textContent=t;
 }
 
@@ -13258,7 +13258,7 @@ function _clonarSecaoParaRelatorio(secaoId){
 // CSS embutido no relatório: herda o design system (paper/agro-tech), otimizado p/ impressão.
 function _cssRelatorio(){
   return `
-  :root{--paper:#F5F4EC;--bg:#F5F4EC;--bg2:#FBFAF6;--txt:#1F1E1C;--txt2:#57534A;--txt3:#928D80;
+  :root{--paper:#F5F4EC;--bg:#F5F4EC;--bg2:#FBFAF6;--txt:#1F1E1C;--txt2:#3E3A31;--txt3:#6B655A;
     --grn:#4A7A56;--blu:#4A6DA0;--gld:#C15F3C;--red:#A33A2E;--bdr:#E4DFD3;--bdr-em:#D6CFC0;--r:12px;}
   *{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact;}
   body{margin:0;background:var(--paper);color:var(--txt);
