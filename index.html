@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 103 -->
+<!-- APP_VERSION: 104 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -6493,17 +6493,29 @@ function rdash(){
     // 'entra' (aporte) ou 'sai' (resgate) da carteira de investimento, ou null se
     // o lançamento não tem nada a ver com investimento.
     const _flagInvLanc=l=>{
-      const sinalInv=l.origemInv==='aporte'||l.origemInv==='resgate'||_idsContaInv.has(l.banco)||_catInvestimento(l.cat);
-      if(!sinalInv)return null;
-      if(l.tipo==='debito')return 'entra';
-      if(l.tipo==='credito'&&l.origemInv!=='dividendo')return 'sai';
-      return null; // crédito de dividendo: fica só em Recebimentos, não conta aqui
+      // Dividendo é receita de verdade: fica só em Recebimentos, não movimenta a carteira.
+      if(l.origemInv==='dividendo')return null;
+      // Marcação explícita (tela "Adicionar Ativo → debitar de uma conta") é autoritativa.
+      if(l.origemInv==='aporte')return 'entra';
+      if(l.origemInv==='resgate')return 'sai';
+      // ATENÇÃO ao ponto de vista da conta onde o lançamento está gravado:
+      //  · conta CORRENTE com categoria "Investimento*": o débito é que tira dinheiro da
+      //    conta e põe na carteira → débito = aporte, crédito = resgate.
+      //  · conta de INVESTIMENTO (tipo==='investimento'): o lançamento está do lado da
+      //    carteira, então é o inverso → crédito (dinheiro chegando) = aporte,
+      //    débito (dinheiro saindo) = resgate.
+      if(_idsContaInv.has(l.banco))return l.tipo==='credito'?'entra':'sai';
+      if(_catInvestimento(l.cat))return l.tipo==='debito'?'entra':'sai';
+      return null;
     };
     const rec=[],pag=[],invn=[];
     meses12.forEach(ym=>{
       const lancMes=S.lancamentos.filter(l=>!l.forecast&&l.data.startsWith(ym));
 
-      const lcCred=lancMes.filter(l=>l.tipo==='credito'&&_flagInvLanc(l)!=='sai').reduce((s,l)=>s+l.valor,0);
+      // Recebimentos = só crédito que é receita de verdade. Qualquer crédito ligado à
+      // carteira (resgate chegando na conta corrente OU aporte chegando na conta de
+      // investimento) é movimentação entre bolsos do próprio dinheiro, não receita.
+      const lcCred=lancMes.filter(l=>l.tipo==='credito'&&_flagInvLanc(l)===null).reduce((s,l)=>s+l.valor,0);
       const divCred=S.dividendos.filter(d=>!d.forecast&&d.lancId==null&&d.data.startsWith(ym)).reduce((s,d)=>s+d.total,0);
       rec.push(+(lcCred+divCred).toFixed(2));
 
@@ -6516,7 +6528,9 @@ function rdash(){
       invn.push(+(entraCarteira-saiCarteira).toFixed(2));
 
       pag.push(+(
-         lcDeb.filter(l=>_flagInvLanc(l)!=='entra'&&!_ehCatPagamentoCartao(l.cat)).reduce((s,l)=>s+l.valor,0)
+         // Mesma lógica dos Recebimentos: débito ligado à carteira (aporte saindo da conta
+         // corrente OU resgate saindo da conta de investimento) não é despesa.
+         lcDeb.filter(l=>_flagInvLanc(l)===null&&!_ehCatPagamentoCartao(l.cat)).reduce((s,l)=>s+l.valor,0)
         +gastosDeb.filter(g=>!_ehCatPagamentoCartao(g.cat)).reduce((s,g)=>s+g.valor,0)
         +comprasDeb.filter(c=>!_ehCatPagamentoCartao(c.cat)).reduce((s,c)=>s+c.valor,0)
       ).toFixed(2));
