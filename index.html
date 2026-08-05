@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 100 -->
+<!-- APP_VERSION: 101 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -12682,15 +12682,30 @@ function _descSimilar(a,b){
   const na=_normDesc(a), nb=_normDesc(b);
   if(na.length<3||nb.length<3)return true;              // desc pouco informativa → decide por valor+data
   if(na===nb)return true;
-  if((na.length>=4&&nb.includes(na))||(nb.length>=4&&na.includes(nb)))return true; // truncamento/prefixo
+  // Truncamento/prefixo: "NETFLIX ENTRETE" ⊂ "NETFLIX ENTRETENIMENTO" → mesma transação.
+  // MAS só vale se o lado mais curto tiver algum termo DISTINTIVO. Sem essa guarda,
+  // "Transferência enviada" (genérico) seria prefixo de "Transferência enviada ADELCIO
+  // SANTOS" e de "Transferência enviada ADEMAR SANTOS" — colapsando duas transferências
+  // reais e diferentes de mesmo valor/dia numa só.
+  {
+    const curta=na.length<=nb.length?na:nb, longa=na.length<=nb.length?nb:na;
+    if(curta.length>=4 && longa.includes(curta)){
+      const distintivo=curta.split(' ').some(t=>t.length>=3 && /[a-z]/.test(t) && !/\d/.test(t) && !_DESC_STOP.has(t));
+      if(distintivo)return true;
+    }
+  }
   // tokens significativos: ≥3 letras, SEM dígitos (remove IDs de transação/sufixos numéricos)
   // e fora da stoplist de termos bancários genéricos (evita falso-positivo entre duas
   // transações do mesmo TIPO — ex.: "Pix enviado" — mas para CONTRAPARTES diferentes)
   const sig=s=>s.split(' ').filter(t=>t.length>=3 && /[a-z]/.test(t) && !/\d/.test(t) && !_DESC_STOP.has(t));
   let ta=sig(na), tb=sig(nb);
-  if(!ta.length||!tb.length){
-    // sem tokens distintivos (ex.: os dois só têm termos genéricos) → cai para o conjunto
-    // completo (sem stoplist) como antes; se ainda vazio, usa a string toda
+  // Um lado só tem termos genéricos ("Transferência enviada") e o outro identifica uma
+  // contraparte ("...ADELCIO SANTOS"): não há evidência de que sejam a MESMA transação.
+  // Tratar como distintas — na dúvida é melhor manter as duas (o usuário vê e remove se
+  // for o caso) do que sumir com um lançamento real.
+  if((!ta.length) !== (!tb.length)) return false;
+  if(!ta.length && !tb.length){
+    // ambos só têm termos genéricos → compara o texto completo (sem stoplist)
     const sigSemStop=s=>s.split(' ').filter(t=>t.length>=3 && /[a-z]/.test(t) && !/\d/.test(t));
     ta=sigSemStop(na); tb=sigSemStop(nb);
   }
@@ -12706,7 +12721,12 @@ function _descSimilar(a,b){
 //   1) valor idêntico (âncora forte, tolerância de 1 centavo p/ arredondamento)
 //   2) data com tolerância de 1 dia — só avaliada se o valor já bateu
 //   3) descrição (comparação tolerante) — só decide depois que valor e data já bateram
-function _jaExisteRegistro(linha, modo, destino){
+// `base` (opcional): lista contra a qual comparar. Durante uma importação em lote é
+// obrigatório passar um SNAPSHOT do estado ANTERIOR à importação — senão os itens já
+// gravados no mesmo lote entram na comparação e o 2º de dois lançamentos legitimamente
+// iguais (mesma data/valor/estabelecimento, ex.: duas contas de telefone de R$64 no
+// mesmo dia) é descartado como "duplicata" de si mesmo.
+function _jaExisteRegistro(linha, modo, destino, base){
   if(!destino)return false;
   const vAlvo=Math.abs(+linha.valor||0);
   const dAlvo=linha.data;
@@ -12716,9 +12736,9 @@ function _jaExisteRegistro(linha, modo, destino){
     return _descSimilar(l.desc,linha.desc);                        // 3) texto — só decide após valor+data baterem
   };
   if(modo==='extrato'){
-    return S.lancamentos.some(l=>l.banco===destino && casa(l));
+    return (base||S.lancamentos).some(l=>l.banco===destino && casa(l));
   } else if(modo==='fatura'){
-    return S.compras.some(c=>c.cartao===destino && casa(c));
+    return (base||S.compras).some(c=>c.cartao===destino && casa(c));
   }
   return false;
 }
@@ -13075,9 +13095,12 @@ function confirmarImport(){
     const conta=S.contas.find(c=>c.id===destino);
     if(!conta){ toast('⚠ Conta inválida'); return; }
     let n=0, dup=0;
+    // Snapshot do estado ANTES da importação: os lançamentos gravados por este mesmo
+    // lote não podem servir de referência de duplicata para os itens seguintes.
+    const _preExist=S.lancamentos.slice();
     itens.forEach(it=>{
       // Defesa final: mesma régua da prévia (valor idêntico, data ±1 dia, texto tolerante)
-      if(_jaExisteRegistro(it,'extrato',destino)){ dup++; return; }
+      if(_jaExisteRegistro(it,'extrato',destino,_preExist)){ dup++; return; }
       const nid=Math.max(0,...S.lancamentos.map(l=>l.id||0))+1+n;
       const lanc={id:nid,data:it.data,banco:destino,tipo:it.tipo,valor:it.valor,desc:it.desc,importado:true};
       if(it.cat)lanc.cat=it.cat;
@@ -13093,8 +13116,10 @@ function confirmarImport(){
     if(!cartao){ toast('⚠ Cartão inválido'); return; }
     const catPadrao=(S.categorias&&S.categorias.includes('Outros'))?'Outros':(S.categorias&&S.categorias[0])||'Outros';
     let n=0, dup=0;
+    // Snapshot do estado ANTES da importação (ver comentário em _jaExisteRegistro)
+    const _preExistC=S.compras.slice();
     itens.forEach(it=>{
-      if(_jaExisteRegistro(it,'fatura',destino)){ dup++; return; }
+      if(_jaExisteRegistro(it,'fatura',destino,_preExistC)){ dup++; return; }
       const nid=Math.max(0,...S.compras.map(c=>c.id||0))+1+n;
       const parc=Math.max(1,parseInt(it.parcelas)||1);
       S.compras.unshift({id:nid,data:it.data,cartao:destino,desc:it.desc,cat:it.cat||catPadrao,valor:it.valor,parcelas:parc,importado:true});
