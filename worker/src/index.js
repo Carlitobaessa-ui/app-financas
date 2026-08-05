@@ -43,6 +43,21 @@ export default {
       });
     }
 
+    // Teto de segurança: no máximo N chamadas/minuto (configurado em
+    // wrangler.toml), mesmo com o segredo correto — limita o estrago se o
+    // segredo algum dia vazar. env.RATE_LIMITER só existe se o binding
+    // estiver configurado; se não existir (ex: dev local sem o binding),
+    // simplesmente não aplica limite.
+    if (env.RATE_LIMITER) {
+      const { success } = await env.RATE_LIMITER.limit({ key: secret });
+      if (!success) {
+        return new Response(JSON.stringify({ error: 'rate_limited' }), {
+          status: 429,
+          headers: { 'Content-Type': 'application/json', ...CORS_HEADERS },
+        });
+      }
+    }
+
     if (!env.ANTHROPIC_API_KEY) {
       return new Response(JSON.stringify({ error: 'proxy_misconfigured', detail: 'ANTHROPIC_API_KEY não foi definida no Worker' }), {
         status: 500,

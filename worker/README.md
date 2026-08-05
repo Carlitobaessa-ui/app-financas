@@ -70,10 +70,22 @@ app" nas Configurações do app. Não precisa tocar na chave real da Anthropic.
 Só é preciso rodar `npx wrangler deploy` de novo se o código em `src/index.js`
 mudar. Trocar os secrets não exige reimplantar.
 
-## Extensão opcional: limite de uso
+## Limite de uso (rate limit) — já configurado
 
-Este proxy não tem limite de requisições por si só (além do plano gratuito da
-Cloudflare). Se quiser um teto de segurança extra (ex.: no máximo N chamadas
-por hora, mesmo com o segredo correto), a Cloudflare oferece *Rate Limiting
-Rules* no painel do Worker — não é necessário para o uso pessoal comum, mas é
-uma camada extra fácil de adicionar depois.
+O `wrangler.toml` já define um teto de **30 chamadas por minuto** via
+[Workers Rate Limiting binding](https://developers.cloudflare.com/workers/runtime-apis/bindings/rate-limit/)
+(não é o painel de "Rate Limiting Rules" — aquele exige um domínio próprio
+com zona na Cloudflare, e este Worker roda num subdomínio `workers.dev`).
+Mesmo que o segredo do app vaze, quem o usar fica limitado a esse teto —
+protege o orçamento da API mesmo no pior caso.
+
+Pra ativar (ou depois de qualquer mudança em `src/index.js` ou `wrangler.toml`),
+é só publicar de novo:
+```bash
+cd worker
+npx wrangler deploy
+```
+Trocar o limite: edite `limit` (chamadas) e `period` (10 ou 60 segundos, só
+esses dois valores são aceitos) em `wrangler.toml`, depois `wrangler deploy`.
+
+Requisições acima do limite recebem `429` do Worker e não chegam à Anthropic.

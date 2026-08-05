@@ -5,3 +5,14 @@ compatibility_date = "2025-01-01"
 # ANTHROPIC_API_KEY e APP_SHARED_SECRET NÃO vão aqui — são secrets, configurados
 # via `wrangler secret put` (ver README.md). Colocar segredo neste arquivo o
 # exporia de novo, no repositório Git — exatamente o problema que estamos resolvendo.
+
+# Teto de segurança extra: no máximo 30 chamadas por minuto (mesmo com o
+# segredo correto), pra limitar o estrago se o segredo do app algum dia vazar.
+# namespace_id é só um identificador arbitrário (não precisa criar nada antes).
+[[ratelimits]]
+name = "RATE_LIMITER"
+namespace_id = "1001"
+
+  [ratelimits.simple]
+  limit = 30
+  period = 60
