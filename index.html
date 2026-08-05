@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 106 -->
+<!-- APP_VERSION: 107 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -7905,8 +7905,7 @@ function rcontas(){
         const _ctsAuto=new Set(_auto.map(l=>l.banco)).size;
         _aa.style.display='flex';
         _aa.innerHTML=`<span class="recon-ic">↻</span>
-          <div class="recon-txt"><strong>${_auto.length} lançamento${_auto.length>1?'s':''} de aplicação automática de saldo</strong> em ${_ctsAuto} conta${_ctsAuto>1?'s':''} — o banco aplica e resgata o saldo todo dia (BB Rende Fácil, RF Simples Ágil e similares). Não são receita, despesa nem aporte, e já são ignorados nos gráficos automaticamente. Só continuam no extrato porque fazem parte do histórico real da conta — se preferir uma visão mais limpa, dá pra removê-los.</div>
-          <button class="btn btn-g" style="font-size:11px;padding:5px 12px;flex-shrink:0" onclick="limparAplicacoesAutomaticas()">Limpar do extrato</button>`;
+          <div class="recon-txt"><strong>${_auto.length} lançamento${_auto.length>1?'s':''} de aplicação automática de saldo</strong> em ${_ctsAuto} conta${_ctsAuto>1?'s':''} — o banco aplica e resgata o saldo todo dia (BB Rende Fácil, RF Simples Ágil e similares). Não são receita, despesa nem aporte, e já são ignorados automaticamente nos gráficos.</div>`;
       } else { _aa.style.display='none'; }
     }
   }
@@ -8462,42 +8461,6 @@ function excluirEmMassa(sec){
   toast('✓ Itens excluídos');
   // Processo concluído: encerra o modo de seleção por completo
   _encerrarSelecao(sec);
-}
-// ─── Limpeza das aplicações automáticas (varredura diária de saldo) ───
-// Remove os lançamentos de "BB Rende Fácil", "RF Simples Ágil" e equivalentes que só
-// existem para zerar o saldo da conta no fim do dia. Captura snapshot antes, então dá
-// para desfazer; os saldos das contas são recalculados preservando divergências prévias.
-function limparAplicacoesAutomaticas(){
-  const alvos=_lancAplicacaoAutomatica();
-  if(!alvos.length){ toast('Nenhuma aplicação automática encontrada'); return; }
-  const porConta={};
-  alvos.forEach(l=>{
-    const c=S.contas.find(x=>x.id===l.banco);
-    const nm=c?c.nome:'(conta removida)';
-    porConta[nm]=(porConta[nm]||0)+1;
-  });
-  const resumo=Object.entries(porConta).map(([nm,n])=>`  · ${nm}: ${n}`).join('\n');
-  const dts=alvos.map(l=>l.data).filter(Boolean).sort();
-  const periodo=dts.length?`${fdt(dts[0])} a ${fdt(dts[dts.length-1])}`:'—';
-  if(!confirm(
-    `Remover ${alvos.length} lançamento(s) de aplicação automática?\n\n`+
-    `Período: ${periodo}\n${resumo}\n\n`+
-    `São movimentações em que o próprio banco aplica e resgata o saldo da conta todo dia `+
-    `(BB Rende Fácil, RF Simples Ágil e similares). Não são receita, despesa nem aporte — `+
-    `só poluem o extrato e inflam a linha de Investimentos.\n\n`+
-    `Um backup é criado antes, então dá para desfazer.`
-  ))return;
-  _capturarSnapshot('limpeza de aplicações automáticas');
-  const ids=alvos.map(l=>l.id);
-  const contasAfet=new Set(alvos.map(l=>l.banco));
-  // Preserva a divergência que a conta já tinha (saldo salvo × soma dos lançamentos),
-  // para a limpeza não mascarar nem criar um problema de reconciliação.
-  const divAntes={}; contasAfet.forEach(cid=>{const c=S.contas.find(x=>x.id===cid);if(c)divAntes[cid]=+(c.saldo-saldoCalculado(c)).toFixed(2);});
-  S.lancamentos=S.lancamentos.filter(l=>!ids.includes(l.id));
-  _recomputarSaldos([...contasAfet],divAntes);
-  persistir();
-  toast(`✓ ${ids.length} aplicação(ões) automática(s) removida(s)`);
-  rcontas(); rdash();
 }
 // ─── Edição em massa ───
 function abrirEdicaoMassa(sec){
