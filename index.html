@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 98 -->
+<!-- APP_VERSION: 99 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -11264,7 +11264,7 @@ IMPORTANTE: Responda APENAS com JSON válido. Sem markdown, sem crases, sem text
 
 Bancos suportados e suas características:
 
-BANCO DO BRASIL: Cabeçalho "EXTRATO BANCÁRIO", colunas Data|Descrição|Débito|Crédito, verde/amarelo
+BANCO DO BRASIL: Cabeçalho "Extrato de Conta Corrente" com logo azul/amarelo. Colunas: Dia | Lote | Documento | Histórico | Valor. O Valor vem com sufixo "(+)" ou "(-)" no final (ex.: "36,13 (-)", "1.690,60 (+)") — não há colunas separadas de Débito/Crédito. O Histórico costuma vir em DUAS linhas: uma linha com o TIPO da operação (ex.: "Pix - Enviado", "Pix - Recebido", "Transferência enviada", "Pagamento de Boleto", "Recebimento de Proventos") e a linha seguinte com hora+contraparte/detalhe (ex.: "01/07 15:27 PIX Marketplace") — junte as duas para formar a descrição. Use a coluna "Dia" (data de lançamento/postagem) como a data da transação, mesmo que o detalhe mencione outra data/hora de operação.
 NUBANK: Logo roxo, layout sem colunas, datas em português "X de [mês]", emoji, seção RESUMO
 CAIXA: Cabeçalho "EXTRATO DE CONTA CORRENTE", azul, colunas Data|Operação|Descrição|Débito|Crédito
 ITAÚ: Logo laranja/vermelho, colunas Data|Operação|Valor|Saldo, agrupamento por dia
@@ -11282,12 +11282,13 @@ Formato JSON esperado (RESPOSTA COMPACTA — não repita chaves de validação p
 
 REGRAS CRÍTICAS:
 - Uma transação por linha (não para saldos, totalizadores, cabeçalhos)
-- IGNORE: SALDO, TOTAL, RESUMO, SUBTOTAL, SALDO ANTERIOR, SALDO DISPONÍVEL, LIMITE
+- IGNORE (não inclua no "itens"): SALDO, TOTAL, RESUMO, SUBTOTAL, SALDO ANTERIOR, SALDO DISPONÍVEL, SALDO DO DIA, LIMITE
+- IGNORE também MOVIMENTAÇÕES AUTOMÁTICAS DE APLICAÇÃO/RESGATE que existem só para zerar o saldo da conta ao fim do dia (poupança automática vinculada) — NÃO são gasto nem receita real, são o próprio dinheiro do titular sendo aplicado/resgatado automaticamente. Exemplos de nome no Banco do Brasil: "BB Rende Fácil"/"Rende Facil", "BB RF Simples Ágil"/"RF Simples Agil". Outros bancos têm produtos equivalentes (ex.: "Poupança automática", "Aplicação automática", "Investimento automático", "Sweep") — identifique pelo padrão: aparece quase todo dia, o valor faz o saldo do dia fechar em zero, e o histórico menciona aplicação/investimento/fundo vinculado à própria conta. Se houver dúvida se é uma aplicação automática ou uma transação real, prefira INCLUIR (mas com confiança mais baixa) a arriscar remover algo real.
 - Valor sempre POSITIVO, tipo define direção (débito/crédito)
 - Data: converta para AAAA-MM-DD (suporte: DD/MM/AAAA, "X de [mês]", AAAA-MM-DD já pronto)
 - Categorias: Alimentação, Transporte, Moradia, Saúde, Lazer, Educação, Serviços, Viagem, Vestuário, Outros
 - Confiança: 1.0 (claro/certo) a <0.5 (incerto); itens <0.3 não retornar
-- Debug: registre problemas em avisos, mas mantenha "avisos" curto (poucas frases, não uma por item)
+- Debug: registre problemas em avisos, mas mantenha "avisos" curto (poucas frases, não uma por item). Se filtrar movimentações automáticas de aplicação, mencione a contagem em "avisos" (ex.: "12 movimentações automáticas de aplicação (BB Rende Fácil) ignoradas").
 - DOCUMENTOS LONGOS (muitas transações): seja direto e conciso na descrição (máx. 40 caracteres) para caber TODAS as transações na resposta. NUNCA pare de extrair no meio do documento — processe até a última página.
 
 Agora analise e extraia. RETORNE APENAS JSON.`,
