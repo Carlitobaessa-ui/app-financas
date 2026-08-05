@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 102 -->
+<!-- APP_VERSION: 103 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -12676,7 +12676,12 @@ function _diasEntre(a,b){
 // (não ajudam a diferenciar duas transações reais — ex.: "Transferência enviada" aparece
 // em dezenas de PIX distintos no mesmo dia). Removidas antes de medir similaridade para
 // que a comparação foque na parte que realmente distingue (nome da contraparte, produto, etc).
-const _DESC_STOP=new Set(['pix','ted','doc','enviado','enviada','recebido','recebida','transferencia','transferido','transferida','pagamento','pago','paga','boleto','compra','comprado','comprada','debito','credito','cartao','fatura','tarifa','taxa','deposito','depositado','saque','sacado','conta','banco','agendado','agendamento','automatico','automatica','recebimento','envio','para','das','dos']);
+// Inclui também PLACEHOLDERS de "sem informação" ("sem descrição", "não informado"):
+// eles indicam AUSÊNCIA de contraparte, não uma contraparte diferente. Sem isso, o mesmo
+// lançamento extraído em duas importações — uma como "Pix Enviado 19/07 12:21" e outra
+// como "Pix Enviado - sem descrição" — era tratado como duas transações distintas.
+const _DESC_STOP=new Set(['pix','ted','doc','enviado','enviada','recebido','recebida','transferencia','transferido','transferida','pagamento','pago','paga','boleto','compra','comprado','comprada','debito','credito','cartao','fatura','tarifa','taxa','deposito','depositado','saque','sacado','conta','banco','agendado','agendamento','automatico','automatica','recebimento','envio','para','das','dos',
+  'sem','descricao','desc','nao','informado','informada','identificado','identificada','lancamento','diversos','diverso','geral','outro','outros','n/d','nd']);
 // Similaridade de descrições: tolera variações do banco (IDs de transação, truncamento, sufixos)
 function _descSimilar(a,b){
   const na=_normDesc(a), nb=_normDesc(b);
@@ -12704,13 +12709,11 @@ function _descSimilar(a,b){
   // Tratar como distintas — na dúvida é melhor manter as duas (o usuário vê e remove se
   // for o caso) do que sumir com um lançamento real.
   if((!ta.length) !== (!tb.length)) return false;
-  if(!ta.length && !tb.length){
-    // ambos só têm termos genéricos → compara o texto completo (sem stoplist)
-    const sigSemStop=s=>s.split(' ').filter(t=>t.length>=3 && /[a-z]/.test(t) && !/\d/.test(t));
-    ta=sigSemStop(na); tb=sigSemStop(nb);
-  }
-  if(!ta.length||!tb.length){ ta=na.split(' ').filter(Boolean); tb=nb.split(' ').filter(Boolean); } // fallback
-  if(!ta.length||!tb.length)return false;
+  // Nenhum dos dois identifica contraparte (ex.: "Pix Enviado 19/07 12:21" vs
+  // "Pix Enviado - sem descrição"): não há como distingui-los pelo texto, então vale a
+  // mesma regra do topo — decide por valor + data, que já bateram. Tratar como a MESMA
+  // transação evita duplicar o lançamento a cada reimportação do extrato.
+  if(!ta.length && !tb.length) return true;
   const sa=new Set(ta), sb=new Set(tb);
   let inter=0; sa.forEach(t=>{ if(sb.has(t))inter++; });
   const uni=new Set([...sa,...sb]).size;
