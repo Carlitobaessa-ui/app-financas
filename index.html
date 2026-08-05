@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 109 -->
+<!-- APP_VERSION: 110 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4900,20 +4900,28 @@ async function atualizarMercadoImoveis(){
 <div id="lanc-body"></div>
 </div></div>
 
-<div class="ov" id="m-config-api"><div class="modal" style="width:520px"><button class="mc" onclick="closeM('m-config-api')">✕</button>
+<div class="ov" id="m-config-api"><div class="modal" style="width:560px"><button class="mc" onclick="closeM('m-config-api')">✕</button>
 <div class="m-eye">Configurações</div><div class="m-title">Chave de API — Agentes de IA</div>
 <div style="font-size:12px;color:var(--txt3);line-height:1.55;margin-bottom:14px">
-  Os três assistentes usam a API da Anthropic. Para funcionarem <strong style="color:var(--txt2)">localmente no navegador</strong> (fora do Claude.ai), cole aqui sua chave pessoal. Ela fica salva apenas <strong style="color:var(--txt2)">neste navegador</strong> (localStorage).
+  Os três assistentes usam a API da Anthropic. Modo recomendado: um pequeno proxy (Cloudflare Worker) guarda a chave real só no servidor — o navegador nunca vê ela, só um segredo de app que pode ser trocado a qualquer momento. Veja como criar o proxy em <span class="mono">worker/README.md</span> no repositório.
 </div>
-<div style="background:#FBF3E8;border:0.5px solid #E4C98A;border-radius:var(--r);padding:11px 13px;margin-bottom:14px;font-size:11px;color:#6A5020;line-height:1.55">
-  ⚠ <strong>Segurança:</strong> a Anthropic desaconselha usar a chave direto no navegador. Qualquer pessoa com acesso a este arquivo ou computador pode lê-la. <strong>Não compartilhe o arquivo após colar a chave.</strong> Se ela vazar, revogue-a no console da Anthropic. O uso da API é cobrado por tokens.
+<div class="fg" style="margin-bottom:6px"><label>URL do proxy</label>
+  <input id="cfg-proxy-url" type="text" placeholder="https://app-financas-proxy.SEU-USUARIO.workers.dev" autocomplete="off" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:11.5px">
 </div>
-<div class="fg" style="margin-bottom:6px"><label>Chave de API (sk-ant-…)</label>
-  <input id="cfg-api-key" type="password" placeholder="sk-ant-api03-…" autocomplete="off" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:11.5px">
+<div class="fg" style="margin-bottom:10px"><label>Segredo do app</label>
+  <input id="cfg-app-secret" type="password" placeholder="o mesmo valor que você colocou em APP_SHARED_SECRET" autocomplete="off" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:11.5px">
 </div>
-<div id="cfg-api-status" style="font-size:11px;color:var(--txt3);margin:8px 0 4px"></div>
-<div style="font-size:11px;color:var(--txt3);margin-bottom:4px">Obtenha sua chave em <span class="mono">console.anthropic.com</span> → API Keys.</div>
-<div class="mfoot"><button class="btn btn-d" onclick="limparApiKey()">Remover Chave</button><button class="btn btn-ghost" onclick="closeM('m-config-api')">Cancelar</button><button class="btn btn-g" onclick="salvarApiKey()">Salvar Chave</button></div>
+<div id="cfg-api-status" style="font-size:11px;color:var(--txt3);margin:4px 0 14px"></div>
+<details style="margin-bottom:10px">
+  <summary style="font-size:12px;color:var(--txt2);cursor:pointer">Avançado — usar a chave direta da Anthropic (sem proxy, não recomendado)</summary>
+  <div style="background:#FBF3E8;border:0.5px solid #E4C98A;border-radius:var(--r);padding:11px 13px;margin:10px 0;font-size:11px;color:#6A5020;line-height:1.55">
+    ⚠ <strong>Só use enquanto não configurar o proxy acima.</strong> A Anthropic desaconselha usar a chave direto no navegador — qualquer pessoa com acesso a este arquivo ou computador pode lê-la. Se ela já vazou, revogue-a em <span class="mono">console.anthropic.com</span> → API Keys e gere uma nova (use a nova só no proxy, nunca mais aqui).
+  </div>
+  <div class="fg" style="margin-bottom:6px"><label>Chave de API (sk-ant-…)</label>
+    <input id="cfg-api-key" type="password" placeholder="sk-ant-api03-…" autocomplete="off" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:11.5px">
+  </div>
+</details>
+<div class="mfoot"><button class="btn btn-d" onclick="limparApiKey()">Remover Tudo</button><button class="btn btn-ghost" onclick="closeM('m-config-api')">Cancelar</button><button class="btn btn-g" onclick="salvarApiKey()">Salvar</button></div>
 </div></div>
 
 <div class="ov" id="m-config-brapi"><div class="modal" style="width:520px"><button class="mc" onclick="closeM('m-config-brapi')">✕</button>
@@ -13885,22 +13893,38 @@ let chatAnalises = [];
 // ═══════════════════════════════════════════════════════════
 // API CLAUDE — chamada central (suporta chave própria p/ uso local no Safari)
 // ═══════════════════════════════════════════════════════════
-const _API_KEY_STORE='anthropic_api_key';
+const _API_KEY_STORE='anthropic_api_key'; // legado: chave direta da Anthropic (não recomendado, ver worker/README.md)
+const _PROXY_URL_STORE='app_proxy_url';   // URL do proxy serverless (ex.: Cloudflare Worker)
+const _APP_SECRET_STORE='app_proxy_secret'; // segredo do app (não é a chave da Anthropic — pode ser trocado a qualquer momento)
 function getApiKey(){ try{ return localStorage.getItem(_API_KEY_STORE)||''; }catch(_){ return ''; } }
-function temApiKey(){ return !!getApiKey(); }
+function getProxyUrl(){ try{ return (localStorage.getItem(_PROXY_URL_STORE)||'').trim(); }catch(_){ return ''; } }
+function getAppSecret(){ try{ return localStorage.getItem(_APP_SECRET_STORE)||''; }catch(_){ return ''; } }
+function usaProxy(){ return !!(getProxyUrl()&&getAppSecret()); }
+function temApiKey(){ return usaProxy()||!!getApiKey(); }
 
 // Faz a chamada ao endpoint de mensagens.
-// - Se houver chave salva: envia os cabeçalhos de acesso direto pelo navegador
-//   (necessário fora do Claude.ai, ex.: Safari via file://).
-// - Sem chave: tenta a chamada sem credencial (funciona apenas dentro do Claude.ai,
-//   onde a autenticação é injetada pelo runtime de Artifacts).
+// - Proxy configurado (recomendado): a chave real da Anthropic nunca passa pelo
+//   navegador. O app manda o segredo do app (rotativo, de baixo risco) num header;
+//   o proxy (Cloudflare Worker, ver worker/README.md) valida o segredo, anexa a
+//   chave real (guardada só no servidor) e repassa para a Anthropic.
+// - Sem proxy, com chave direta salva (legado): envia a chave real do navegador —
+//   funciona, mas é o modo desaconselhado (ver aviso em Configurações).
+// - Sem nada configurado: tenta sem credencial (só funciona dentro do Claude.ai).
 async function chamarClaudeAPI(body){
+  if(usaProxy()){
+    const resp=await fetch(getProxyUrl(),{
+      method:'POST',
+      headers:{ 'Content-Type':'application/json', 'x-app-secret':getAppSecret() },
+      body:JSON.stringify(body)
+    });
+    return resp;
+  }
   const key=getApiKey();
   const headers={ 'Content-Type':'application/json' };
   if(key){
     headers['x-api-key']=key;
     headers['anthropic-version']='2023-06-01';
-    // Permite chamadas diretas do navegador (uso pessoal; ver aviso de segurança nas Configurações)
+    // Permite chamadas diretas do navegador (modo legado; ver aviso de segurança nas Configurações)
     headers['anthropic-dangerous-direct-browser-access']='true';
   }
   const resp=await fetch('https://api.anthropic.com/v1/messages',{
@@ -13909,36 +13933,52 @@ async function chamarClaudeAPI(body){
   return resp;
 }
 
-// ── Configurações da chave de API ──
+// ── Configurações da chave de API / proxy ──
 function abrirConfigApi(){
-  const inp=document.getElementById('cfg-api-key');
-  if(inp) inp.value=getApiKey();
+  const inpProxy=document.getElementById('cfg-proxy-url');
+  const inpSecret=document.getElementById('cfg-app-secret');
+  const inpKey=document.getElementById('cfg-api-key');
+  if(inpProxy) inpProxy.value=getProxyUrl();
+  if(inpSecret) inpSecret.value=getAppSecret();
+  if(inpKey) inpKey.value=getApiKey();
   _refletirStatusApi();
   openM('m-config-api');
 }
 function salvarApiKey(){
-  const inp=document.getElementById('cfg-api-key');
-  const val=(inp?inp.value:'').trim();
+  const inpProxy=document.getElementById('cfg-proxy-url');
+  const inpSecret=document.getElementById('cfg-app-secret');
+  const inpKey=document.getElementById('cfg-api-key');
+  const proxyUrl=(inpProxy?inpProxy.value:'').trim();
+  const appSecret=(inpSecret?inpSecret.value:'').trim();
+  const key=(inpKey?inpKey.value:'').trim();
   try{
-    if(val){ localStorage.setItem(_API_KEY_STORE,val); toast('✓ Chave salva neste navegador'); }
-    else{ localStorage.removeItem(_API_KEY_STORE); toast('Chave removida'); }
-  }catch(e){ toast('⚠ Não foi possível salvar a chave'); }
+    if(proxyUrl) localStorage.setItem(_PROXY_URL_STORE,proxyUrl); else localStorage.removeItem(_PROXY_URL_STORE);
+    if(appSecret) localStorage.setItem(_APP_SECRET_STORE,appSecret); else localStorage.removeItem(_APP_SECRET_STORE);
+    if(key){ localStorage.setItem(_API_KEY_STORE,key); } else { localStorage.removeItem(_API_KEY_STORE); }
+    toast(proxyUrl&&appSecret?'✓ Proxy configurado — a chave real não passa mais pelo navegador':'✓ Configuração salva');
+  }catch(e){ toast('⚠ Não foi possível salvar'); }
   _refletirStatusApi();
   closeM('m-config-api');
 }
 function limparApiKey(){
-  try{ localStorage.removeItem(_API_KEY_STORE); }catch(_){}
-  const inp=document.getElementById('cfg-api-key'); if(inp)inp.value='';
+  try{
+    localStorage.removeItem(_API_KEY_STORE);
+    localStorage.removeItem(_PROXY_URL_STORE);
+    localStorage.removeItem(_APP_SECRET_STORE);
+  }catch(_){}
+  ['cfg-api-key','cfg-proxy-url','cfg-app-secret'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   _refletirStatusApi();
-  toast('Chave removida deste navegador');
+  toast('Configuração removida deste navegador');
 }
 function _refletirStatusApi(){
   const st=document.getElementById('cfg-api-status');
   if(!st)return;
-  if(temApiKey()){
-    st.innerHTML='<span style="color:var(--grn)">●</span> Chave configurada — os agentes funcionam localmente.';
+  if(usaProxy()){
+    st.innerHTML='<span style="color:var(--grn)">●</span> Proxy configurado — a chave real fica só no servidor, nunca no navegador.';
+  } else if(getApiKey()){
+    st.innerHTML='<span style="color:var(--gld)">●</span> Usando chave direta (modo legado, não recomendado) — configure o proxy acima.';
   } else {
-    st.innerHTML='<span style="color:var(--gld)">●</span> Sem chave — os agentes só funcionam dentro do Claude.ai.';
+    st.innerHTML='<span style="color:var(--gld)">●</span> Sem credencial — os agentes só funcionam dentro do Claude.ai.';
   }
 }
 
