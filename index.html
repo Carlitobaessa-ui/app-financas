@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 107 -->
+<!-- APP_VERSION: 108 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -8707,6 +8707,10 @@ function renomearCategoria(antigo,novo){
   let n=0;
   S.gastos.forEach(g=>{if(g.cat===antigo){g.cat=novo;n++;}});
   S.compras.forEach(c=>{if(c.cat===antigo){c.cat=novo;n++;}});
+  // Lançamentos de conta corrente (extrato manual ou importado) também guardam
+  // a categoria em .cat — sem isso, o histórico anterior à renomeação ficava
+  // "órfão" (referenciando um nome que não existe mais em S.categorias).
+  (S.lancamentos||[]).forEach(l=>{if(l.cat===antigo){l.cat=novo;n++;}});
   // Propaga para o orçamento, se houver uma conta de orçamento com o mesmo nome
   if(S.orc&&S.orc[antigo]&&!S.orc[novo]){S.orc[novo]=S.orc[antigo];delete S.orc[antigo];}
   // Fixa a cor sob o novo nome (mantém identidade visual nos gráficos)
