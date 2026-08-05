@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 101 -->
+<!-- APP_VERSION: 102 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -12726,28 +12726,38 @@ function _descSimilar(a,b){
 // gravados no mesmo lote entram na comparação e o 2º de dois lançamentos legitimamente
 // iguais (mesma data/valor/estabelecimento, ex.: duas contas de telefone de R$64 no
 // mesmo dia) é descartado como "duplicata" de si mesmo.
+// Predicado único de "é o mesmo registro" (valor → data → descrição)
+function _mesmoRegistro(reg, linha){
+  const vAlvo=Math.abs(+linha.valor||0);
+  if(Math.abs(Math.abs(reg.valor)-vAlvo)>=0.01)return false;      // 1) valor idêntico — âncora forte
+  if(_diasEntre(reg.data,linha.data)>1)return false;              // 2) data — tolerância de 1 dia
+  return _descSimilar(reg.desc,linha.desc);                       // 3) texto — só decide após valor+data baterem
+}
+// Registros já gravados no destino (base de comparação para a importação)
+function _registrosDoDestino(modo, destino){
+  if(modo==='extrato')return (S.lancamentos||[]).filter(l=>l.banco===destino);
+  if(modo==='fatura')return (S.compras||[]).filter(c=>c.cartao===destino);
+  return [];
+}
 function _jaExisteRegistro(linha, modo, destino, base){
   if(!destino)return false;
-  const vAlvo=Math.abs(+linha.valor||0);
-  const dAlvo=linha.data;
-  const casa=(l)=>{
-    if(Math.abs(Math.abs(l.valor)-vAlvo)>=0.01)return false;       // 1) valor idêntico — âncora forte
-    if(_diasEntre(l.data,dAlvo)>1)return false;                    // 2) data — tolerância de 1 dia
-    return _descSimilar(l.desc,linha.desc);                        // 3) texto — só decide após valor+data baterem
-  };
-  if(modo==='extrato'){
-    return (base||S.lancamentos).some(l=>l.banco===destino && casa(l));
-  } else if(modo==='fatura'){
-    return (base||S.compras).some(c=>c.cartao===destino && casa(c));
-  }
-  return false;
+  return (base||_registrosDoDestino(modo,destino)).some(r=>_mesmoRegistro(r,linha));
 }
+// Marca duplicatas COM MULTIPLICIDADE: cada registro já gravado só pode "explicar" UMA
+// linha do lote. Se o extrato traz 2 lançamentos idênticos (ex.: duas contas de telefone
+// de R$64 no mesmo dia) e apenas 1 está gravado, só o 1º é duplicata — o 2º é novo e
+// vem marcado para importar. Sem isso, os dois vinham desmarcados e um sumia.
 function _marcarDuplicatas(){
   const modo=_impCtx.modo;
   if(modo!=='extrato'&&modo!=='fatura')return 0;
   const destino=document.getElementById('imp-dest')?.value;
   let nDup=0;
-  (_impCtx.linhas||[]).forEach(l=>{ const dup=_jaExisteRegistro(l, modo, destino); l._dup=dup; if(dup)nDup++; });
+  const base=_registrosDoDestino(modo,destino).map(r=>({data:r.data,desc:r.desc,valor:r.valor,_usado:false}));
+  (_impCtx.linhas||[]).forEach(l=>{
+    const m=destino?base.find(r=>!r._usado && _mesmoRegistro(r,l)):null;
+    if(m)m._usado=true;
+    l._dup=!!m; if(m)nDup++;
+  });
   return nDup;
 }
 function _reverificarDuplicatas(){
@@ -13095,12 +13105,14 @@ function confirmarImport(){
     const conta=S.contas.find(c=>c.id===destino);
     if(!conta){ toast('⚠ Conta inválida'); return; }
     let n=0, dup=0;
-    // Snapshot do estado ANTES da importação: os lançamentos gravados por este mesmo
-    // lote não podem servir de referência de duplicata para os itens seguintes.
-    const _preExist=S.lancamentos.slice();
+    // Base consumível do estado ANTES da importação: cada registro já gravado só pode
+    // "explicar" UMA linha do lote (mesma regra da prévia). Assim dois lançamentos
+    // legitimamente iguais no mesmo extrato não colapsam num só.
+    const _baseExt=_registrosDoDestino('extrato',destino).map(r=>({data:r.data,desc:r.desc,valor:r.valor,_usado:false}));
     itens.forEach(it=>{
       // Defesa final: mesma régua da prévia (valor idêntico, data ±1 dia, texto tolerante)
-      if(_jaExisteRegistro(it,'extrato',destino,_preExist)){ dup++; return; }
+      const _m=_baseExt.find(r=>!r._usado && _mesmoRegistro(r,it));
+      if(_m){ _m._usado=true; dup++; return; }
       const nid=Math.max(0,...S.lancamentos.map(l=>l.id||0))+1+n;
       const lanc={id:nid,data:it.data,banco:destino,tipo:it.tipo,valor:it.valor,desc:it.desc,importado:true};
       if(it.cat)lanc.cat=it.cat;
@@ -13116,10 +13128,11 @@ function confirmarImport(){
     if(!cartao){ toast('⚠ Cartão inválido'); return; }
     const catPadrao=(S.categorias&&S.categorias.includes('Outros'))?'Outros':(S.categorias&&S.categorias[0])||'Outros';
     let n=0, dup=0;
-    // Snapshot do estado ANTES da importação (ver comentário em _jaExisteRegistro)
-    const _preExistC=S.compras.slice();
+    // Base consumível do estado ANTES da importação (ver comentário em _marcarDuplicatas)
+    const _baseFat=_registrosDoDestino('fatura',destino).map(r=>({data:r.data,desc:r.desc,valor:r.valor,_usado:false}));
     itens.forEach(it=>{
-      if(_jaExisteRegistro(it,'fatura',destino,_preExistC)){ dup++; return; }
+      const _m=_baseFat.find(r=>!r._usado && _mesmoRegistro(r,it));
+      if(_m){ _m._usado=true; dup++; return; }
       const nid=Math.max(0,...S.compras.map(c=>c.id||0))+1+n;
       const parc=Math.max(1,parseInt(it.parcelas)||1);
       S.compras.unshift({id:nid,data:it.data,cartao:destino,desc:it.desc,cat:it.cat||catPadrao,valor:it.valor,parcelas:parc,importado:true});
