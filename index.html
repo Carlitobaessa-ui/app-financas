@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 99 -->
+<!-- APP_VERSION: 100 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -12672,15 +12672,28 @@ function _diasEntre(a,b){
   if(isNaN(da)||isNaN(db))return 999;
   return Math.abs(Math.round((da-db)/86400000));
 }
+// Palavras genéricas de operação bancária que aparecem em MUITAS transações diferentes
+// (não ajudam a diferenciar duas transações reais — ex.: "Transferência enviada" aparece
+// em dezenas de PIX distintos no mesmo dia). Removidas antes de medir similaridade para
+// que a comparação foque na parte que realmente distingue (nome da contraparte, produto, etc).
+const _DESC_STOP=new Set(['pix','ted','doc','enviado','enviada','recebido','recebida','transferencia','transferido','transferida','pagamento','pago','paga','boleto','compra','comprado','comprada','debito','credito','cartao','fatura','tarifa','taxa','deposito','depositado','saque','sacado','conta','banco','agendado','agendamento','automatico','automatica','recebimento','envio','para','das','dos']);
 // Similaridade de descrições: tolera variações do banco (IDs de transação, truncamento, sufixos)
 function _descSimilar(a,b){
   const na=_normDesc(a), nb=_normDesc(b);
   if(na.length<3||nb.length<3)return true;              // desc pouco informativa → decide por valor+data
   if(na===nb)return true;
   if((na.length>=4&&nb.includes(na))||(nb.length>=4&&na.includes(nb)))return true; // truncamento/prefixo
-  // tokens significativos: ≥3 letras e SEM dígitos (remove IDs de transação e sufixos numéricos)
-  const sig=s=>s.split(' ').filter(t=>t.length>=3 && /[a-z]/.test(t) && !/\d/.test(t));
+  // tokens significativos: ≥3 letras, SEM dígitos (remove IDs de transação/sufixos numéricos)
+  // e fora da stoplist de termos bancários genéricos (evita falso-positivo entre duas
+  // transações do mesmo TIPO — ex.: "Pix enviado" — mas para CONTRAPARTES diferentes)
+  const sig=s=>s.split(' ').filter(t=>t.length>=3 && /[a-z]/.test(t) && !/\d/.test(t) && !_DESC_STOP.has(t));
   let ta=sig(na), tb=sig(nb);
+  if(!ta.length||!tb.length){
+    // sem tokens distintivos (ex.: os dois só têm termos genéricos) → cai para o conjunto
+    // completo (sem stoplist) como antes; se ainda vazio, usa a string toda
+    const sigSemStop=s=>s.split(' ').filter(t=>t.length>=3 && /[a-z]/.test(t) && !/\d/.test(t));
+    ta=sigSemStop(na); tb=sigSemStop(nb);
+  }
   if(!ta.length||!tb.length){ ta=na.split(' ').filter(Boolean); tb=nb.split(' ').filter(Boolean); } // fallback
   if(!ta.length||!tb.length)return false;
   const sa=new Set(ta), sb=new Set(tb);
