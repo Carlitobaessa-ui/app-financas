@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>app-financas vs. Mercado — Análise Comparativa</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Source+Serif+4:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#F5F3EE;
+    --bg-warm:#EFEAE1;
+    --card:#FFFFFF;
+    --ink:#201F1B;
+    --ink-soft:#3A3833;
+    --muted:#7A756A;
+    --border:#E6E1D6;
+    --accent:#D97757;
+    --accent-dark:#B85C3E;
+    --accent-soft:#F4E3DA;
+    --green:#4B7B63;
+    --green-soft:#E4EEE8;
+    --amber:#B8862F;
+    --amber-soft:#F5ECD9;
+    --red:#B4483A;
+    --red-soft:#F5E0DC;
+    --blue:#4C6E8C;
+    --blue-soft:#E4EBF0;
+  }
+  *{box-sizing:border-box;}
+  html{scroll-behavior:smooth;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,-apple-system,sans-serif;
+    font-size:16px;
+    line-height:1.65;
+    -webkit-font-smoothing:antialiased;
+  }
+  h1,h2,h3{font-family:'Source Serif 4',Georgia,serif; color:var(--ink); font-weight:600; margin:0;}
+  a{color:var(--accent-dark);}
+
+  .topbar{
+    position:sticky; top:0; z-index:50;
+    background:rgba(245,243,238,0.92);
+    backdrop-filter:blur(6px);
+    border-bottom:1px solid var(--border);
+    padding:14px 32px;
+    display:flex; align-items:center; gap:12px;
+  }
+  .topbar .mark{
+    width:26px;height:26px;border-radius:8px;background:var(--accent);
+    display:flex;align-items:center;justify-content:center;
+    color:white;font-family:'Source Serif 4',serif;font-weight:700;font-size:16px;flex:none;
+  }
+  .topbar .ttl{font-size:14px;font-weight:600;color:var(--ink-soft);}
+  .topbar .sub{font-size:12.5px;color:var(--muted);margin-left:auto;display:none;}
+  @media(min-width:720px){.topbar .sub{display:block;}}
+
+  .hero{
+    max-width:920px;margin:0 auto;padding:72px 32px 28px;
+  }
+  .hero .eyebrow{
+    display:inline-flex;align-items:center;gap:8px;
+    font-size:12.5px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;
+    color:var(--accent-dark);background:var(--accent-soft);
+    padding:6px 14px;border-radius:999px;margin-bottom:22px;
+  }
+  .hero h1{font-size:44px;line-height:1.12;margin-bottom:16px;letter-spacing:-0.01em;}
+  .hero p.lead{font-size:19px;color:var(--ink-soft);max-width:680px;margin-bottom:26px;font-family:'Source Serif 4',serif;font-style:italic;}
+  .meta-row{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:8px;}
+  .pill{
+    font-size:13px;color:var(--muted);background:var(--card);border:1px solid var(--border);
+    padding:6px 13px;border-radius:999px;
+  }
+  .pill b{color:var(--ink-soft);}
+
+  nav.toc{
+    max-width:920px;margin:8px auto 40px;padding:0 32px;
+    display:flex;gap:8px;flex-wrap:wrap;
+  }
+  nav.toc a{
+    font-size:13px;color:var(--ink-soft);text-decoration:none;
+    background:var(--card);border:1px solid var(--border);
+    padding:7px 14px;border-radius:999px;transition:.15s;
+  }
+  nav.toc a:hover{border-color:var(--accent);color:var(--accent-dark);}
+
+  main{max-width:920px;margin:0 auto;padding:0 32px 100px;}
+  section{margin-bottom:14px;scroll-margin-top:80px;}
+  .card{
+    background:var(--card);border:1px solid var(--border);border-radius:18px;
+    padding:36px 40px;margin-bottom:28px;
+    box-shadow:0 1px 2px rgba(32,31,27,0.03), 0 8px 24px rgba(32,31,27,0.04);
+  }
+  .sec-num{
+    display:inline-flex;align-items:center;justify-content:center;
+    width:30px;height:30px;border-radius:9px;background:var(--ink);color:var(--bg);
+    font-family:'Source Serif 4',serif;font-size:14px;font-weight:700;margin-right:12px;flex:none;
+  }
+  h2.h-title{display:flex;align-items:center;font-size:25px;margin-bottom:18px;}
+  h3.h-sub{font-size:18px;color:var(--accent-dark);margin:26px 0 10px;font-family:'Inter';font-weight:700;}
+  p{margin:0 0 15px;color:var(--ink-soft);}
+  p:last-child{margin-bottom:0;}
+  .lede{font-size:17.5px;font-family:'Source Serif 4',serif;color:var(--ink);}
+
+  table{width:100%;border-collapse:collapse;margin:16px 0 8px;font-size:14px;}
+  .tcap{font-size:12.5px;color:var(--muted);text-align:left;margin-top:8px;font-style:italic;}
+  th{
+    background:var(--ink);color:#F5F3EE;text-align:left;
+    padding:11px 14px;font-weight:600;font-size:13px;letter-spacing:.01em;
+  }
+  th:first-child{border-radius:10px 0 0 0;}
+  th:last-child{border-radius:0 10px 0 0;}
+  td{padding:11px 14px;border-bottom:1px solid var(--border);vertical-align:top;color:var(--ink-soft);}
+  tr:nth-child(even) td{background:var(--bg-warm);}
+  tr:last-child td{border-bottom:none;}
+
+  .badge{
+    display:inline-block;padding:3px 10px;border-radius:999px;font-size:12px;font-weight:600;white-space:nowrap;
+  }
+  .b-critico{background:var(--red-soft);color:var(--red);}
+  .b-alto{background:var(--amber-soft);color:var(--amber);}
+  .b-moderado{background:var(--blue-soft);color:var(--blue);}
+  .b-baixo{background:var(--border);color:var(--muted);}
+  .b-frente{background:var(--green-soft);color:var(--green);}
+
+  .tier{border-left:4px solid var(--border);padding-left:20px;margin-bottom:30px;}
+  .tier.essencial{border-color:var(--red);}
+  .tier.recomendado{border-color:var(--amber);}
+  .tier.oportunista{border-color:var(--muted);}
+  .tier h3.h-sub{margin-top:0;}
+
+  .callout{
+    background:var(--accent-soft);border:1px solid var(--accent);border-radius:14px;
+    padding:20px 24px;margin:18px 0;font-size:14.5px;color:var(--ink-soft);
+  }
+  .callout b{color:var(--accent-dark);}
+
+  .strength-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:8px;}
+  @media(min-width:640px){.strength-grid{grid-template-columns:1fr 1fr 1fr;}}
+  .strength{background:var(--green-soft);border-radius:14px;padding:18px 18px;}
+  .strength .k{font-size:13px;font-weight:700;color:var(--green);text-transform:uppercase;letter-spacing:.03em;margin-bottom:6px;}
+  .strength p{font-size:13.5px;margin:0;color:var(--ink-soft);}
+
+  footer{
+    max-width:920px;margin:0 auto;padding:40px 32px 80px;
+    color:var(--muted);font-size:12.5px;border-top:1px solid var(--border);
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div class="mark">*</div>
+  <div class="ttl">app-financas — Análise Comparativa de Mercado</div>
+  <div class="sub">Preparado com Claude · 5 de agosto de 2026</div>
+</div>
+
+<div class="hero">
+  <span class="eyebrow">Relatório · Roadmap de investimento</span>
+  <h1>app-financas vs. Mercado</h1>
+  <p class="lead">Comparação com apps líderes de finanças pessoais (Brasil e global), matriz de gaps e roadmap de investimento — com custo de desenvolvimento assistido por Claude AI e sustentação.</p>
+  <div class="meta-row">
+    <span class="pill"><b>Preparado para</b> · Carlito Baessa</span>
+    <span class="pill"><b>Data</b> · 5 de agosto de 2026</span>
+    <span class="pill"><b>Escopo</b> · index.html (~15.255 linhas) + 7 apps benchmarked</span>
+  </div>
+</div>
+
+<nav class="toc">
+  <a href="#sumario">Sumário executivo</a>
+  <a href="#metodologia">Metodologia</a>
+  <a href="#hoje">O app hoje</a>
+  <a href="#benchmark">Benchmark</a>
+  <a href="#gaps">Matriz de gaps</a>
+  <a href="#forcas">Pontos fortes</a>
+  <a href="#roadmap">Roadmap</a>
+  <a href="#premissas">Premissas de custo</a>
+  <a href="#sustentacao">Sustentação</a>
+  <a href="#recomendacao">Recomendação</a>
+  <a href="#fontes">Fontes</a>
+</nav>
+
+<main>
+
+  <section id="sumario">
+    <div class="card">
+      <h2 class="h-title"><span class="sec-num">1</span>Sumário executivo</h2>
+      <p class="lede">O app-financas não é, hoje, um app de finanças pessoais no sentido estrito — é um sistema caseiro que combina gestão de contas, cartões e orçamento com carteira de investimentos multi-classe, patrimônio (imóveis, bens, financiamentos), um módulo inteiro de trading físico de grãos e três camadas de copiloto de IA conversacional com contexto financeiro completo.</p>
+      <p>Nenhum concorrente de mercado pesquisado — nem os líderes brasileiros (Mobills, Organizze) nem os líderes globais (YNAB, Monarch Money, Copilot Money, Quicken Simplifi, Empower) — cobre essa combinação. Em profundidade de IA generativa aplicada (assistente conversacional com contexto financeiro real, briefing diário multiagente, extração de documentos bancários por visão computacional com regras específicas por banco), o app-financas está à frente da maioria dos concorrentes brasileiros e no mesmo patamar dos dois líderes globais mais avançados nessa frente (Monarch e Copilot Money).</p>
+      <p>Por outro lado, o app carrega gaps estruturais que hoje são <b>"tabela stakes"</b> — presentes em praticamente todo concorrente pago de peso: sincronização bancária automática (Open Finance), aplicativo nativo em loja, postura de segurança básica (a chave de API da Anthropic fica salva em texto puro no navegador), notificações push proativas e compartilhamento multiusuário/familiar. Nenhum desses gaps é tecnicamente difícil de endereçar com desenvolvimento assistido por IA — o gargalo real é o custo recorrente de serviços de terceiros e o tempo humano de revisão, não o custo de "programação" em si.</p>
+      <div class="callout"><b>Recomendação central:</b> sequenciar por risco e custo — primeiro segurança e notificações (baixo custo, risco real hoje), depois sincronização bancária (maior esforço e custo recorrente, mas maior redução de fricção), e só então mobilidade nativa, compartilhamento familiar, apuração de IR sobre investimentos e um feed real de dados para o módulo de grãos.</div>
+    </div>
+  </section>
+
+  <section id="metodologia">
+    <div class="card">
+      <h2 class="h-title"><span class="sec-num">2</span>Metodologia</h2>
+      <p>O inventário de funcionalidades do app-financas foi levantado por leitura automatizada e sistemática do código-fonte (index.html, ~15.255 linhas, arquitetura single-file sem framework, estado global em localStorage com sincronização em nuvem via Neon), mapeando páginas, funções e módulos reais — sem inferir recursos que não estão implementados.</p>
+      <p>O benchmark de mercado foi construído por pesquisa direta (fontes oficiais dos próprios apps e comparativos independentes, citadas na seção 11) sobre sete aplicativos: dois líderes do mercado brasileiro (Mobills, Organizze) e cinco líderes do mercado global (YNAB, Monarch Money, Copilot Money, Quicken Simplifi, Empower Personal Dashboard).</p>
+      <p>As estimativas de custo partem de uma premissa deliberada: o desenvolvimento é feito por um agente Claude operando de forma assistida, não por uma equipe de programadores tradicional. A unidade de esforço usada é a <b>"sessão Claude"</b> — um bloco de trabalho contínuo de escopo definido, implementação, teste e publicação, dimensionado com base no ritmo real observado neste projeto (versões v98 a v108). A seção 8 detalha as premissas de custo em reais.</p>
+    </div>
+  </section>
+
+  <section id="hoje">
+    <div class="card">
+      <h2 class="h-title"><span class="sec-num">3</span>O que o app-financas é hoje</h2>
+
+      <h3 class="h-sub">3.1 Núcleo financeiro pessoal</h3>
+      <p>Contas correntes multibanco com lançamentos de débito, crédito e transferência, reconciliação de saldo que compara o saldo declarado contra a soma calculada dos lançamentos, cartões de crédito com compras parceladas e controle de limite, orçamento por categoria com alertas de 85% e 100% do limite, metas financeiras com aporte mensal calculado automaticamente, e um motor de recorrência genérico (diária, semanal, mensal, anual, com data-fim, contagem-fim ou "nunca" limitado a 24 meses de projeção).</p>
+
+      <h3 class="h-sub">3.2 Investimentos e patrimônio</h3>
+      <p>Carteira multi-classe — ações B3, ações e ETFs dos EUA, FIIs, renda fixa, criptomoedas, câmbio e ouro — com cotações ao vivo (brapi, Financial Modeling Prep e AwesomeAPI) e análises fundamentalistas geradas por IA. Módulo de bens e patrimônio com financiamento e seguro, módulo de imóveis com simulação de holding familiar para planejamento sucessório (premissas ajustáveis, não avaliação de mercado ao vivo) e um painel de "sinais fracos e mapa de riscos" com projeção de impacto em três horizontes de tempo.</p>
+
+      <h3 class="h-sub">3.3 Importação de documentos via IA</h3>
+      <p>O recurso tecnicamente mais sofisticado do app: extração de extratos e faturas por visão computacional (Claude Vision), com prompts especializados por banco — reconhecendo o layout de 12 instituições brasileiras (BB, Nubank, Caixa, Itaú, Bradesco, Inter, C6, BTG, XP, Santander, Sicredi, Sicoob) — e um algoritmo de detecção de duplicatas por similaridade de texto (Jaccard sobre tokens, com controle de multiplicidade). Esse motor foi construído e endurecido ao longo desta própria série de sessões, corrigindo falsos positivos e negativos com casos extraídos de extratos reais do usuário.</p>
+
+      <h3 class="h-sub">3.4 Copilotos de IA</h3>
+      <p>Três camadas de assistente conversacional com contexto financeiro completo, lançamento de despesas por voz ou foto, e um briefing diário automático simulando três "agentes" especializados (assistente financeiro, estrategista de investimentos, CFO pessoal), com cache de uma geração por dia.</p>
+
+      <h3 class="h-sub">3.5 Módulo de mercado de grãos — diferencial sem paralelo no mercado</h3>
+      <p>Um módulo completo de trading físico de commodities agrícolas (soja, milho, trigo) embutido dentro de um app de finanças pessoais: registro de operações em sacas de 60kg, marcação a mercado de hedge CBOT, preços por 13 cooperativas reais do Sul e Centro-Oeste, câmbio USD/BRL ao vivo e dados de produção agrícola do Brasil extraídos ao vivo da API pública do IBGE. As curvas de CBOT e B3, porém, são <b>simuladas</b> — o próprio código documenta que não há hoje fonte gratuita disponível. Nenhum concorrente pesquisado tem módulo equivalente; é a maior singularidade do app, mas hoje funciona mais como ferramenta de registro e cenário do que como fonte de preço confiável.</p>
+
+      <h3 class="h-sub">3.6 O que explicitamente não existe hoje</h3>
+      <p>Sem sincronização bancária automática (importação é manual, por upload). Sem aplicativo nativo (é PWA instalável via navegador). Sem multiusuário real (login individual; "holding familiar" é conteúdo de planejamento, não conta compartilhada). Login social e biometria/passkey existem parcialmente no código, mas desativados. Sem criptografia de dados em repouso — a chave de API da Anthropic fica em texto puro no navegador, com aviso explícito do próprio app sobre o risco. Sem notificações push nativas — alertas só aparecem como lista dentro do painel.</p>
+    </div>
+  </section>
+
+  <section id="benchmark">
+    <div class="card">
+      <h2 class="h-title"><span class="sec-num">4</span>Benchmark de mercado</h2>
+      <p>Tabela condensada dos sete aplicativos pesquisados frente ao app-financas.</p>
+      <table>
+        <tr><th>App</th><th>Sinc. bancária auto.</th><th>IA generativa</th><th>Multiusuário</th><th>Nativo mobile</th><th>Preço aprox.</th></tr>
+        <tr><td>Mobills (BR)</td><td>Open Finance (parcial free)</td><td>Assessor via WhatsApp</td><td>Sim (família)</td><td>Sim</td><td>Freemium</td></tr>
+        <tr><td>Organizze (BR)</td><td>Open Finance (pago)</td><td>Categorização/scanner</td><td>Sim (casal)</td><td>Sim</td><td>Freemium</td></tr>
+        <tr><td>YNAB</td><td>Plaid / Direct Import</td><td>Não (deliberado)</td><td>Até 6 pessoas</td><td>Sim</td><td>US$ 14,99/mês</td></tr>
+        <tr><td>Monarch Money</td><td>Plaid + MX + Finicity</td><td>AI Assistant (chat)</td><td>Forte (household)</td><td>Sim</td><td>US$ 14,99–199/ano</td></tr>
+        <tr><td>Copilot Money</td><td>Automática</td><td>Assistente proativo (beta)</td><td>Tags p/ casal</td><td>iOS/Mac (+web)</td><td>US$ 13/mês</td></tr>
+        <tr><td>Quicken Simplifi</td><td>Automática</td><td>Só na categorização</td><td>Até 6 pessoas</td><td>Sim</td><td>US$ 5,99–7,99/mês</td></tr>
+        <tr><td>Empower Dashboard</td><td>Automática (ampla)</td><td>Não destacado</td><td>Limitado</td><td>Sim</td><td>Gratuito*</td></tr>
+        <tr style="font-weight:600;"><td>app-financas (hoje)</td><td>Ausente (importação manual via IA)</td><td>3 camadas de copiloto + briefing diário</td><td>Ausente</td><td>Ausente (PWA)</td><td>Custo de infra próprio</td></tr>
+      </table>
+      <p class="tcap">*Empower é gratuito e monetiza por serviço de consultoria de investimentos (mínimo de aporte). Fontes completas na seção 11.</p>
+    </div>
+  </section>
+
+  <section id="gaps">
+    <div class="card">
+      <h2 class="h-title"><span class="sec-num">5</span>Matriz de gaps</h2>
+      <p>Comparação dimensão a dimensão entre o que o app-financas tem hoje e o padrão observado no mercado.</p>
+      <table>
+        <tr><th>Dimensão</th><th>app-financas hoje</th><th>Padrão de mercado</th><th>Gap</th></tr>
+        <tr><td>Sincronização bancária</td><td>Manual: upload de PDF/imagem, extração por IA</td><td>Automática via Open Finance/Plaid em praticamente todo concorrente pago</td><td><span class="badge b-critico">Crítico</span></td></tr>
+        <tr><td>Segurança</td><td>Chave de API em texto puro no navegador; sem criptografia em repouso; 2FA/passkey desativados</td><td>MFA, criptografia AES-256, alguns com SOC2</td><td><span class="badge b-critico">Crítico</span></td></tr>
+        <tr><td>Notificações</td><td>Alertas só dentro do painel</td><td>Push nativo para vencimento, orçamento, anomalias</td><td><span class="badge b-alto">Alto</span></td></tr>
+        <tr><td>App nativo mobile</td><td>PWA instalável via navegador</td><td>App nativo iOS/Android em todos os 7 pesquisados</td><td><span class="badge b-alto">Alto</span></td></tr>
+        <tr><td>Multiusuário/família</td><td>Login individual único</td><td>Compartilhamento familiar em 6 de 7 concorrentes</td><td><span class="badge b-alto">Alto</span></td></tr>
+        <tr><td>IA generativa conversacional</td><td>3 camadas de copiloto + briefing diário multiagente</td><td>Só Monarch e Copilot têm equivalente</td><td><span class="badge b-frente">À frente</span></td></tr>
+        <tr><td>Extração/categorização de documentos</td><td>Visão computacional por banco (12 layouts BR) com deduplicação</td><td>Regras/ML genérico; scanner pontual (Organizze)</td><td><span class="badge b-frente">À frente</span></td></tr>
+        <tr><td>Investimentos multi-classe</td><td>BR/EUA/FIIs/RF/cripto/câmbio/ouro, cotação ao vivo, análise por IA</td><td>Comparável a Monarch Plus/Copilot</td><td><span class="badge b-moderado">Moderado</span></td></tr>
+        <tr><td>Patrimônio total (imóveis+cripto)</td><td>Módulo de imóveis com valores simulados/ajustáveis</td><td>Empower avalia imóveis via Zestimate e cripto ao vivo</td><td><span class="badge b-moderado">Moderado</span></td></tr>
+        <tr><td>Módulo de commodities agrícolas</td><td>Trading físico de grãos com IBGE ao vivo; curvas CBOT/B3 simuladas</td><td>Nenhum concorrente tem módulo equivalente</td><td><span class="badge b-frente">Único</span></td></tr>
+        <tr><td>Score de crédito</td><td>Ausente</td><td>Só Monarch monitora nativamente</td><td><span class="badge b-baixo">Baixo</span></td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section id="forcas">
+    <div class="card">
+      <h2 class="h-title"><span class="sec-num">6</span>Pontos fortes exclusivos</h2>
+      <p>Três frentes em que o app-financas já está à frente do que qualquer concorrente pesquisado oferece:</p>
+      <div class="strength-grid">
+        <div class="strength"><div class="k">IA aplicada</div><p>Três níveis de copiloto com acesso estruturado aos dados reais e briefing diário automatizado — não um chatbot genérico.</p></div>
+        <div class="strength"><div class="k">Importação bancária</div><p>Motor construído e testado contra layouts reais de 12 bancos, com tratamento de casos-limite (sweeps automáticos, datas divergentes).</p></div>
+        <div class="strength"><div class="k">Módulo agro</div><p>Trading físico de commodities integrado ao patrimônio pessoal — combinação sem paralelo no mercado de apps financeiros.</p></div>
+      </div>
+      <p style="margin-top:18px;">Juntos, tornam o app-financas mais um "sistema operacional financeiro e patrimonial sob medida" do que um concorrente direto de Mobills ou YNAB — a matriz de gaps deve ser lida com essa ressalva: alguns gaps (sincronização bancária, app nativo) importam porque reduzem fricção de uso diário; outros (score de crédito, orçamento envelope rígido) importam pouco dado o perfil de uso real do sistema.</p>
+    </div>
+  </section>
+
+  <section id="roadmap">
+    <div class="card">
+      <h2 class="h-title"><span class="sec-num">7</span>Roadmap priorizado de melhorias</h2>
+      <p>Esforço em "sessões Claude" (seção 2); custo de desenvolvimento é a estimativa de gasto com tokens de API se pago por uso; custo de sustentação é o gasto recorrente com serviços de terceiros, independente de quem programou.</p>
+
+      <div class="tier essencial">
+        <h3 class="h-sub"><span class="badge b-critico">Essencial</span> &nbsp;Mitiga risco real ou fricção alta</h3>
+        <table>
+          <tr><th>Melhoria</th><th>Esforço</th><th>Custo dev</th><th>Custo terceiros</th></tr>
+          <tr><td>Segurança: proxy de chave de API, criptografia local, reativar 2FA/passkey</td><td>4–5 sessões</td><td>R$ 100–300</td><td>R$ 0/mês</td></tr>
+          <tr><td>Notificações push via Web Push API (reaproveita gerarAlertas())</td><td>3–4 sessões</td><td>R$ 80–250</td><td>R$ 0/mês</td></tr>
+          <tr><td>Sincronização bancária automática (Open Finance via Pluggy/Belvo)</td><td>10–15 sessões</td><td>R$ 300–900</td><td>R$ 150–600/mês*</td></tr>
+        </table>
+        <p class="tcap">*Sujeito a cotação direta com o provedor; maior esforço do roadmap.</p>
+      </div>
+
+      <div class="tier recomendado">
+        <h3 class="h-sub"><span class="badge b-alto">Recomendado</span> &nbsp;Eleva ao padrão de mercado</h3>
+        <table>
+          <tr><th>Melhoria</th><th>Esforço</th><th>Custo dev</th><th>Custo terceiros</th></tr>
+          <tr><td>Empacotar o PWA como app de loja (Capacitor/TWA)</td><td>4–6 sessões</td><td>R$ 100–350</td><td>~R$ 650 único + R$ 550/ano</td></tr>
+          <tr><td>Multiusuário/família (2º login, permissão compartilhada)</td><td>5–8 sessões</td><td>R$ 150–450</td><td>R$ 0–50/mês</td></tr>
+          <tr><td>Feed real de curvas CBOT/B3 e cooperativas</td><td>3–5 sessões</td><td>R$ 100–300</td><td>R$ 0 a R$ 250–1.000/mês</td></tr>
+          <tr><td>Apuração de IR sobre investimentos (PM, ganho de capital, DARF)</td><td>5–7 sessões</td><td>R$ 150–400</td><td>R$ 0</td></tr>
+        </table>
+      </div>
+
+      <div class="tier oportunista">
+        <h3 class="h-sub"><span class="badge b-baixo">Oportunista</span> &nbsp;Valor menor ou nicho</h3>
+        <table>
+          <tr><th>Melhoria</th><th>Esforço</th><th>Custo dev</th><th>Custo terceiros</th></tr>
+          <tr><td>Scanner de recibo avulso dedicado (1 clique)</td><td>2 sessões</td><td>R$ 40–150</td><td>R$ 0/mês</td></tr>
+          <tr><td>Orçamento zero-based rígido (estilo YNAB)</td><td>3 sessões</td><td>R$ 60–200</td><td>R$ 0/mês</td></tr>
+          <tr><td>Score de crédito</td><td>Não recomendado</td><td>—</td><td>—</td></tr>
+        </table>
+      </div>
+    </div>
+  </section>
+
+  <section id="premissas">
+    <div class="card">
+      <h2 class="h-title"><span class="sec-num">8</span>Premissas de custo</h2>
+      <p>Os valores de "custo dev" assumem pagamento por uso de API da Anthropic (tokens), não o custo de uma assinatura Claude Pro/Max já contratada — se o desenvolvimento for feito dentro de um plano já pago, o custo marginal por sessão tende a zero, e o único custo real passa a ser o tempo do próprio usuário revisando e testando cada entrega.</p>
+      <p>Uma "sessão Claude" foi calibrada pelo ritmo observado neste mesmo projeto: correções e funcionalidades de complexidade pequena a média (v105 a v108 desta série) foram especificadas, implementadas, testadas e publicadas dentro de uma única sessão contínua. Itens de maior complexidade estrutural são estimados em múltiplas sessões distribuídas ao longo de semanas — não porque a IA leve mais tempo por sessão, mas porque dependem de etapas externas (homologação junto ao provedor de Open Finance, sandbox, aprovação nas lojas de app).</p>
+      <p>Os custos de terceiros marcados com asterisco não puderam ser confirmados com precisão nas fontes públicas consultadas — são faixas de referência e devem ser validados por cotação direta antes de qualquer compromisso orçamentário.</p>
+    </div>
+  </section>
+
+  <section id="sustentacao">
+    <div class="card">
+      <h2 class="h-title"><span class="sec-num">9</span>Sustentação contínua</h2>
+      <p>Mesmo sem adicionar nenhuma melhoria do roadmap, o app-financas já gera custo recorrente de manutenção reativa: mudanças de layout de extrato bancário quebram os prompts de extração por banco (aconteceu nesta série com o extrato do Banco do Brasil), erros aparecem com o uso contínuo, e cotas gratuitas de APIs de mercado podem ser excedidas.</p>
+      <p>Estimativa mensal: 1 a 2 sessões Claude de ajuste reativo (R$ 30–150 em tokens, ou marginal se dentro de assinatura), mais a assinatura Claude já existente, mais contingência de R$ 0–150/mês caso as cotas gratuitas de cotações sejam excedidas. Hospedagem (Neon DB, service worker) tende a permanecer gratuita para uso de uma única pessoa.</p>
+    </div>
+  </section>
+
+  <section id="recomendacao">
+    <div class="card">
+      <h2 class="h-title"><span class="sec-num">10</span>Recomendação final</h2>
+      <p>Primeiro, segurança e notificações — menor custo e esforço, e o único gap classificado como risco real (chave de API exposta). Segundo, avaliar sincronização bancária — maior impacto na fricção diária, mas também maior custo recorrente; vale cotar direto com um agregador antes de comprometer orçamento. Terceiro, empacotar o PWA para as lojas — reaproveitamento quase total do código já existente. Só depois investir em compartilhamento familiar, apuração de IR e um feed real para o módulo de grãos, nessa ordem — nenhum dos três resolve um risco imediato, cada um resolve uma limitação conforme a necessidade amadurecer.</p>
+    </div>
+  </section>
+
+  <section id="fontes">
+    <div class="card">
+      <h2 class="h-title"><span class="sec-num">11</span>Fontes</h2>
+      <p style="font-size:13.5px;">Mobills: apps.apple.com/br/app/mobills-controle-de-gastos · mobills.com.br/noticias (Mobills Investimentos com IA) · idinheiro.com.br (segurança). Organizze: ajuda.organizze.com.br (Open Finance) · organizze.com.br/app-de-financas. Ranking BR: graniq.com.br/melhores-apps · encaixei.com.br/blog/melhores-apps-financas. YNAB: ynab.com/security · ynab.com/features · useorigin.com (comparativo 2026). Monarch Money: help.monarch.com (segurança e IA) · monarch.com/blog/winter-release. Copilot Money: copilot.money/privacy-and-security · copilot.money/dispatch. Quicken Simplifi: quicken.com/features/save-more-money · quicken.com/about-us/press. Empower: support-personalwealth.empower.com · robberger.com/empower-review.</p>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div>app-financas — Análise Comparativa de Mercado · Relatório gerado com assistência de Claude (Anthropic) em 5 de agosto de 2026.</div>
+</footer>
+
+</body>
+</html>
