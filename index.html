@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 120 -->
+<!-- APP_VERSION: 121 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1715,6 +1715,61 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     </div>
     <div id="ir-nota-us" style="font-size:11.5px;color:var(--txt3);margin-top:4px"></div>
     <div class="pft">Estimativa apenas — não distingue day-trade (alíquota 20%, sem isenção) por falta de dado de compra casada, nem deduz corretagem/custos. Stocks EUA seguem o regime de ganho de capital no exterior (Lei 14.754/2023), apurado no ajuste anual, e não entram neste cálculo mensal de DARF (código 6015). Consulte um contador antes de recolher qualquer DARF.</div>
+  </div>
+
+  <!-- COMPARAÇÃO VS. BENCHMARKS -->
+  <div class="panel mb" id="panel-bench" style="margin-top:16px">
+    <div class="phd">
+      <div><div class="pt" style="display:flex;align-items:center">📊 Carteira vs. Benchmarks</div><div class="ps">Rentabilidade consolidada da carteira contra CDI, IBOVESPA e S&amp;P500</div></div>
+      <button class="btn btn-ghost" onclick="abrirConfigBench()">⚙ Taxas</button>
+    </div>
+    <div id="bench-kpis" class="kpi-row"></div>
+    <div id="bench-barras" style="margin-top:14px"></div>
+    <div class="pft">Rentabilidade da carteira = resultado acumulado de Ações BR + Stocks EUA + FIIs + Satélite ÷ custo total. Benchmarks são taxas de referência editáveis (⚙), não cotações ao vivo.</div>
+  </div>
+
+  <!-- CRIPTOMOEDAS -->
+  <div class="panel mb" id="panel-cripto" style="margin-top:16px">
+    <div class="phd">
+      <div><div class="pt" style="display:flex;align-items:center">₿ Criptomoedas</div><div class="ps">Cotação ao vivo via CoinGecko — classe própria, fora da apuração de IR de ações/satélite</div></div>
+      <button class="btn btn-g" onclick="openM('m-cripto')">+ Adicionar</button>
+    </div>
+    <div id="cripto-kpis" class="kpi-row" style="margin-bottom:12px"></div>
+    <div id="cripto-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhuma criptomoeda cadastrada. Use <strong>+ Adicionar</strong>.</div>
+    <table id="cripto-tabela" class="tbl-mob-cards"><thead><tr><th>Moeda</th><th class="tr">Qtd</th><th class="tr">PM</th><th class="tr">Atual</th><th class="tr">Posição</th><th class="tr">Resultado</th><th></th></tr></thead><tbody id="tb-cripto"></tbody></table>
+    <div class="pft">Cripto tem regra de isenção de IR própria: R$35.000/mês em vendas totais (qualquer criptoativo), acima disso 15% sobre o ganho (código de recolhimento 4600) — não confundir com a regra de R$20.000 de ações/satélite acima. Consulte um contador antes de recolher qualquer DARF.</div>
+  </div>
+
+  <!-- MILHAS & PONTOS -->
+  <div class="panel mb" id="panel-milhas" style="margin-top:16px">
+    <div class="phd">
+      <div><div class="pt" style="display:flex;align-items:center">✈️ Milhas &amp; Pontos</div><div class="ps">Programas de fidelidade (Livelo, Smiles, Latam Pass…) — valor de resgate estimado</div></div>
+      <button class="btn btn-g" onclick="openM('m-milhas')">+ Adicionar</button>
+    </div>
+    <div id="milhas-kpis" class="kpi-row" style="margin-bottom:12px"></div>
+    <div id="milhas-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum programa cadastrado. Use <strong>+ Adicionar</strong>.</div>
+    <table id="milhas-tabela" class="tbl-mob-cards"><thead><tr><th>Programa</th><th class="tr">Saldo</th><th class="tr">Valor/milheiro</th><th class="tr">Valor estimado</th><th>Obs.</th><th></th></tr></thead><tbody id="tb-milhas"></tbody></table>
+    <div class="pft">Valor estimado = (saldo ÷ 1000) × valor do milheiro. Cadastro manual — não há API gratuita confiável para cotação de milhas; atualize o valor do milheiro periodicamente (ex: cotações MaxMilhas/Melhores Destinos).</div>
+  </div>
+
+  <!-- MONITOR DE COBERTURA FGC -->
+  <div class="panel mb" id="panel-fgc" style="margin-top:16px">
+    <div class="phd">
+      <div><div class="pt" style="display:flex;align-items:center">🛡️ Cobertura do FGC</div><div class="ps">Soma de CDB/LCI/LCA/RDB por instituição financeira vs. limite de garantia de R$250.000</div></div>
+    </div>
+    <div id="fgc-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum título de renda fixa com instituição cadastrada ainda.</div>
+    <div id="fgc-conteudo"></div>
+    <div class="pft">O FGC garante até R$250.000 por CPF e por instituição (conglomerado), limitado a R$1 milhão a cada 4 anos. Fundos de investimento e ações/FIIs não são cobertos pelo FGC. Estimativa baseada nos dados cadastrados — confirme o CNPJ do conglomerado antes de decidir sobre concentração.</div>
+  </div>
+
+  <!-- DECLARAÇÃO DE BENS — IRPF -->
+  <div class="panel mb" id="panel-bens-irpf" style="margin-top:16px">
+    <div class="phd">
+      <div><div class="pt" style="display:flex;align-items:center">📋 Declaração de Bens — IRPF</div><div class="ps">Posição de bens e direitos formatada para a ficha "Bens e Direitos" da declaração anual</div></div>
+      <button class="btn btn-ghost" onclick="exportarBensIrpfTxt()">⭳ Exportar .txt</button>
+    </div>
+    <div id="bens-irpf-conteudo"></div>
+    <div class="pft">Gerado a partir dos ativos, bens e contas já cadastrados. Códigos de bens conforme tabela da Receita Federal (aproximados por tipo) — revise e ajuste manualmente na declaração oficial, especialmente saldos em 31/12 e discriminação exigida por código.</div>
   </div>
 
   <!-- GRÃOS / COMMODITIES -->
@@ -3989,6 +4044,17 @@ async function atualizarMercadoImoveis(){
     <table class="tbl-mob-cards"><thead><tr><th class="th-sort" data-tbl="gas" data-key="data" data-render="rgas" onclick="sortTbl(this)">Data<span class="sort-ic"></span></th><th class="th-sort" data-tbl="gas" data-key="desc" data-render="rgas" onclick="sortTbl(this)">Descrição<span class="sort-ic"></span></th><th class="th-sort" data-tbl="gas" data-key="cat" data-render="rgas" onclick="sortTbl(this)">Categoria<span class="sort-ic"></span></th><th class="th-sort" data-tbl="gas" data-key="origem" data-render="rgas" onclick="sortTbl(this)">Origem<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="gas" data-key="valor" data-render="rgas" onclick="sortTbl(this)">Valor<span class="sort-ic"></span></th><th></th></tr></thead><tbody id="tb-gas"></tbody></table>
     <div class="pft">Gastos avulsos · Realizados ou Previstos conforme aba selecionada acima</div>
   </div>
+  <!-- RASTREADOR DE ASSINATURAS / RECORRÊNCIAS -->
+  <div class="panel mb" id="panel-assinaturas" style="margin-top:16px">
+    <div class="phd">
+      <div><div class="pt" style="display:flex;align-items:center">🔁 Assinaturas &amp; Recorrências</div><div class="ps">Detecção automática de cobranças repetidas nos lançamentos e compras de cartão dos últimos 4 meses</div></div>
+    </div>
+    <div id="assin-kpis" class="kpi-row" style="margin-bottom:12px"></div>
+    <div id="assin-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum padrão de cobrança recorrente detectado ainda — precisa de pelo menos 2 ocorrências da mesma descrição/valor aproximado.</div>
+    <table id="assin-tabela" class="tbl-mob-cards" style="display:none"><thead><tr><th>Descrição</th><th class="tr">Valor médio</th><th class="tr">Ocorrências</th><th>Categoria</th><th>Último lançamento</th><th class="tr">Variação</th></tr></thead><tbody id="tb-assin"></tbody></table>
+    <div class="pft">Heurística: agrupa lançamentos com descrição semelhante e valor dentro de ±15%, aparecendo em pelo menos 2 dos últimos 4 meses. Sem acesso a dados bancários automáticos, a detecção é sobre os lançamentos já cadastrados no app.</div>
+  </div>
+
   <div class="panel">
     <div class="phd"><div class="pt">Gerenciar Categorias</div><button class="btn btn-g" style="font-size:11px;padding:5px 12px" onclick="abrirAddCategoria()">+ Nova Categoria</button></div>
     <div class="pbd"><div id="cat-gerenciar" style="display:flex;flex-wrap:wrap;gap:8px"></div></div>
@@ -4034,6 +4100,23 @@ async function atualizarMercadoImoveis(){
       <button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="goTo('orcamento')">Ajustar orçamento →</button>
     </div>
     <div class="pbd" id="obj-impacto"></div>
+  </div>
+
+  <!-- SIMULADOR DE APOSENTADORIA / INDEPENDÊNCIA FINANCEIRA -->
+  <div class="panel mb" id="panel-aposentadoria" style="margin-top:16px">
+    <div class="phd">
+      <div><div class="pt" style="display:flex;align-items:center">🏖️ Simulador de Aposentadoria</div><div class="ps">Projeção de patrimônio dado aporte mensal e rentabilidade esperada (juros compostos)</div></div>
+    </div>
+    <div class="fgrid" style="margin-bottom:14px">
+      <div class="fg"><label>Aporte mensal (R$)</label><input id="ap-aporte" type="number" step="0.01" oninput="_apPreview()"></div>
+      <div class="fg"><label>Rentabilidade esperada (% a.a.)</label><input id="ap-rent" type="number" step="0.1" oninput="_apPreview()"></div>
+      <div class="fg"><label>Prazo (anos)</label><input id="ap-anos" type="number" step="1" oninput="_apPreview()"></div>
+      <div class="fg"><label>Renda mensal desejada na aposentadoria (R$)</label><input id="ap-renda" type="number" step="0.01" oninput="_apPreview()"></div>
+    </div>
+    <div id="ap-kpis" class="kpi-row" style="margin-bottom:12px"></div>
+    <div id="ap-resultado" style="font-size:12.5px;color:var(--txt2);line-height:1.7;background:var(--bg2);border:0.5px solid var(--bdr);border-radius:var(--r);padding:12px 15px;margin-bottom:10px"></div>
+    <div style="text-align:right"><button class="btn btn-g" onclick="salvarAposentadoria()">Salvar parâmetros</button></div>
+    <div class="pft">Projeção de patrimônio composto: parte do patrimônio líquido atual + aporte mensal, capitalizado à rentabilidade informada. Regra dos 4% (retirada segura anual) usada para estimar a renda mensal sustentável — estimativa educacional, não recomendação de investimento.</div>
   </div>
 </div>
 
@@ -4583,6 +4666,26 @@ async function atualizarMercadoImoveis(){
 <div class="inv-link-sub" style="margin-bottom:12px;padding:9px 12px;background:var(--bg);border-radius:8px">O fundo entra na carteira como Renda Fixa. O rendimento é a diferença entre a posição atual e o valor aplicado.</div>
 <div class="mfoot"><button class="btn btn-ghost" onclick="closeM('m-fundo')">Cancelar</button><button class="btn btn-g" id="fu-btn" onclick="addFundo()">Adicionar</button></div></div></div>
 
+<div class="ov" id="m-cripto"><div class="modal"><button class="mc" onclick="closeM('m-cripto')">✕</button><div class="m-eye">Criptomoedas</div><div class="m-title">Adicionar Criptomoeda</div>
+<div class="fgrid"><div class="fg"><label>Moeda</label><select id="cr-moeda" onchange="_crAoMudarMoeda()"><option value="BTC">Bitcoin (BTC)</option><option value="ETH">Ethereum (ETH)</option><option value="SOL">Solana (SOL)</option><option value="BNB">BNB</option><option value="ADA">Cardano (ADA)</option><option value="XRP">XRP</option><option value="DOGE">Dogecoin (DOGE)</option><option value="LTC">Litecoin (LTC)</option><option value="DOT">Polkadot (DOT)</option><option value="MATIC">Polygon (MATIC)</option><option value="OUTRA">Outra…</option></select></div><div class="fg" id="cr-nome-wrap" style="display:none"><label>Nome da moeda</label><input id="cr-nome" type="text" placeholder="ex: Avalanche"></div></div>
+<div class="fgrid"><div class="fg"><label>Quantidade</label><input id="cr-qtd" type="number" step="any" placeholder="0.0250"></div><div class="fg"><label>Preço médio de compra (R$)</label><input id="cr-pm" type="number" step="0.01" placeholder="0.00"></div></div>
+<div class="inv-link-sub" style="margin-bottom:12px;padding:9px 12px;background:var(--bg);border-radius:8px">Cotação ao vivo (BTC, ETH, SOL, BNB, ADA, XRP, DOGE, LTC, DOT, MATIC) via CoinGecko, gratuito. Para "Outra", o preço fica travado no preço médio informado até você atualizar manualmente. <strong>Não entra na apuração de IR de ações/satélite</strong> — cripto tem regra própria de isenção (R$35.000/mês em vendas).</div>
+<div class="mfoot"><button class="btn btn-ghost" onclick="closeM('m-cripto')">Cancelar</button><button class="btn btn-g" id="cr-btn" onclick="addCripto()">Adicionar</button></div></div></div>
+
+<div class="ov" id="m-milhas"><div class="modal"><button class="mc" onclick="closeM('m-milhas')">✕</button><div class="m-eye">Milhas &amp; Pontos</div><div class="m-title">Adicionar Programa</div>
+<div class="fg" style="margin-bottom:12px"><label>Programa</label><input id="ml-programa" type="text" placeholder="Livelo, Smiles, Latam Pass…"></div>
+<div class="fgrid"><div class="fg"><label>Saldo de pontos/milhas</label><input id="ml-saldo" type="number" step="1" placeholder="50000"></div><div class="fg"><label>Valor do milheiro (R$)</label><input id="ml-vlmilheiro" type="number" step="0.01" placeholder="25.00"></div></div>
+<div class="fg" style="margin-bottom:12px"><label>Observação (opcional)</label><input id="ml-obs" type="text" placeholder="validade, clube de assinatura…"></div>
+<div class="inv-link-sub" style="margin-bottom:12px;padding:9px 12px;background:var(--bg);border-radius:8px">Valor estimado = (saldo ÷ 1000) × valor do milheiro. Cadastro manual — não há API gratuita confiável para cotação de milhas/pontos. Atualize o valor do milheiro periodicamente conforme cotações de mercado (ex: MaxMilhas, Melhores Destinos).</div>
+<div class="mfoot"><button class="btn btn-ghost" onclick="closeM('m-milhas')">Cancelar</button><button class="btn btn-g" id="ml-btn" onclick="addMilhas()">Adicionar</button></div></div></div>
+
+<div class="ov" id="m-bench"><div class="modal"><button class="mc" onclick="closeM('m-bench')">✕</button><div class="m-eye">Investimentos</div><div class="m-title">Taxas de Benchmark</div>
+<div class="fg" style="margin-bottom:12px"><label>Período de referência</label><input id="bn-periodo" type="text" placeholder="12m"></div>
+<div class="fgrid"><div class="fg"><label>CDI acumulado (%)</label><input id="bn-cdi" type="number" step="0.01" placeholder="10.75"></div><div class="fg"><label>IBOVESPA (%)</label><input id="bn-ibov" type="number" step="0.01" placeholder="12.00"></div></div>
+<div class="fg" style="margin-bottom:12px"><label>S&amp;P500 (%)</label><input id="bn-sp500" type="number" step="0.01" placeholder="10.00"></div>
+<div class="inv-link-sub" style="margin-bottom:12px;padding:9px 12px;background:var(--bg);border-radius:8px">Taxas de referência, editáveis manualmente (sem API paga). Atualize periodicamente com valores públicos (Banco Central, B3, indexes).</div>
+<div class="mfoot"><button class="btn btn-ghost" onclick="closeM('m-bench')">Cancelar</button><button class="btn btn-g" onclick="salvarBench()">Salvar</button></div></div></div>
+
 <div class="ov" id="m-grao"><div class="modal"><button class="mc" onclick="closeM('m-grao')">✕</button><div class="m-eye">Commodities · Grãos</div><div class="m-title">Operação de Grãos</div>
 <div class="fgrid"><div class="fg"><label>Produto</label><select id="gr-prod" onchange="_grSymRef()"><option value="soja">Soja</option><option value="milho">Milho</option><option value="trigo">Trigo</option></select></div><div class="fg"><label>Operação</label><select id="gr-tipo" onchange="_grAjustarConta()"><option value="originacao">Originação</option><option value="compra">Compra</option><option value="venda">Venda</option></select></div></div>
 <div class="fgrid"><div class="fg"><label>Data</label><input id="gr-dt" type="date"></div><div class="fg"><label>Quantidade (sacas)</label><input id="gr-qtd" type="number" placeholder="1000" step="1"></div></div>
@@ -4605,7 +4708,7 @@ async function atualizarMercadoImoveis(){
 
 <div class="ov" id="m-gasto"><div class="modal"><button class="mc" onclick="closeM('m-gasto')">✕</button><div class="m-eye">Controle Pessoal</div><div class="m-title">Novo Lançamento</div>
 <div class="fgrid"><div class="fg"><label>Data</label><input id="ga-dt" type="date"></div><div class="fg"><label>Valor (R$)</label><input id="ga-vl" type="number" placeholder="0.00" step="0.01"></div></div>
-<div class="fgrid"><div class="fg"><label>Descrição</label><input id="ga-dc" type="text" placeholder="Descrição…"></div><div class="fg"><label>Categoria</label><select id="ga-ct"></select></div></div>
+<div class="fgrid"><div class="fg"><label>Descrição</label><input id="ga-dc" type="text" placeholder="Descrição…" oninput="_aoDigitarDescGasto()"></div><div class="fg"><label>Categoria <span id="ga-ct-auto" class="cm" style="font-size:9.5px;display:none">· sugerida</span></label><select id="ga-ct" onchange="_gaCatDirty=true"></select></div></div>
 <div class="fgrid">
   <div class="fg"><label>Forma de Pagamento</label>
     <select id="ga-forma" onchange="onGastoForma()">
@@ -4703,8 +4806,8 @@ async function atualizarMercadoImoveis(){
 
 <div class="ov" id="m-compra"><div class="modal"><button class="mc" onclick="closeM('m-compra')">✕</button><div class="m-eye">Cartões de Crédito</div><div class="m-title">Nova Compra</div>
 <div class="fgrid"><div class="fg"><label>Data</label><input id="cp-dt" type="date"></div><div class="fg"><label>Cartão</label><select id="cp-ct"></select></div></div>
-<div class="fg" style="margin-bottom:12px"><label>Descrição</label><input id="cp-dc" type="text" placeholder="Supermercado, Amazon…"></div>
-<div class="fgrid"><div class="fg"><label>Categoria</label><select id="cp-ca"></select></div><div class="fg"><label>Valor Total (R$)</label><input id="cp-vl" type="number" placeholder="0.00" step="0.01"></div></div>
+<div class="fg" style="margin-bottom:12px"><label>Descrição</label><input id="cp-dc" type="text" placeholder="Supermercado, Amazon…" oninput="_aoDigitarDescCompra()"></div>
+<div class="fgrid"><div class="fg"><label>Categoria <span id="cp-ca-auto" class="cm" style="font-size:9.5px;display:none">· sugerida</span></label><select id="cp-ca" onchange="_cpCatDirty=true"></select></div><div class="fg"><label>Valor Total (R$)</label><input id="cp-vl" type="number" placeholder="0.00" step="0.01"></div></div>
 <div class="fgrid"><div class="fg"><label>Parcelas</label><select id="cp-pr"><option value="1">À vista</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option><option value="13">13x</option><option value="14">14x</option><option value="15">15x</option><option value="16">16x</option><option value="17">17x</option><option value="18">18x</option><option value="19">19x</option><option value="20">20x</option><option value="21">21x</option><option value="22">22x</option><option value="23">23x</option><option value="24">24x</option></select></div><div class="fg"><label>Valor/Parcela</label><input id="cp-vp" type="number" readonly style="opacity:.55"></div></div>
 <div class="rec-block" data-prefix="cp"></div>
 <div class="rec-scope" id="cp-scope" style="display:none">
@@ -5250,6 +5353,18 @@ const S={
   // Registro de vendas de Ações BR/Stocks EUA/FIIs/Satélite — base para apuração de IR (ganho de capital).
   // Cada venda: {id,data,ticker,tipo,nome,qtd,precoVenda,custoBase,valorVenda,resultado,contaDestinoId,lancId}
   vendasAtivos:[],
+  // Criptomoedas — classe própria (fora de S.ativos) porque tem regra de isenção de IR diferente
+  // (R$35.000/mês em vendas, não R$20.000) e não deve entrar no agrupamento de IR de ações/satélite.
+  // Cada item: {id,moeda,ticker,qtd,pm,nome}. Cotação ao vivo via getQ() (CoinGecko, já usado no app).
+  cripto:[],
+  // Milhas/pontos de cartão e programas de fidelidade (Livelo, Smiles, Latam Pass etc.) — sem API
+  // gratuita confiável, cadastro manual como as posições "satélite".
+  // Cada item: {id,programa,saldoPontos,valorMilheiro,obs}
+  milhas:[],
+  // Taxas de referência para a comparação de rentabilidade da carteira vs. benchmarks (editável pelo usuário).
+  benchRates:{cdi:10.75,ibov:12,sp500:10,periodo:'12m'},
+  // Simulador de aposentadoria / independência financeira (parâmetros salvos entre sessões).
+  aposentadoria:{aporteMensal:0,rentAA:8,anos:20,metaRendaMensal:0},
 };
 
 // ─── MOCK QUOTES
@@ -5332,6 +5447,57 @@ function _ordAlfa(arr,keyFn){
 }
 // Preenche os selects de categoria (gastos, compras e filtro de cartões) a
 // partir de S.categorias. Preserva o valor selecionado quando possível.
+// ─── CATEGORIZAÇÃO AUTOMÁTICA POR REGRAS LOCAIS (sem IA/API — custo zero) ───
+// Tabela de palavras-chave → categoria padrão. Casa contra a descrição digitada
+// no lançamento de gasto e sugere a categoria automaticamente, sem sobrescrever
+// uma escolha manual do usuário (ver _gaCatDirty).
+const REGRAS_CATEGORIA=[
+  {re:/\b(uber|99|99pop|taxi|t[aá]xi|combust[ií]vel|posto|gasolina|etanol|estacionamento|ped[aá]gio|metr[oô]|onibus|ônibus|passagem municipal)\b/i,cat:'Transporte'},
+  {re:/\b(ifood|restaurante|lanchonete|padaria|supermercado|mercado|feira|hortifruti|a[cç]ougue|delivery|rappi|hamburgueria|pizzaria|café|cafeteria)\b/i,cat:'Alimentação'},
+  {re:/\b(farmacia|farmácia|drogaria|hospital|clinica|clínica|plano de sa[uú]de|dentista|m[eé]dico|laborat[oó]rio|exame|remedio|remédio|academia|smart ?fit)\b/i,cat:'Saúde'},
+  {re:/\b(cinema|netflix|spotify|amazon prime|disney|hbo|max|show|ingresso|teatro|jogo|game|steam|playstation|xbox|bar\b|balada)\b/i,cat:'Lazer'},
+  {re:/\b(aluguel|condominio|condomínio|iptu|energia el[eé]trica|copel|cemig|light|enel|conta de luz|conta de agua|conta de água|sabesp|sanepar|gas encanado|internet|net fibra|vivo fibra|claro net)\b/i,cat:'Moradia'},
+  {re:/\b(escola|faculdade|universidade|curso|mensalidade escolar|udemy|alura|coursera|livro|livraria|material escolar)\b/i,cat:'Educação'},
+  {re:/\b(roupa|cal[cç]ado|t[eê]nis|zara|renner|riachuelo|c\&a|shopee|shein|magalu roupas)\b/i,cat:'Vestuário'},
+  {re:/\b(sal[aã]o|barbearia|advogado|contador|assinatura|mensalidade software|manuten[cç][aã]o|pet ?shop|veterin[aá]rio)\b/i,cat:'Serviços'},
+  {re:/\b(passagem a[eé]rea|hotel|pousada|airbnb|booking|viagem|aeroporto|voo|cia a[eé]rea|latam|gol|azul)\b/i,cat:'Viagem'},
+];
+function _sugerirCategoria(desc){
+  const d=(desc||'').toLowerCase();
+  if(!d)return null;
+  const regra=REGRAS_CATEGORIA.find(r=>r.re.test(d));
+  return regra?regra.cat:null;
+}
+let _gaCatDirty=false; // true assim que o usuário escolhe a categoria manualmente (ou está editando)
+function _aoDigitarDescGasto(){
+  if(_gaCatDirty)return;
+  const desc=document.getElementById('ga-dc')?.value;
+  const sugestao=_sugerirCategoria(desc);
+  const sel=document.getElementById('ga-ct');
+  const badge=document.getElementById('ga-ct-auto');
+  if(!sel)return;
+  if(sugestao && [...sel.options].some(o=>o.value===sugestao)){
+    sel.value=sugestao;
+    if(badge)badge.style.display='';
+  } else if(badge){
+    badge.style.display='none';
+  }
+}
+let _cpCatDirty=false;
+function _aoDigitarDescCompra(){
+  if(_cpCatDirty)return;
+  const desc=document.getElementById('cp-dc')?.value;
+  const sugestao=_sugerirCategoria(desc);
+  const sel=document.getElementById('cp-ca');
+  const badge=document.getElementById('cp-ca-auto');
+  if(!sel)return;
+  if(sugestao && [...sel.options].some(o=>o.value===sugestao)){
+    sel.value=sugestao;
+    if(badge)badge.style.display='';
+  } else if(badge){
+    badge.style.display='none';
+  }
+}
 function popularCategorias(){
   const cats=_ordAlfa(S.categorias||[]);
   // Selects de cadastro (gasto e compra)
@@ -5568,7 +5734,7 @@ const getQ=tk=>{const q=MQ[tk];if(!q)return null;const j=(Math.random()-.5)*.003
 // ─── CHARTS cache
 const CH={};
 // ─── Contexto de edição (guarda o que está sendo editado por modal)
-const EDIT={ativo:null,dividendo:null,gasto:null,conta:null,lanc:null,cartao:null,compra:null,bem:null,objetivo:null,orc:null,cot:null,pagfat:null,grao:null,aluguel:null,fundo:null};
+const EDIT={ativo:null,dividendo:null,gasto:null,conta:null,lanc:null,cartao:null,compra:null,bem:null,objetivo:null,orc:null,cot:null,pagfat:null,grao:null,aluguel:null,fundo:null,cripto:null,milhas:null};
 function limparEdit(){for(const k in EDIT)EDIT[k]=null;}
 // Guarda o callback pendente da exclusão recorrente (recebe o escopo: 'one'|'all')
 let _delRecCb=null;
@@ -5941,7 +6107,9 @@ function limiteDisponivel(cartao){
 function valorBensTotal(){return(S.bens||[]).reduce((s,b)=>s+b.vlAt,0)}
 // Valor patrimonial dos grãos: estoque físico valorizado + resultado de hedge em aberto
 function valorGraosTotal(){return graosEstoqueValor()+graosHedgeTotal()}
-function patrimonioLiquido(){return totInv()+saldoBancarioTotal()+valorBensTotal()+valorGraosTotal()-faturasTotalAbertas()-totalSaldoDevedor()}
+function valorCriptoTotal(){return (S.cripto||[]).reduce((s,c)=>{const q=getQ(c.ticker+'BRL');const preco=q?q.p:c.pm;return s+c.qtd*preco;},0)}
+function valorMilhasTotal(){return (S.milhas||[]).reduce((s,m)=>s+(m.saldoPontos/1000)*m.valorMilheiro,0)}
+function patrimonioLiquido(){return totInv()+saldoBancarioTotal()+valorBensTotal()+valorGraosTotal()+valorCriptoTotal()+valorMilhasTotal()-faturasTotalAbertas()-totalSaldoDevedor()}
 
 // ─── ALERTAS INTELIGENTES
 function gerarAlertas(){
@@ -6897,6 +7065,11 @@ function rcar(){
   rgraos();
   rdivMonitor();
   rVendasAtivos();
+  rCripto();
+  rMilhas();
+  rBenchmarks();
+  rDeclaracaoBens();
+  rFgc();
 }
 // ─── MONITORAMENTO DE DIVIDENDOS POR EMPRESA (Ações BR / Stocks EUA) ───
 // Agrupa S.dividendos por empresa, separando BR de EUA. A classificação usa
@@ -8842,6 +9015,53 @@ function rgas(){
     return `<tr${(g.data||'')<_hojeISO()?' class="lanc-ant"':''}${g.forecast&&!((g.data||'')<_hojeISO())?' style="opacity:.92"':''}><td class="cm mono" data-label="Data" style="font-size:11px">${fdt(g.data)}</td><td data-label="Descrição">${g.desc}${g.forecast?' <span class="fc-badge">previsto</span>':''}</td><td data-label="Categoria"><span class="badge b-n" style="font-size:9px">${g.cat}</span></td><td data-label="Origem">${formaBadge}</td><td class="tr mono cr" data-label="Valor">${brl(g.valor)}</td><td class="td-act"><button class="btn btn-ed" onclick="editGasto(${i})">✎</button> <button class="btn btn-d" onclick="rmGasto(${i})">✕</button></td></tr>`;
   }).join('').concat(_tblMaisHTML('gastos',_visG.length,_gasPag.length,6)):`<tr><td colspan="6" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prevG?'Nenhum gasto previsto':'Nenhum gasto'}</td></tr>`;
   renderGerenciarCategorias();
+  rAssinaturas();
+}
+// ─── RASTREADOR DE ASSINATURAS/RECORRÊNCIAS ───
+// Heurística local (sem IA/API paga): agrupa lançamentos com descrição normalizada
+// igual, aparecendo em ≥2 meses distintos dos últimos 4 meses, com valor estável
+// (variação máx-mín ≤50% da média) — indício de cobrança recorrente/assinatura.
+// Reaproveita _normDesc() já usado na deduplicação de importação (definida mais abaixo no arquivo).
+function _detectarAssinaturas(){
+  const hoje=new Date();
+  const limite=new Date(hoje.getFullYear(),hoje.getMonth()-3,1);
+  const itens=[
+    ...(S.gastos||[]).filter(g=>!g.forecast&&g.data).map(g=>({data:g.data,desc:g.desc,cat:g.cat,valor:g.valor})),
+    ...(S.compras||[]).filter(c=>!c.forecast&&c.data).map(c=>({data:c.data,desc:c.desc,cat:c.cat,valor:(c.valor||0)/(c.parcelas||1)})),
+  ].filter(x=>{ const d=new Date(x.data); return !isNaN(d)&&d>=limite; });
+  const grupos={};
+  itens.forEach(it=>{
+    const key=_normDesc(it.desc);
+    if(!key)return;
+    (grupos[key]=grupos[key]||[]).push(it);
+  });
+  const resultado=[];
+  Object.values(grupos).forEach(lista=>{
+    if(lista.length<2)return;
+    const meses=new Set(lista.map(x=>(x.data||'').slice(0,7)));
+    if(meses.size<2)return;
+    const valores=lista.map(x=>x.valor);
+    const media=valores.reduce((a,b)=>a+b,0)/valores.length;
+    const min=Math.min(...valores),max=Math.max(...valores);
+    if(media<=0||(max-min)/media>0.5)return; // valores muito díspares não indicam assinatura
+    const ultimo=[...lista].sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];
+    resultado.push({desc:ultimo.desc,cat:ultimo.cat,valorMedio:media,ocorrencias:lista.length,meses:meses.size,ultimaData:ultimo.data,variacao:(max-min)/media*100});
+  });
+  return resultado.sort((a,b)=>b.valorMedio-a.valorMedio);
+}
+function rAssinaturas(){
+  const kpisEl=document.getElementById('assin-kpis');if(!kpisEl)return;
+  const vazioEl=document.getElementById('assin-vazio'),tabEl=document.getElementById('assin-tabela');
+  const lista=_detectarAssinaturas();
+  if(!lista.length){ if(vazioEl)vazioEl.style.display='block'; if(tabEl)tabEl.style.display='none'; kpisEl.innerHTML=''; return; }
+  if(vazioEl)vazioEl.style.display='none'; if(tabEl)tabEl.style.display='';
+  const totalMensal=lista.reduce((s,x)=>s+x.valorMedio,0);
+  kpisEl.innerHTML=`<div class="kpi"><div class="kpi-eye">Assinaturas Detectadas</div><div class="kpi-val">${lista.length}</div></div><div class="kpi"><div class="kpi-eye">Total Estimado/Mês</div><div class="kpi-val cr">${brl(totalMensal)}</div></div><div class="kpi"><div class="kpi-eye">Estimado/Ano</div><div class="kpi-val cr">${brl(totalMensal*12)}</div></div>`;
+  const tb=document.getElementById('tb-assin');
+  if(tb)tb.innerHTML=lista.map(x=>{
+    const alerta=x.variacao>10;
+    return `<tr><td data-label="Descrição"><strong>${x.desc}</strong></td><td class="tr mono" data-label="Valor médio">${brl(x.valorMedio)}</td><td class="tr mono" data-label="Ocorrências">${x.ocorrencias}× (${x.meses} meses)</td><td data-label="Categoria"><span class="badge b-g" style="font-size:9px">${x.cat||'—'}</span></td><td class="cm" data-label="Último lançamento" style="font-size:11px">${fdt(x.ultimaData)}</td><td class="tr mono ${alerta?'cr':'cm'}" data-label="Variação">${alerta?'⚠ ':''}${x.variacao.toFixed(0)}%</td></tr>`;
+  }).join('');
 }
 
 // Painel de gestão de categorias (chips com cor + botão remover)
@@ -9117,6 +9337,64 @@ function robjetivos(){
       ${totalAporte+fixosTot>S.receita?'<span style="color:var(--red);font-weight:600">⚠ Comprometimento acima da receita! Revise objetivos ou aumente receita.</span>':''}
     </div>
   `;
+  rAposentadoria();
+}
+// ─── SIMULADOR DE APOSENTADORIA / INDEPENDÊNCIA FINANCEIRA ───
+// Projeção de juros compostos: patrimônio líquido atual + aporte mensal, capitalizado
+// à rentabilidade informada. Renda sustentável estimada pela regra dos 4% ao ano.
+let _apInit=false;
+function rAposentadoria(){
+  const kpisEl=document.getElementById('ap-kpis');if(!kpisEl)return;
+  const ap=S.aposentadoria||{aporteMensal:0,rentAA:8,anos:20,metaRendaMensal:0};
+  if(!_apInit){
+    document.getElementById('ap-aporte').value=ap.aporteMensal||0;
+    document.getElementById('ap-rent').value=ap.rentAA!=null?ap.rentAA:8;
+    document.getElementById('ap-anos').value=ap.anos||20;
+    document.getElementById('ap-renda').value=ap.metaRendaMensal||0;
+    _apInit=true;
+  }
+  _apPreview();
+}
+function _simularAposentadoria(patrimAtual,aporte,rentAA,anos){
+  const n=Math.max(1,Math.round(anos*12));
+  const r=Math.pow(1+(rentAA/100),1/12)-1;
+  const fv=(r===0)?(patrimAtual+aporte*n):(patrimAtual*Math.pow(1+r,n)+aporte*((Math.pow(1+r,n)-1)/r));
+  const rendaMensalSustentavel=fv*0.04/12; // regra dos 4% ao ano (retirada segura)
+  return {fv,rendaMensalSustentavel,n};
+}
+function _apPreview(){
+  const kpisEl=document.getElementById('ap-kpis'),resEl=document.getElementById('ap-resultado');
+  if(!kpisEl)return;
+  const aporte=parseFloat(document.getElementById('ap-aporte').value)||0;
+  const rentAA=parseFloat(document.getElementById('ap-rent').value)||0;
+  const anos=parseFloat(document.getElementById('ap-anos').value)||0;
+  const metaRenda=parseFloat(document.getElementById('ap-renda').value)||0;
+  const patrimAtual=Math.max(0,patrimonioLiquido());
+  if(anos<=0){ kpisEl.innerHTML=''; if(resEl)resEl.innerHTML='Informe um prazo em anos maior que zero.'; return; }
+  const {fv,rendaMensalSustentavel}=_simularAposentadoria(patrimAtual,aporte,rentAA,anos);
+  const totalAportado=aporte*anos*12;
+  const jurosGanhos=fv-patrimAtual-totalAportado;
+  kpisEl.innerHTML=`<div class="kpi"><div class="kpi-eye">Patrimônio Projetado</div><div class="kpi-val cg">${brl(fv)}</div></div><div class="kpi"><div class="kpi-eye">Total Aportado</div><div class="kpi-val">${brl(totalAportado)}</div></div><div class="kpi"><div class="kpi-eye">Juros Compostos</div><div class="kpi-val cgd">${brl(Math.max(0,jurosGanhos))}</div></div><div class="kpi"><div class="kpi-eye">Renda Mensal Sustentável</div><div class="kpi-val cb">${brl(rendaMensalSustentavel)}</div></div>`;
+  let msg=`Em <strong>${anos} anos</strong>, partindo do patrimônio líquido atual (${brl(patrimAtual)}) com aporte de ${brl(aporte)}/mês a ${rentAA}% a.a., a projeção é de <strong>${brl(fv)}</strong>.`;
+  msg+=` Pela regra dos 4% (retirada anual segura), isso sustenta uma renda de aproximadamente <strong>${brl(rendaMensalSustentavel)}/mês</strong> sem consumir o principal.`;
+  if(metaRenda>0){
+    if(rendaMensalSustentavel>=metaRenda){
+      msg+=` <span class="cg">✓ Atinge a meta de renda mensal de ${brl(metaRenda)}.</span>`;
+    } else {
+      const faltaFv=Math.max(0,(metaRenda*12/0.04)-fv);
+      msg+=` <span class="cr">✗ Fica abaixo da meta de renda mensal de ${brl(metaRenda)} — faltariam ${brl(faltaFv)} de patrimônio.</span>`;
+    }
+  }
+  if(resEl)resEl.innerHTML=msg;
+}
+function salvarAposentadoria(){
+  const aporte=parseFloat(document.getElementById('ap-aporte').value)||0;
+  const rentAA=parseFloat(document.getElementById('ap-rent').value)||0;
+  const anos=parseFloat(document.getElementById('ap-anos').value)||0;
+  const metaRenda=parseFloat(document.getElementById('ap-renda').value)||0;
+  S.aposentadoria={aporteMensal:aporte,rentAA,anos,metaRendaMensal:metaRenda};
+  persistir();
+  toast('✓ Parâmetros de aposentadoria salvos');
 }
 
 // Aportar manualmente num objetivo
@@ -9492,6 +9770,99 @@ function editFundoTk(tk){
   document.getElementById('fu-pos').value=a.preco!=null?a.preco:'';
   document.getElementById('fu-tk').value=a.ticker||'';
 }
+// ─── CRIPTOMOEDAS: CRUD (S.cripto — classe própria, fora de S.ativos) ───
+function _crAoMudarMoeda(){
+  const v=document.getElementById('cr-moeda')?.value;
+  const nw=document.getElementById('cr-nome-wrap');
+  if(nw)nw.style.display=(v==='OUTRA')?'':'none';
+}
+const CRIPTO_NOMES={BTC:'Bitcoin',ETH:'Ethereum',SOL:'Solana',BNB:'BNB',ADA:'Cardano',XRP:'XRP',DOGE:'Dogecoin',LTC:'Litecoin',DOT:'Polkadot',MATIC:'Polygon'};
+function addCripto(){
+  const moedaSel=document.getElementById('cr-moeda').value;
+  const qtd=parseFloat(document.getElementById('cr-qtd').value);
+  const pm=parseFloat(document.getElementById('cr-pm').value);
+  if(isNaN(qtd)||qtd<=0||isNaN(pm)||pm<=0){toast('⚠ Preencha quantidade e preço médio');return;}
+  let ticker=moedaSel,nome=CRIPTO_NOMES[moedaSel]||moedaSel;
+  if(moedaSel==='OUTRA'){
+    nome=(document.getElementById('cr-nome').value||'').trim();
+    if(!nome){toast('⚠ Informe o nome da moeda');return;}
+    ticker=nome.toUpperCase().replace(/[^A-Z0-9]/g,'').slice(0,10)||'CRIPTO';
+  }
+  const reg={moeda:moedaSel,ticker,nome,qtd,pm};
+  if(EDIT.cripto!=null){
+    const i=(S.cripto||[]).findIndex(x=>x.id===EDIT.cripto);
+    if(i>=0){ S.cripto[i]={...S.cripto[i],...reg}; toast('✓ Posição atualizada'); }
+  } else {
+    reg.id='cr_'+Date.now()+'_'+Math.floor(Math.random()*1000);
+    (S.cripto||(S.cripto=[])).push(reg);
+    toast('✓ Criptomoeda adicionada');
+  }
+  persistir(); closeM('m-cripto');
+  const ap=document.querySelector('.page.active')?.id?.replace('page-','')||'carteira';
+  render(ap); rdash();
+}
+function editCripto(id){
+  const c=(S.cripto||[]).find(x=>x.id===id); if(!c)return;
+  openM('m-cripto');
+  EDIT.cripto=id;
+  document.querySelector('#m-cripto .m-title').textContent='Editar Criptomoeda';
+  const b=document.getElementById('cr-btn'); if(b)b.textContent='Salvar';
+  const isOutra=!CRIPTO_NOMES[c.moeda];
+  document.getElementById('cr-moeda').value=isOutra?'OUTRA':c.moeda;
+  _crAoMudarMoeda();
+  if(isOutra)document.getElementById('cr-nome').value=c.nome||'';
+  document.getElementById('cr-qtd').value=c.qtd||'';
+  document.getElementById('cr-pm').value=c.pm||'';
+}
+function rmCripto(id){
+  const c=(S.cripto||[]).find(x=>x.id===id); if(!c)return;
+  if(!confirm(`Remover a posição de ${c.nome||c.ticker}?`))return;
+  S.cripto=(S.cripto||[]).filter(x=>x.id!==id);
+  persistir();
+  const ap=document.querySelector('.page.active')?.id?.replace('page-','')||'carteira';
+  render(ap); rdash();
+  toast('✓ Posição removida');
+}
+// ─── MILHAS/PONTOS: CRUD (S.milhas) ───
+function addMilhas(){
+  const programa=(document.getElementById('ml-programa').value||'').trim();
+  const saldo=parseFloat(document.getElementById('ml-saldo').value);
+  const vlMilheiro=parseFloat(document.getElementById('ml-vlmilheiro').value);
+  const obs=(document.getElementById('ml-obs').value||'').trim();
+  if(!programa||isNaN(saldo)||saldo<0||isNaN(vlMilheiro)||vlMilheiro<=0){toast('⚠ Preencha programa, saldo e valor do milheiro');return;}
+  const reg={programa,saldoPontos:saldo,valorMilheiro:vlMilheiro,obs};
+  if(EDIT.milhas!=null){
+    const i=(S.milhas||[]).findIndex(x=>x.id===EDIT.milhas);
+    if(i>=0){ S.milhas[i]={...S.milhas[i],...reg}; toast('✓ Programa atualizado'); }
+  } else {
+    reg.id='ml_'+Date.now()+'_'+Math.floor(Math.random()*1000);
+    (S.milhas||(S.milhas=[])).push(reg);
+    toast('✓ Programa adicionado');
+  }
+  persistir(); closeM('m-milhas');
+  const ap=document.querySelector('.page.active')?.id?.replace('page-','')||'carteira';
+  render(ap); rdash();
+}
+function editMilhas(id){
+  const m=(S.milhas||[]).find(x=>x.id===id); if(!m)return;
+  openM('m-milhas');
+  EDIT.milhas=id;
+  document.querySelector('#m-milhas .m-title').textContent='Editar Programa';
+  const b=document.getElementById('ml-btn'); if(b)b.textContent='Salvar';
+  document.getElementById('ml-programa').value=m.programa||'';
+  document.getElementById('ml-saldo').value=m.saldoPontos||'';
+  document.getElementById('ml-vlmilheiro').value=m.valorMilheiro||'';
+  document.getElementById('ml-obs').value=m.obs||'';
+}
+function rmMilhas(id){
+  const m=(S.milhas||[]).find(x=>x.id===id); if(!m)return;
+  if(!confirm(`Remover o programa ${m.programa}?`))return;
+  S.milhas=(S.milhas||[]).filter(x=>x.id!==id);
+  persistir();
+  const ap=document.querySelector('.page.active')?.id?.replace('page-','')||'carteira';
+  render(ap); rdash();
+  toast('✓ Programa removido');
+}
 function rmAtivo(tk){
   const a=S.ativos.find(x=>x.ticker===tk);
   // Se o ativo teve aporte vinculado, oferecer resgate à conta (crédito) ao remover
@@ -9583,6 +9954,164 @@ function rmVendaAtivo(id){
   toast('Registro de venda removido');
   const ap=document.querySelector('.page.active')?.id?.replace('page-','')||'carteira';
   render(ap);rdash();
+}
+// ─── CRIPTOMOEDAS: render ───
+function rCripto(){
+  const kpisEl=document.getElementById('cripto-kpis');if(!kpisEl)return;
+  const lista=S.cripto||[];
+  const vazioEl=document.getElementById('cripto-vazio'),tabEl=document.getElementById('cripto-tabela');
+  if(!lista.length){ if(vazioEl)vazioEl.style.display='block'; if(tabEl)tabEl.style.display='none'; kpisEl.innerHTML=''; return; }
+  if(vazioEl)vazioEl.style.display='none'; if(tabEl)tabEl.style.display='';
+  let totInvest=0,totAtual=0;
+  const rows=lista.map(c=>{
+    const q=getQ(c.ticker+'BRL');
+    const preco=q?q.p:c.pm;
+    const posicao=c.qtd*preco,custoP=c.qtd*c.pm,resultado=posicao-custoP;
+    totInvest+=custoP; totAtual+=posicao;
+    return `<tr><td data-label="Moeda"><strong>${c.nome}</strong><br><span class="cm" style="font-size:10px">${c.ticker}</span></td><td class="tr mono" data-label="Qtd">${c.qtd}</td><td class="tr mono" data-label="PM">${brl(c.pm)}</td><td class="tr mono" data-label="Atual">${brl(preco)}${q?'':'<br><span class="cm" style="font-size:9px">manual</span>'}</td><td class="tr mono" data-label="Posição">${brl(posicao)}</td><td class="tr mono ${cCls(resultado)}" data-label="Resultado">${resultado>=0?'+':'-'}${brl(Math.abs(resultado))}</td><td class="td-act"><button class="btn btn-ed" onclick="editCripto('${c.id}')">✎</button> <button class="btn btn-d" onclick="rmCripto('${c.id}')">✕</button></td></tr>`;
+  }).join('');
+  const tb=document.getElementById('tb-cripto');if(tb)tb.innerHTML=rows;
+  const rDif=totAtual-totInvest,rp=totInvest>0?rDif/totInvest*100:0;
+  kpisEl.innerHTML=`<div class="kpi"><div class="kpi-eye">Total Investido</div><div class="kpi-val">${brl(totInvest)}</div></div><div class="kpi"><div class="kpi-eye">Posição Atual</div><div class="kpi-val">${brl(totAtual)}</div></div><div class="kpi"><div class="kpi-eye">Resultado</div><div class="kpi-val ${cCls(rDif)}">${rDif>=0?'+':'-'}${brl(Math.abs(rDif))}</div></div><div class="kpi"><div class="kpi-eye">Rentabilidade</div><div class="kpi-val ${cCls(rp)}">${pct(rp)}</div></div>`;
+}
+// ─── MILHAS/PONTOS: render ───
+function rMilhas(){
+  const kpisEl=document.getElementById('milhas-kpis');if(!kpisEl)return;
+  const lista=S.milhas||[];
+  const vazioEl=document.getElementById('milhas-vazio'),tabEl=document.getElementById('milhas-tabela');
+  if(!lista.length){ if(vazioEl)vazioEl.style.display='block'; if(tabEl)tabEl.style.display='none'; kpisEl.innerHTML=''; return; }
+  if(vazioEl)vazioEl.style.display='none'; if(tabEl)tabEl.style.display='';
+  let totValor=0;
+  const rows=lista.map(m=>{
+    const valor=(m.saldoPontos/1000)*m.valorMilheiro;
+    totValor+=valor;
+    return `<tr><td data-label="Programa"><strong>${m.programa}</strong></td><td class="tr mono" data-label="Saldo">${(m.saldoPontos||0).toLocaleString('pt-BR')}</td><td class="tr mono" data-label="Valor/milheiro">${brl(m.valorMilheiro)}</td><td class="tr mono" data-label="Valor estimado">${brl(valor)}</td><td class="cm" data-label="Obs.">${m.obs||'—'}</td><td class="td-act"><button class="btn btn-ed" onclick="editMilhas('${m.id}')">✎</button> <button class="btn btn-d" onclick="rmMilhas('${m.id}')">✕</button></td></tr>`;
+  }).join('');
+  const tb=document.getElementById('tb-milhas');if(tb)tb.innerHTML=rows;
+  kpisEl.innerHTML=`<div class="kpi"><div class="kpi-eye">Programas</div><div class="kpi-val">${lista.length}</div></div><div class="kpi"><div class="kpi-eye">Valor Estimado Total</div><div class="kpi-val">${brl(totValor)}</div></div>`;
+}
+// ─── COMPARAÇÃO VS. BENCHMARKS ───
+function abrirConfigBench(){
+  const br=S.benchRates||{cdi:10.75,ibov:12,sp500:10,periodo:'12m'};
+  openM('m-bench');
+  document.getElementById('bn-periodo').value=br.periodo||'12m';
+  document.getElementById('bn-cdi').value=br.cdi!=null?br.cdi:'';
+  document.getElementById('bn-ibov').value=br.ibov!=null?br.ibov:'';
+  document.getElementById('bn-sp500').value=br.sp500!=null?br.sp500:'';
+}
+function salvarBench(){
+  const periodo=(document.getElementById('bn-periodo').value||'12m').trim();
+  const cdi=parseFloat(document.getElementById('bn-cdi').value);
+  const ibov=parseFloat(document.getElementById('bn-ibov').value);
+  const sp500=parseFloat(document.getElementById('bn-sp500').value);
+  S.benchRates={periodo,cdi:isNaN(cdi)?0:cdi,ibov:isNaN(ibov)?0:ibov,sp500:isNaN(sp500)?0:sp500};
+  persistir(); closeM('m-bench');
+  rBenchmarks();
+  toast('✓ Taxas de benchmark atualizadas');
+}
+function rBenchmarks(){
+  const kpisEl=document.getElementById('bench-kpis'),barrasEl=document.getElementById('bench-barras');
+  if(!kpisEl)return;
+  const inv=totInv(),cs=custo(),rp=cs>0?(inv-cs)/cs*100:0;
+  const br=S.benchRates||{cdi:10.75,ibov:12,sp500:10,periodo:'12m'};
+  kpisEl.innerHTML=`<div class="kpi"><div class="kpi-eye">Carteira (total)</div><div class="kpi-val ${cCls(rp)}">${pct(rp)}</div></div><div class="kpi"><div class="kpi-eye">CDI (${br.periodo})</div><div class="kpi-val">${pct(br.cdi)}</div></div><div class="kpi"><div class="kpi-eye">IBOVESPA (${br.periodo})</div><div class="kpi-val">${pct(br.ibov)}</div></div><div class="kpi"><div class="kpi-eye">S&amp;P500 (${br.periodo})</div><div class="kpi-val">${pct(br.sp500)}</div></div>`;
+  const itens=[['Carteira',rp,'var(--accent)'],['CDI',br.cdi,'#8A8A8A'],['IBOVESPA',br.ibov,'#2E6B3A'],['S&P500',br.sp500,'#1D4ED8']];
+  const maxAbs=Math.max(1,...itens.map(i=>Math.abs(i[1])));
+  if(barrasEl)barrasEl.innerHTML=itens.map(([nome,v,cor])=>{
+    const w=Math.min(100,Math.abs(v)/maxAbs*100);
+    return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:11.5px;margin-bottom:3px"><span>${nome}</span><span class="${cCls(v)}">${pct(v)}</span></div><div class="pillar-track"><div class="pillar-fill" style="width:${w}%;background:${cor}"></div></div></div>`;
+  }).join('');
+}
+// ─── MONITOR DE COBERTURA FGC ───
+function rFgc(){
+  const vazioEl=document.getElementById('fgc-vazio'),contEl=document.getElementById('fgc-conteudo');
+  if(!contEl)return;
+  const titulos=(S.ativos||[]).filter(a=>a.tipo==='RF'&&!a.fundo);
+  if(!titulos.length){ if(vazioEl)vazioEl.style.display='block'; contEl.innerHTML=''; return; }
+  if(vazioEl)vazioEl.style.display='none';
+  const porInst={};
+  titulos.forEach(a=>{
+    const inst=a.inst||'Instituição não informada';
+    porInst[inst]=(porInst[inst]||0)+(a.pm||0);
+  });
+  const LIMITE=250000;
+  contEl.innerHTML=Object.entries(porInst).sort((a,b)=>b[1]-a[1]).map(([inst,total])=>{
+    const pctUso=Math.min(100,total/LIMITE*100);
+    const estouro=total>LIMITE;
+    return `<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px"><span><strong>${inst}</strong></span><span class="${estouro?'cr':'cm'}">${brl(total)}${estouro?' ⚠ acima do limite':''}</span></div><div class="pillar-track"><div class="pillar-fill" style="width:${pctUso}%;background:${estouro?'#B23A3A':'#2E6B3A'}"></div></div></div>`;
+  }).join('');
+}
+// ─── DECLARAÇÃO DE BENS — IRPF ───
+// Deriva a lista de bens/direitos a partir de S.ativos + S.cripto + S.bens + S.contas,
+// com códigos aproximados da tabela de Bens e Direitos da Receita Federal. Não substitui
+// revisão manual na declaração oficial.
+function _bensIrpfLinhas(){
+  const linhas=[];
+  (S.ativos||[]).filter(a=>(a.tipo==='BR'||a.tipo==='SAT')&&a.qtd>0).forEach(a=>{
+    linhas.push({codigo:'31/32',grupo:'Participações societárias (ações)',desc:`${a.qtd} ${a.ticker}${a.nome?' — '+a.nome:''} (B3)`,valor:pos(a)});
+  });
+  (S.ativos||[]).filter(a=>a.tipo==='US'&&a.qtd>0).forEach(a=>{
+    linhas.push({codigo:'127',grupo:'Bens e direitos no exterior',desc:`${a.qtd} ${a.ticker}${a.nome?' — '+a.nome:''} (NYSE/NASDAQ)`,valor:pos(a)});
+  });
+  (S.ativos||[]).filter(a=>a.tipo==='FII'&&a.qtd>0).forEach(a=>{
+    linhas.push({codigo:'73',grupo:'Fundos',desc:`${a.qtd} cotas ${a.ticker}${a.nome?' — '+a.nome:''}`,valor:pos(a)});
+  });
+  (S.ativos||[]).filter(a=>a.tipo==='RF').forEach(a=>{
+    linhas.push({codigo:a.fundo?'72':'45',grupo:'Aplicações financeiras',desc:`${a.fundo?'Fundo':'Título'} ${a.ticker}${a.inst?' — '+a.inst:''}`,valor:a.pm||0});
+  });
+  (S.cripto||[]).forEach(c=>{
+    const q=getQ(c.ticker+'BRL');const preco=q?q.p:c.pm;
+    linhas.push({codigo:'81/89',grupo:'Criptoativos',desc:`${c.qtd} ${c.ticker}${c.nome?' — '+c.nome:''}`,valor:c.qtd*preco});
+  });
+  const codBem={veiculo:'21',rural:'14',urbano:'11'};
+  (S.bens||[]).forEach(b=>{
+    linhas.push({codigo:codBem[b.cat]||'99',grupo:'Bens móveis e imóveis',desc:`${b.nome}${b.detalhe?' — '+b.detalhe:''}`,valor:b.vlAt!=null?b.vlAt:(b.vlAq||0)});
+  });
+  (S.contas||[]).forEach(c=>{
+    linhas.push({codigo:'41/42',grupo:'Depósitos (conta corrente/poupança)',desc:c.nome,valor:c.saldo||0});
+  });
+  return linhas;
+}
+function rDeclaracaoBens(){
+  const el=document.getElementById('bens-irpf-conteudo');if(!el)return;
+  const linhas=_bensIrpfLinhas();
+  if(!linhas.length){ el.innerHTML='<div class="empty-hint" style="padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum bem cadastrado ainda.</div>'; return; }
+  const total=linhas.reduce((s,l)=>s+l.valor,0);
+  const porGrupo={};
+  linhas.forEach(l=>{(porGrupo[l.grupo]=porGrupo[l.grupo]||[]).push(l)});
+  let html='';
+  Object.entries(porGrupo).forEach(([grupo,itens])=>{
+    html+=`<div class="pt" style="font-size:12.5px;margin:12px 0 6px">${grupo}</div>`;
+    html+=`<table class="tbl-mob-cards" style="margin-bottom:8px"><thead><tr><th>Código</th><th>Discriminação</th><th class="tr">Situação atual</th></tr></thead><tbody>`;
+    itens.forEach(l=>{
+      html+=`<tr><td class="mono" data-label="Código">${l.codigo}</td><td data-label="Discriminação">${l.desc}</td><td class="tr mono" data-label="Situação atual">${brl(l.valor)}</td></tr>`;
+    });
+    html+='</tbody></table>';
+  });
+  html+=`<div style="font-size:12.5px;font-weight:600;margin-top:8px;text-align:right">Total: ${brl(total)}</div>`;
+  el.innerHTML=html;
+}
+function exportarBensIrpfTxt(){
+  const linhas=_bensIrpfLinhas();
+  if(!linhas.length){ toast('⚠ Nenhum bem cadastrado ainda'); return; }
+  let txt='DECLARAÇÃO DE BENS E DIREITOS — rascunho gerado em '+new Date().toLocaleDateString('pt-BR')+'\n';
+  txt+='Revise cada item na declaração oficial (código, discriminação completa, saldo em 31/12).\n\n';
+  const porGrupo={};
+  linhas.forEach(l=>{(porGrupo[l.grupo]=porGrupo[l.grupo]||[]).push(l)});
+  Object.entries(porGrupo).forEach(([grupo,itens])=>{
+    txt+='── '+grupo+' ──\n';
+    itens.forEach(l=>{ txt+=`Código ${l.codigo} — ${l.desc} — ${brl(l.valor)}\n`; });
+    txt+='\n';
+  });
+  const total=linhas.reduce((s,l)=>s+l.valor,0);
+  txt+='TOTAL: '+brl(total)+'\n';
+  const blob=new Blob([txt],{type:'text/plain;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a');
+  a.href=url; a.download='declaracao-bens-irpf-'+new Date().toISOString().split('T')[0]+'.txt';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url)},100);
+  toast('✓ Declaração de bens exportada (.txt)');
 }
 function rVendasAtivos(){
   const tb=document.getElementById('tb-vendas-ativos');if(!tb)return;
@@ -10121,6 +10650,7 @@ function editGasto(i){
   document.getElementById('ga-vl').value=g.valor;
   document.getElementById('ga-dc').value=g.desc;
   document.getElementById('ga-ct').value=g.cat;
+  _gaCatDirty=true; // edição carrega categoria já definida — não deixa a sugestão automática sobrescrever
   document.getElementById('ga-forma').value=g.forma||'dinheiro';
   onGastoForma();
   if(g.origem){const sel=document.getElementById('ga-origem');if(sel)sel.value=g.origem;}
@@ -10430,6 +10960,7 @@ function editCompra(id){
   document.getElementById('cp-ct').value=cp.cartao;
   document.getElementById('cp-dc').value=cp.desc;
   document.getElementById('cp-ca').value=cp.cat;
+  _cpCatDirty=true; // edição carrega categoria já definida — não deixa a sugestão automática sobrescrever
   document.getElementById('cp-vl').value=cp.valor;
   document.getElementById('cp-pr').value=cp.parcelas;
   const scope=document.getElementById('cp-scope');
@@ -10599,7 +11130,7 @@ function openM(id){
   const now=new Date().toISOString().split('T')[0];
   // Reset de modo-edição: por padrão todo modal abre em modo "adicionar".
   // As funções edit* chamam openM primeiro e depois ajustam título/botão/EDIT.
-  const _mt={'m-ativo':['ativo','Adicionar Ativo','Adicionar'],'m-dividendo':['dividendo','Lançar Provento','Confirmar'],'m-gasto':['gasto','Novo Lançamento','Adicionar'],'m-conta':['conta','Nova Conta','Adicionar'],'m-lancamento':['lanc','Novo Lançamento','Lançar'],'m-cartao':['cartao','Novo Cartão','Adicionar'],'m-compra':['compra','Nova Compra','Adicionar'],'m-bem':['bem','Novo Bem','Cadastrar Bem'],'m-objetivo':['objetivo','Novo Objetivo','Adicionar'],'m-orcamento':['orc','Nova Conta de Orçamento','Adicionar Categoria'],'m-aluguel':['aluguel','Contrato de Aluguel','Adicionar'],'m-fundo':['fundo','Fundo de Investimento','Adicionar']};
+  const _mt={'m-ativo':['ativo','Adicionar Ativo','Adicionar'],'m-dividendo':['dividendo','Lançar Provento','Confirmar'],'m-gasto':['gasto','Novo Lançamento','Adicionar'],'m-conta':['conta','Nova Conta','Adicionar'],'m-lancamento':['lanc','Novo Lançamento','Lançar'],'m-cartao':['cartao','Novo Cartão','Adicionar'],'m-compra':['compra','Nova Compra','Adicionar'],'m-bem':['bem','Novo Bem','Cadastrar Bem'],'m-objetivo':['objetivo','Novo Objetivo','Adicionar'],'m-orcamento':['orc','Nova Conta de Orçamento','Adicionar Categoria'],'m-aluguel':['aluguel','Contrato de Aluguel','Adicionar'],'m-fundo':['fundo','Fundo de Investimento','Adicionar'],'m-cripto':['cripto','Adicionar Criptomoeda','Adicionar'],'m-milhas':['milhas','Adicionar Programa','Adicionar']};
   if(_mt[id]){
     const [ek,titulo,btn]=_mt[id];
     EDIT[ek]=null;
@@ -10614,7 +11145,7 @@ function openM(id){
     if(id==='m-lancamento'&&typeof onLcTipo==='function')onLcTipo();
     if(id==='m-bem'&&typeof onBemCat==='function')onBemCat();
   }
-  if(id==='m-gasto'){popularCategorias();document.getElementById('ga-dt').value=now;resetRec('ga');resetForecast('ga');document.getElementById('ga-forma').value='conta';onGastoForma();const rb=document.querySelector('#m-gasto .rec-block');if(rb)rb.style.display='';const sc=document.getElementById('ga-scope');if(sc)sc.style.display='none';}
+  if(id==='m-gasto'){popularCategorias();document.getElementById('ga-dt').value=now;resetRec('ga');resetForecast('ga');document.getElementById('ga-forma').value='conta';onGastoForma();const rb=document.querySelector('#m-gasto .rec-block');if(rb)rb.style.display='';const sc=document.getElementById('ga-scope');if(sc)sc.style.display='none';_gaCatDirty=false;const gcAuto=document.getElementById('ga-ct-auto');if(gcAuto)gcAuto.style.display='none';}
   if(id==='m-ativo'){_popularContasSelect('at-aporte-conta','');}
   if(id==='m-aluguel'){
     ['al-tk','al-qtd','al-pm','al-preco','al-venc','al-taxa','al-nome'].forEach(x=>{const e=document.getElementById(x);if(e)e.value='';});
@@ -10622,6 +11153,14 @@ function openM(id){
   }
   if(id==='m-fundo'){
     ['fu-nome','fu-apl','fu-pos','fu-tk'].forEach(x=>{const e=document.getElementById(x);if(e)e.value='';});
+  }
+  if(id==='m-cripto'){
+    ['cr-qtd','cr-pm','cr-nome'].forEach(x=>{const e=document.getElementById(x);if(e)e.value='';});
+    const m=document.getElementById('cr-moeda');if(m)m.value='BTC';
+    const nw=document.getElementById('cr-nome-wrap');if(nw)nw.style.display='none';
+  }
+  if(id==='m-milhas'){
+    ['ml-programa','ml-saldo','ml-vlmilheiro','ml-obs'].forEach(x=>{const e=document.getElementById(x);if(e)e.value='';});
   }
   if(id==='m-grao'){
     document.getElementById('gr-dt').value=now;
@@ -10655,6 +11194,7 @@ function openM(id){
     resetRec('cp');resetForecast('cp');
     const rb=document.querySelector('#m-compra .rec-block');if(rb)rb.style.display='';
     const sc=document.getElementById('cp-scope');if(sc)sc.style.display='none';
+    _cpCatDirty=false;const cpAuto=document.getElementById('cp-ca-auto');if(cpAuto)cpAuto.style.display='none';
   }
   if(id==='m-bem'){
     ['bm-seg','bm-fin'].forEach(p=>{
@@ -11185,6 +11725,10 @@ function persistir(){
       graos:S.graos,
       aluguel:S.aluguel,
       vendasAtivos:S.vendasAtivos,
+      cripto:S.cripto,
+      milhas:S.milhas,
+      benchRates:S.benchRates,
+      aposentadoria:S.aposentadoria,
     }));
   }catch(e){console.warn('persistir falhou:',e)}
   // Rede de segurança: tenta um snapshot automático (respeita intervalo/teto internamente)
@@ -11229,6 +11773,12 @@ function _aplicarDadosRestaurados(d){
     if(!Array.isArray(S.aluguel))S.aluguel=[]; // migração: backups antigos não têm aluguel
     if(d.vendasAtivos)S.vendasAtivos=d.vendasAtivos;
     if(!Array.isArray(S.vendasAtivos))S.vendasAtivos=[]; // migração: backups antigos não têm vendas
+    if(d.cripto)    S.cripto=d.cripto;
+    if(!Array.isArray(S.cripto))S.cripto=[]; // migração: backups antigos não têm cripto dedicada
+    if(d.milhas)    S.milhas=d.milhas;
+    if(!Array.isArray(S.milhas))S.milhas=[]; // migração: backups antigos não têm milhas
+    if(d.benchRates && typeof d.benchRates==='object')S.benchRates={...S.benchRates,...d.benchRates};
+    if(d.aposentadoria && typeof d.aposentadoria==='object')S.aposentadoria={...S.aposentadoria,...d.aposentadoria};
     if(d.bens)      S.bens=d.bens;
     if(d.usdBrl)    S.usdBrl=d.usdBrl;
     if(d.cotWatch)  S.cotWatch=d.cotWatch;
@@ -11458,6 +12008,10 @@ function snapshotState(){
     graos:S.graos,
     aluguel:S.aluguel,
     vendasAtivos:S.vendasAtivos,
+    cripto:S.cripto,
+    milhas:S.milhas,
+    benchRates:S.benchRates,
+    aposentadoria:S.aposentadoria,
   };
 }
 
@@ -11486,6 +12040,10 @@ function aplicarSnapshot(d){
   if(d.graos)      S.graos=d.graos;
   if(d.aluguel)    S.aluguel=d.aluguel;
   if(d.vendasAtivos) S.vendasAtivos=d.vendasAtivos;
+  if(d.cripto)     S.cripto=d.cripto;
+  if(d.milhas)     S.milhas=d.milhas;
+  if(d.benchRates && typeof d.benchRates==='object') S.benchRates={...S.benchRates,...d.benchRates};
+  if(d.aposentadoria && typeof d.aposentadoria==='object') S.aposentadoria={...S.aposentadoria,...d.aposentadoria};
 }
 
 // ─── Grava na nuvem (com debounce para não gravar a cada tecla) ───
@@ -14017,6 +14575,11 @@ function snapshotDados(){
     bancosCustom:S.bancosCustom,
     graos:S.graos,
     aluguel:S.aluguel,
+    vendasAtivos:S.vendasAtivos,
+    cripto:S.cripto,
+    milhas:S.milhas,
+    benchRates:S.benchRates,
+    aposentadoria:S.aposentadoria,
   };
 }
 
@@ -14265,6 +14828,12 @@ function aplicarSnapshot(d){
   if(!Array.isArray(S.aluguel))S.aluguel=[];
   if(d.vendasAtivos)S.vendasAtivos=d.vendasAtivos;
   if(!Array.isArray(S.vendasAtivos))S.vendasAtivos=[];
+  if(d.cripto)     S.cripto=d.cripto;
+  if(!Array.isArray(S.cripto))S.cripto=[];
+  if(d.milhas)     S.milhas=d.milhas;
+  if(!Array.isArray(S.milhas))S.milhas=[];
+  if(d.benchRates && typeof d.benchRates==='object')S.benchRates={...S.benchRates,...d.benchRates};
+  if(d.aposentadoria && typeof d.aposentadoria==='object')S.aposentadoria={...S.aposentadoria,...d.aposentadoria};
   if(Array.isArray(d.categorias))S.categorias=d.categorias;
   if(Array.isArray(d.bancosCustom))S.bancosCustom=d.bancosCustom;
   if(d.catCores&&typeof d.catCores==='object')Object.assign(CC,d.catCores);
@@ -14738,19 +15307,23 @@ async function _fxFetch(){
 }
 
 // ── Cripto (BTC, ETH em BRL) via CoinGecko — gratuito, sem chave ──
+// Mapa símbolo→id CoinGecko. Ampliado para cobrir as moedas do rastreador de
+// criptomoedas dedicado (S.cripto) além de BTC/ETH — mesma chamada gratuita,
+// só ids= maior. Chaves BTCBRL/ETHBRL preservadas para não quebrar quem já usa.
+const CRIPTO_COINGECKO_IDS={BTC:'bitcoin',ETH:'ethereum',SOL:'solana',BNB:'binancecoin',ADA:'cardano',XRP:'ripple',DOGE:'dogecoin',LTC:'litecoin',DOT:'polkadot',MATIC:'matic-network'};
 async function _criptoFetch(){
   try{
-    const resp=await fetch('https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=brl&include_24hr_change=true');
+    const ids=Object.values(CRIPTO_COINGECKO_IDS).join(',');
+    const resp=await fetch(`https://api.coingecko.com/api/v3/simple/price?ids=${ids}&vs_currencies=brl&include_24hr_change=true`);
     if(!resp.ok)return;
     const data=await resp.json();
-    if(data?.bitcoin?.brl!=null){
-      MQ['BTCBRL']={p:Number(data.bitcoin.brl),d:0,dp:Number(data.bitcoin.brl_24h_change||0)};
-      _tickersAoVivo.add('BTCBRL');
-    }
-    if(data?.ethereum?.brl!=null){
-      MQ['ETHBRL']={p:Number(data.ethereum.brl),d:0,dp:Number(data.ethereum.brl_24h_change||0)};
-      _tickersAoVivo.add('ETHBRL');
-    }
+    Object.entries(CRIPTO_COINGECKO_IDS).forEach(([sigla,gid])=>{
+      const d=data?.[gid];
+      if(d?.brl!=null){
+        MQ[sigla+'BRL']={p:Number(d.brl),d:0,dp:Number(d.brl_24h_change||0)};
+        _tickersAoVivo.add(sigla+'BRL');
+      }
+    });
   }catch(_){ /* mantém último valor conhecido */ }
 }
 
