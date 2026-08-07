@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 112 -->
+<!-- APP_VERSION: 113 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1433,6 +1433,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="nav-div"></div>
     <div class="nav-group">Configurações</div>
     <button class="nav-item" onclick="abrirConfigApi()"><span class="ni"><svg class="svi"><use href="#ic-ia"/></svg></span><span class="nav-label"> Chave de API</span></button>
+    <button class="nav-item" onclick="abrirConfigEnc()"><span class="ni">🔒</span><span class="nav-label"> Criptografia local</span></button>
     <button class="nav-item" onclick="authPasskeyRegister()"><span class="ni"><svg class="svi"><use href="#ic-faceid"/></svg></span><span class="nav-label"> Face ID / Biometria</span></button>
     <button class="nav-item" onclick="authLogout()"><span class="ni"><svg class="svi"><use href="#ic-sair"/></svg></span><span class="nav-label"> Sair</span></button>
     <div class="nav-div"></div>
@@ -4922,6 +4923,43 @@ async function atualizarMercadoImoveis(){
   </div>
 </details>
 <div class="mfoot"><button class="btn btn-d" onclick="limparApiKey()">Remover Tudo</button><button class="btn btn-ghost" onclick="closeM('m-config-api')">Cancelar</button><button class="btn btn-g" onclick="salvarApiKey()">Salvar</button></div>
+</div></div>
+
+<div class="ov" id="m-config-enc"><div class="modal" style="width:520px"><button class="mc" onclick="closeM('m-config-enc')">✕</button>
+<div class="m-eye">Configurações</div><div class="m-title">🔒 Criptografia local</div>
+<div style="font-size:12px;color:var(--txt3);line-height:1.55;margin-bottom:14px">
+  Protege o backup salvo <em>neste navegador</em> com um PIN — os dados passam a ficar cifrados (AES-256) em vez de texto puro no localStorage. Só você sabe o PIN; ele nunca é salvo em lugar nenhum, só no que você digitar. <strong>Se você usa sincronização com a nuvem</strong>, esquecer o PIN não é perder os dados — só o acesso a esta cópia local. <strong>Sem sincronização</strong>, esquecer o PIN é perder o acesso aos dados salvos aqui.
+</div>
+<div id="enc-form-setup">
+  <div class="fg" style="margin-bottom:6px"><label>Escolha um PIN (4+ caracteres)</label>
+    <input id="enc-pin1" type="password" autocomplete="off" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:13px">
+  </div>
+  <div class="fg" style="margin-bottom:10px"><label>Confirme o PIN</label>
+    <input id="enc-pin2" type="password" autocomplete="off" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:13px">
+  </div>
+  <label style="display:flex;gap:7px;align-items:flex-start;font-size:11.5px;color:var(--txt2);margin-bottom:6px;cursor:pointer">
+    <input type="checkbox" id="enc-confirma-risco" style="margin-top:2px">
+    <span>Entendi: se eu esquecer este PIN e não tiver sincronização com a nuvem ativa, perco o acesso aos dados salvos neste navegador.</span>
+  </label>
+</div>
+<div id="enc-form-ativo" style="display:none">
+  <div style="background:var(--bg2);border:0.5px solid var(--bdr);border-radius:var(--r);padding:11px 13px;font-size:12px;color:var(--txt2)">🔒 Criptografia local ativa neste navegador.</div>
+</div>
+<div id="enc-status" style="font-size:11.5px;color:#B4483A;margin:8px 0;min-height:14px"></div>
+<div class="mfoot">
+  <button class="btn btn-d" id="enc-btn-desativar" style="display:none" onclick="_uiDesativarEnc()">Desativar</button>
+  <button class="btn btn-ghost" onclick="closeM('m-config-enc')">Cancelar</button>
+  <button class="btn btn-g" id="enc-btn-ativar" onclick="_uiAtivarEnc()">Ativar</button>
+</div>
+</div></div>
+
+<div class="ov" id="enc-lock-overlay" style="display:none;z-index:9999"><div class="modal" style="width:380px;text-align:center">
+  <div style="font-size:32px;margin-bottom:10px">🔒</div>
+  <div class="m-title" style="margin-bottom:6px">Dados protegidos</div>
+  <div style="font-size:12px;color:var(--txt3);margin-bottom:16px">Digite o PIN da criptografia local para abrir o app neste navegador.</div>
+  <input id="enc-lock-pin" type="password" autocomplete="off" placeholder="PIN" style="width:100%;text-align:center;font-family:'JetBrains Mono',monospace;font-size:16px;margin-bottom:10px" onkeydown="if(event.key==='Enter')_uiDesbloquearEnc()">
+  <div id="enc-lock-status" style="font-size:11.5px;color:#B4483A;min-height:16px;margin-bottom:10px"></div>
+  <button class="btn btn-g" style="width:100%" onclick="_uiDesbloquearEnc()">Desbloquear</button>
 </div></div>
 
 <div class="ov" id="m-config-brapi"><div class="modal" style="width:520px"><button class="mc" onclick="closeM('m-config-brapi')">✕</button>
@@ -10800,12 +10838,23 @@ function persistir(){
   // Rede de segurança: tenta um snapshot automático (respeita intervalo/teto internamente)
   try{ if(typeof _talvezSnapshotAuto==='function' && !window._bootBackup)_talvezSnapshotAuto('automático'); }catch(_){}
   if (typeof syncPush === 'function') syncPush(); // ═══ INTEGRAÇÃO NEON — sobe para a nuvem também
+  _reencriptarAposPersistir(); // ═══ CRIPTOGRAFIA LOCAL — recifra o backup em segundo plano
 }
 function restaurar(){
   try{
     const raw=localStorage.getItem(STORAGE_KEY);
     if(!raw)return false;
     const d=JSON.parse(raw);
+    _aplicarDadosRestaurados(d);
+    return true;
+  }catch(e){console.warn('restaurar falhou:',e);return false}
+}
+// Extraído de restaurar() para ser reaproveitado pelo desbloqueio da
+// criptografia local (que decripta o blob em vez de ler localStorage direto,
+// mas aplica os dados sobre S do mesmo jeito). Comportamento idêntico ao de
+// antes — só mudou onde o texto (JSON já decodificado) vem de.
+function _aplicarDadosRestaurados(d){
+  try{
     if(d.ativos)    S.ativos=d.ativos;
     if(d.gastos)    S.gastos=d.gastos;
     if(d.dividendos)S.dividendos=d.dividendos;
@@ -10859,8 +10908,167 @@ function restaurar(){
       S.cotWatch.cripto=us.filter(it=>it.ico==='cripto'||/BTC|ETH|cripto/i.test(it.sym+it.nome));
       S.cotWatch.us=us.filter(it=>!(it.ico==='cripto'||/BTC|ETH|cripto/i.test(it.sym+it.nome)));
     }
-    return true;
-  }catch(e){console.warn('restaurar falhou:',e);return false}
+  }catch(e){console.warn('_aplicarDadosRestaurados falhou:',e);}
+}
+
+// ═══ CRIPTOGRAFIA LOCAL — protege o backup salvo no navegador (localStorage) ═══
+// Opt-in. Quando ativada, o blob salvo em STORAGE_KEY passa a ser cifrado com
+// AES-256-GCM, com a chave derivada (PBKDF2, 210k iterações) de um PIN que só
+// existe na sua cabeça — nunca é salvo em lugar nenhum. Só o "salt" (não é
+// secreto) e um pequeno marcador cifrado (para validar o PIN sem precisar
+// decriptar o backup inteiro) ficam salvos ao lado do blob.
+// Escopo real (importante): protege contra alguém com acesso ao computador/
+// perfil do navegador DEPOIS do fato (arquivos do localStorage). NÃO é
+// criptografia de ponta a ponta — não impede alguém olhando a tela enquanto o
+// app está aberto/desbloqueado, nem substitui a segurança do próprio Mac.
+// Se a sincronização com a nuvem (Neon) estiver ativa, a cópia na nuvem
+// continua em texto puro (mecanismo separado, protegido pela senha da sua
+// conta Neon) — perder o PIN local não é perder os dados nesse caso, só o
+// acesso à cópia deste navegador especificamente.
+const _ENC_ON_KEY='enc_local_on';
+const _ENC_SALT_KEY='enc_local_salt';
+const _ENC_VERIFY_KEY='enc_local_verify';
+const _ENC_BLOB_KEY='portfolio_v1_enc';
+let _encKey=null; // CryptoKey em memória durante a sessão — nunca persistido
+
+function encricaoLocalAtiva(){ try{ return localStorage.getItem(_ENC_ON_KEY)==='1'; }catch(_){ return false; } }
+
+function _b64(buf){ return btoa(String.fromCharCode(...new Uint8Array(buf))); }
+function _unb64(str){ return Uint8Array.from(atob(str),c=>c.charCodeAt(0)); }
+
+async function _derivarChaveEnc(pin,saltB64){
+  const salt=_unb64(saltB64);
+  const enc=new TextEncoder();
+  const base=await crypto.subtle.importKey('raw',enc.encode(pin),'PBKDF2',false,['deriveKey']);
+  return crypto.subtle.deriveKey(
+    {name:'PBKDF2',salt,iterations:210000,hash:'SHA-256'},
+    base,{name:'AES-GCM',length:256},false,['encrypt','decrypt']
+  );
+}
+async function _encriptarTexto(key,texto){
+  const iv=crypto.getRandomValues(new Uint8Array(12));
+  const enc=new TextEncoder();
+  const ct=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,enc.encode(texto));
+  return _b64(iv)+'.'+_b64(ct);
+}
+async function _decriptarTexto(key,payload){
+  const [ivB64,ctB64]=String(payload).split('.');
+  if(!ivB64||!ctB64)throw new Error('payload cifrado inválido');
+  const iv=_unb64(ivB64), ct=_unb64(ctB64);
+  const buf=await crypto.subtle.decrypt({name:'AES-GCM',iv},key,ct);
+  return new TextDecoder().decode(buf);
+}
+
+// ─── Ativar (1ª vez): cifra o backup atual com o PIN escolhido, some com o texto puro ───
+async function ativarCriptografiaLocal(pin){
+  if(!pin||pin.length<4)throw new Error('O PIN precisa ter pelo menos 4 caracteres');
+  const saltBuf=crypto.getRandomValues(new Uint8Array(16));
+  const saltB64=_b64(saltBuf);
+  const key=await _derivarChaveEnc(pin,saltB64);
+  const verify=await _encriptarTexto(key,'ok-financas');
+  const raw=localStorage.getItem(STORAGE_KEY)||JSON.stringify({});
+  const blob=await _encriptarTexto(key,raw);
+  localStorage.setItem(_ENC_SALT_KEY,saltB64);
+  localStorage.setItem(_ENC_VERIFY_KEY,verify);
+  localStorage.setItem(_ENC_BLOB_KEY,blob);
+  localStorage.removeItem(STORAGE_KEY);
+  localStorage.setItem(_ENC_ON_KEY,'1');
+  _encKey=key;
+}
+
+// ─── Desbloquear (app aberto com criptografia já ativa): valida o PIN e aplica os dados ───
+async function desbloquearCriptografiaLocal(pin){
+  const saltB64=localStorage.getItem(_ENC_SALT_KEY);
+  const verify=localStorage.getItem(_ENC_VERIFY_KEY);
+  if(!saltB64||!verify)throw new Error('Criptografia local não está configurada corretamente');
+  const key=await _derivarChaveEnc(pin,saltB64);
+  let check;
+  try{ check=await _decriptarTexto(key,verify); }
+  catch(_){ throw new Error('PIN incorreto'); }
+  if(check!=='ok-financas')throw new Error('PIN incorreto');
+  _encKey=key;
+  const blob=localStorage.getItem(_ENC_BLOB_KEY);
+  if(blob){
+    const raw=await _decriptarTexto(key,blob);
+    _aplicarDadosRestaurados(JSON.parse(raw));
+  }
+}
+
+// ─── Desativar: decripta o que houver e volta ao fluxo antigo (texto puro) ───
+async function desativarCriptografiaLocal(){
+  if(_encKey){
+    const blob=localStorage.getItem(_ENC_BLOB_KEY);
+    if(blob){
+      try{ localStorage.setItem(STORAGE_KEY,await _decriptarTexto(_encKey,blob)); }catch(_){}
+    }
+  }
+  localStorage.removeItem(_ENC_BLOB_KEY);
+  localStorage.removeItem(_ENC_SALT_KEY);
+  localStorage.removeItem(_ENC_VERIFY_KEY);
+  localStorage.removeItem(_ENC_ON_KEY);
+  _encKey=null;
+}
+
+// ─── Chamado ao fim de persistir(): re-cifra o backup em segundo plano ───
+// Mantém persistir() 100% síncrono e inalterado para todos os ~150 pontos do
+// app que já o chamam — isso aqui é só um espelho assíncrono por cima.
+function _reencriptarAposPersistir(){
+  if(!encricaoLocalAtiva()||!_encKey)return;
+  const raw=localStorage.getItem(STORAGE_KEY);
+  if(raw==null)return;
+  _encriptarTexto(_encKey,raw).then(blob=>{
+    localStorage.setItem(_ENC_BLOB_KEY,blob);
+    localStorage.removeItem(STORAGE_KEY);
+  }).catch(e=>console.warn('re-criptografia local falhou:',e));
+}
+
+// ─── UI: modal de configuração (Configurações → Criptografia local) ───
+function abrirConfigEnc(){
+  const ativo=encricaoLocalAtiva();
+  document.getElementById('enc-form-setup').style.display=ativo?'none':'block';
+  document.getElementById('enc-form-ativo').style.display=ativo?'block':'none';
+  document.getElementById('enc-btn-ativar').style.display=ativo?'none':'inline-block';
+  document.getElementById('enc-btn-desativar').style.display=ativo?'inline-block':'none';
+  document.getElementById('enc-status').textContent='';
+  const p1=document.getElementById('enc-pin1'),p2=document.getElementById('enc-pin2'),ck=document.getElementById('enc-confirma-risco');
+  if(p1)p1.value=''; if(p2)p2.value=''; if(ck)ck.checked=false;
+  openM('m-config-enc');
+}
+async function _uiAtivarEnc(){
+  const p1=document.getElementById('enc-pin1').value,p2=document.getElementById('enc-pin2').value;
+  const ck=document.getElementById('enc-confirma-risco'),st=document.getElementById('enc-status');
+  if(!ck.checked){st.textContent='Marque a confirmação de que entende o risco de perder o PIN.';return}
+  if(!p1||p1.length<4){st.textContent='O PIN precisa ter pelo menos 4 caracteres.';return}
+  if(p1!==p2){st.textContent='Os PINs não coincidem.';return}
+  st.style.color='#B4483A';
+  try{
+    await ativarCriptografiaLocal(p1);
+    toast('🔒 Criptografia local ativada');
+    closeM('m-config-enc');
+  }catch(e){ st.textContent=e.message; }
+}
+async function _uiDesativarEnc(){
+  if(!confirm('Desativar a criptografia local? O backup deste navegador volta a ficar em texto puro.'))return;
+  await desativarCriptografiaLocal();
+  toast('Criptografia local desativada');
+  closeM('m-config-enc');
+}
+
+// ─── UI: tela de desbloqueio ao abrir o app (quando a criptografia está ativa) ───
+async function _uiDesbloquearEnc(){
+  const pin=document.getElementById('enc-lock-pin').value;
+  const st=document.getElementById('enc-lock-status');
+  st.textContent='';
+  try{
+    await desbloquearCriptografiaLocal(pin);
+    document.getElementById('enc-lock-overlay').style.display='none';
+    const ap=document.querySelector('.page.active')?.id?.replace('page-','')||'dashboard';
+    render(ap); rdash();
+    toast('🔓 Desbloqueado');
+  }catch(e){
+    st.textContent=e.message;
+    const inp=document.getElementById('enc-lock-pin'); inp.value=''; inp.focus();
+  }
 }
 
 // ═══ INTEGRAÇÃO NEON — autenticação (e-mail) e sincronização (ver 03-guia.md) ═══
@@ -15191,6 +15399,14 @@ function renderDisrupcao(dis,m){
 
 // ─── INIT
 (function init(){
+  // ═══ CRIPTOGRAFIA LOCAL — mostra a tela de PIN se estiver ativa. Não bloqueia
+  // o resto do init(): o app carrega por baixo com o estado inicial vazio (o
+  // mesmo caminho já testado do "1º uso"), e desbloquear substitui os dados via
+  // _uiDesbloquearEnc() → desbloquearCriptografiaLocal() → render()+rdash().
+  if(encricaoLocalAtiva() && !_encKey){
+    const ov=document.getElementById('enc-lock-overlay');
+    if(ov){ ov.style.display='flex'; setTimeout(()=>document.getElementById('enc-lock-pin')?.focus(),80); }
+  }
   bootAuth(); // ═══ INTEGRAÇÃO NEON — mostra login / restaura sessão
   // Síntese III — restaura dados persistidos
   const restaurado=restaurar();
