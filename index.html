@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 114 -->
+<!-- APP_VERSION: 115 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -423,6 +423,7 @@ th.th-sort .sort-ic{font-size:8px;letter-spacing:0;margin-left:2px;color:var(--a
 .btn-dk{background:var(--txt);color:var(--surf)}
 .btn-d{background:var(--red-lt);color:var(--red);border:0.5px solid rgba(163,58,46,.2);font-size:11px;padding:3px 9px}
 .btn-ed{background:var(--blu-dim);color:var(--blu);border:0.5px solid rgba(74,109,160,.2);font-size:11px;padding:3px 9px}
+.btn-vd{background:var(--gld-dim);color:var(--gld);border:0.5px solid rgba(193,95,60,.25);font-size:11px;padding:3px 9px}
 .btn-ed:hover{background:var(--blu);color:#fff}
 .rec-scope{background:var(--blu-dim);border:0.5px solid rgba(74,109,160,.25);border-radius:10px;padding:11px 13px;margin-bottom:13px}
 .rec-scope-lbl{font-size:11.5px;color:var(--txt2);margin-bottom:8px;line-height:1.45}
@@ -1667,6 +1668,17 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div id="sat-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhuma posição satélite. O Comitê recomenda no máximo 5% da carteira — aposta pequena e assimétrica.</div>
     <table id="sat-tabela" class="tbl-mob-cards"><thead><tr><th class="th-sort" data-tbl="sat" data-key="ticker" data-render="rcar" onclick="sortTbl(this)">Ticker<span class="sort-ic"></span></th><th class="th-sort" data-tbl="sat" data-key="qtd" data-render="rcar" onclick="sortTbl(this)">Qtd<span class="sort-ic"></span></th><th class="th-sort" data-tbl="sat" data-key="pm" data-render="rcar" onclick="sortTbl(this)">PM<span class="sort-ic"></span></th><th class="th-sort" data-tbl="sat" data-key="atual" data-render="rcar" onclick="sortTbl(this)">Atual<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="sat" data-key="posicao" data-render="rcar" onclick="sortTbl(this)">Posição<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="sat" data-key="resultado" data-render="rcar" onclick="sortTbl(this)">Resultado<span class="sort-ic"></span></th><th class="tr th-sort" data-tbl="sat" data-key="rent" data-render="rcar" onclick="sortTbl(this)">Rent.<span class="sort-ic"></span></th><th></th></tr></thead><tbody id="tb-sat"></tbody></table>
     <div class="pft">Posições satélite (convicção assimétrica), todas cadastradas</div>
+  </div>
+
+  <!-- HISTÓRICO DE VENDAS — BASE PARA APURAÇÃO DE IR -->
+  <div class="panel mb" id="panel-vendas" style="margin-top:16px">
+    <div class="phd">
+      <div><div class="pt" style="display:flex;align-items:center">💰 Histórico de Vendas</div><div class="ps">Registro de vendas para apuração de ganho de capital (IR) — use o botão 💰 nas tabelas acima</div></div>
+    </div>
+    <div id="vendas-resumo" style="font-size:12px;color:var(--txt2);margin-bottom:10px"></div>
+    <div id="vendas-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhuma venda registrada ainda. Clique em 💰 numa posição acima para registrar.</div>
+    <table id="vendas-tabela" class="tbl-mob-cards" style="display:none"><thead><tr><th>Data</th><th>Ativo</th><th class="tr">Qtd</th><th class="tr">Preço venda</th><th class="tr">Valor venda</th><th class="tr">Custo base</th><th class="tr">Resultado</th><th></th></tr></thead><tbody id="tb-vendas-ativos"></tbody></table>
+    <div class="pft">Custo base = quantidade vendida × preço médio do ativo no momento da venda (método exigido pela Receita Federal). Cálculo de imposto devido (isenção mensal de R$20.000 em ações, alíquota de FIIs, DARF) ainda não incluído — por enquanto só o histórico, que é a base necessária para isso.</div>
   </div>
 
   <!-- GRÃOS / COMMODITIES -->
@@ -4507,6 +4519,19 @@ async function atualizarMercadoImoveis(){
 </div>
 <div class="mfoot"><button class="btn btn-ghost" onclick="closeM('m-ativo')">Cancelar</button><button class="btn btn-g" onclick="addAtivo()">Adicionar</button></div></div></div>
 
+<div class="ov" id="m-venda-ativo"><div class="modal"><button class="mc" onclick="closeM('m-venda-ativo')">✕</button><div class="m-eye">Investimentos</div><div class="m-title">Registrar Venda</div>
+<div style="font-size:11.5px;color:var(--txt3);line-height:1.5;margin-bottom:12px">Registra a venda para apurar ganho/perda de capital (base para IR). O cálculo de imposto devido (isenção mensal, DARF) ainda não é feito automaticamente — fica para uma etapa futura; aqui só entra o histórico com o resultado de cada venda.</div>
+<div class="fgrid"><div class="fg"><label>Ativo</label><input id="vd-tk" type="text" readonly style="opacity:.7"></div><div class="fg"><label>Data da venda</label><input id="vd-data" type="date"></div></div>
+<div class="fgrid"><div class="fg"><label id="vd-lq">Quantidade a vender</label><input id="vd-qtd" type="number" step="any" oninput="_vdPreview()"></div><div class="fg"><label>Preço de venda (por unidade)</label><input id="vd-preco" type="number" step="0.01" oninput="_vdPreview()"></div></div>
+<div class="inv-link-wrap" id="vd-conta-wrap">
+  <div class="inv-link-head"><span class="inv-link-ic">↥</span><label class="inv-link-lbl">Creditar em uma conta</label></div>
+  <div class="inv-link-sub">Entra como crédito no extrato bancário — acompanhe o valor da venda caindo na conta.</div>
+  <select id="vd-conta"></select>
+</div>
+<div id="vd-preview" style="font-size:12px;color:var(--txt2);line-height:1.6;background:var(--bg2);border:0.5px solid var(--bdr);border-radius:var(--r);padding:10px 13px;margin-bottom:4px"></div>
+<div class="mfoot"><button class="btn btn-ghost" onclick="closeM('m-venda-ativo')">Cancelar</button><button class="btn btn-g" onclick="confirmarVendaAtivo()">Registrar Venda</button></div>
+</div></div>
+
 <div class="ov" id="m-aluguel"><div class="modal"><button class="mc" onclick="closeM('m-aluguel')">✕</button><div class="m-eye">Aluguel de Ações</div><div class="m-title">Contrato de Aluguel</div>
 <div class="fgrid"><div class="fg"><label>Ticker</label><input id="al-tk" type="text" placeholder="VIVT3" style="text-transform:uppercase"></div><div class="fg"><label>Papel</label><select id="al-papel"><option value="Doador">Doador (empresto — recebo taxa)</option><option value="Tomador">Tomador (tomo — pago taxa)</option></select></div></div>
 <div class="fgrid"><div class="fg"><label>Quantidade</label><input id="al-qtd" type="number" placeholder="8"></div><div class="fg"><label>Preço médio (Abertura)</label><input id="al-pm" type="number" placeholder="0.00" step="0.01"></div></div>
@@ -5186,6 +5211,9 @@ const S={
   bancosCustom:[],
   graos:[], // lotes de grãos: originação/compra/venda + hedge opcional
   aluguel:[], // contratos de aluguel de ações (securities lending): Doador (renda) ou Tomador (obrigação)
+  // Registro de vendas de Ações BR/Stocks EUA/FIIs/Satélite — base para apuração de IR (ganho de capital).
+  // Cada venda: {id,data,ticker,tipo,nome,qtd,precoVenda,custoBase,valorVenda,resultado,contaDestinoId,lancId}
+  vendasAtivos:[],
 };
 
 // ─── MOCK QUOTES
@@ -6814,13 +6842,13 @@ function rcar(){
   document.getElementById('c-rnt').textContent=pct(rp);
   document.getElementById('c-rnt').className='kpi-val '+(rp>=0?'cg':'cr');
   document.getElementById('c-num').textContent=S.ativos.length;
-  const rowBR=a=>{const p=a.preco||a.pm,r=rent(a),pv=pos(a),rv=pv-a.qtd*a.pm;return`<tr><td data-label="Ticker"><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono" data-label="Qtd">${a.qtd}</td><td class="mono" data-label="PM">${brl(a.pm)}</td><td class="mono" data-label="Atual">${a.preco?brl(a.preco):'—'}${a.varPct!==undefined?`<br><span class="cm" style="font-size:9px">${pct(a.varPct)} hoje</span>`:''}</td><td class="tr mono" data-label="Posição">${brl(pv)}</td><td class="tr mono ${cCls(rv)}" data-label="Resultado">${rv>=0?'+':'-'}${brl(Math.abs(rv))}</td><td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td><td class="td-act"><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`};
+  const rowBR=a=>{const p=a.preco||a.pm,r=rent(a),pv=pos(a),rv=pv-a.qtd*a.pm;return`<tr><td data-label="Ticker"><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono" data-label="Qtd">${a.qtd}</td><td class="mono" data-label="PM">${brl(a.pm)}</td><td class="mono" data-label="Atual">${a.preco?brl(a.preco):'—'}${a.varPct!==undefined?`<br><span class="cm" style="font-size:9px">${pct(a.varPct)} hoje</span>`:''}</td><td class="tr mono" data-label="Posição">${brl(pv)}</td><td class="tr mono ${cCls(rv)}" data-label="Resultado">${rv>=0?'+':'-'}${brl(Math.abs(rv))}</td><td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td><td class="td-act">${a.qtd>0?`<button class="btn btn-vd" onclick="abrirVenderAtivo('${a.ticker}')" title="Registrar venda (apuração de IR)">💰</button> `:''}<button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`};
   const _sortAtivosBR={ticker:{fn:a=>a.ticker,type:'str'},qtd:{fn:a=>a.qtd,type:'num'},pm:{fn:a=>a.pm,type:'num'},atual:{fn:a=>a.preco||a.pm,type:'num'},posicao:{fn:a=>pos(a),type:'num'},resultado:{fn:a=>pos(a)-a.qtd*a.pm,type:'num'},rent:{fn:a=>rent(a),type:'num'}};
   document.getElementById('tb-br').innerHTML=_sortRows('br',S.ativos.filter(a=>a.tipo==='BR'),_sortAtivosBR).map(rowBR).join('');
   const _sortAtivosUS={ticker:{fn:a=>a.ticker,type:'str'},qtd:{fn:a=>a.qtd,type:'num'},pm:{fn:a=>a.pm,type:'num'},atual:{fn:a=>a.preco||a.pm,type:'num'},posicao:{fn:a=>pos(a),type:'num'},resultado:{fn:a=>pos(a)-a.qtd*a.pm*S.usdBrl,type:'num'},rent:{fn:a=>rent(a),type:'num'}};
-  document.getElementById('tb-us').innerHTML=_sortRows('us',S.ativos.filter(a=>a.tipo==='US'),_sortAtivosUS).map(a=>{const p=a.preco||a.pm,r=rent(a),pv=pos(a),rv=pv-a.qtd*a.pm*S.usdBrl;return`<tr><td data-label="Ticker"><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono" data-label="Qtd">${a.qtd}</td><td class="mono" data-label="PM (USD)">${usd(a.pm)}</td><td class="mono" data-label="Atual">${a.preco?usd(a.preco):'—'}${a.varPct!==undefined?`<br><span class="cm" style="font-size:9px">${pct(a.varPct)} hoje</span>`:''}</td><td class="tr mono" data-label="Posição BRL">${brl(pv)}</td><td class="tr mono ${cCls(rv)}" data-label="Resultado">${rv>=0?'+':'-'}${brl(Math.abs(rv))}</td><td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td><td class="td-act"><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`}).join('');
+  document.getElementById('tb-us').innerHTML=_sortRows('us',S.ativos.filter(a=>a.tipo==='US'),_sortAtivosUS).map(a=>{const p=a.preco||a.pm,r=rent(a),pv=pos(a),rv=pv-a.qtd*a.pm*S.usdBrl;return`<tr><td data-label="Ticker"><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono" data-label="Qtd">${a.qtd}</td><td class="mono" data-label="PM (USD)">${usd(a.pm)}</td><td class="mono" data-label="Atual">${a.preco?usd(a.preco):'—'}${a.varPct!==undefined?`<br><span class="cm" style="font-size:9px">${pct(a.varPct)} hoje</span>`:''}</td><td class="tr mono" data-label="Posição BRL">${brl(pv)}</td><td class="tr mono ${cCls(rv)}" data-label="Resultado">${rv>=0?'+':'-'}${brl(Math.abs(rv))}</td><td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td><td class="td-act">${a.qtd>0?`<button class="btn btn-vd" onclick="abrirVenderAtivo('${a.ticker}')" title="Registrar venda (apuração de IR)">💰</button> `:''}<button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`}).join('');
   const _sortAtivosFII={ticker:{fn:a=>a.ticker,type:'str'},qtd:{fn:a=>a.qtd,type:'num'},pm:{fn:a=>a.pm,type:'num'},atual:{fn:a=>a.preco||a.pm,type:'num'},dy:{fn:a=>a.ticker==='HGLG11'?8.4:13.2,type:'num'},rent:{fn:a=>rent(a),type:'num'}};
-  document.getElementById('tb-fii').innerHTML=_sortRows('fii',S.ativos.filter(a=>a.tipo==='FII'),_sortAtivosFII).map(a=>{const r=rent(a),dy=a.ticker==='HGLG11'?8.4:13.2;return`<tr><td data-label="Fundo"><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono" data-label="Qtd">${a.qtd}</td><td class="mono" data-label="PM">${brl(a.pm)}</td><td class="mono" data-label="Atual">${a.preco?brl(a.preco):'—'}</td><td class="tr mono cgd" data-label="DY">${dy.toFixed(1)}%</td><td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td><td class="td-act"><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`}).join('');
+  document.getElementById('tb-fii').innerHTML=_sortRows('fii',S.ativos.filter(a=>a.tipo==='FII'),_sortAtivosFII).map(a=>{const r=rent(a),dy=a.ticker==='HGLG11'?8.4:13.2;return`<tr><td data-label="Fundo"><strong class="mono">${a.ticker}</strong><br><span class="cm" style="font-size:10px">${a.nome}</span></td><td class="mono" data-label="Qtd">${a.qtd}</td><td class="mono" data-label="PM">${brl(a.pm)}</td><td class="mono" data-label="Atual">${a.preco?brl(a.preco):'—'}</td><td class="tr mono cgd" data-label="DY">${dy.toFixed(1)}%</td><td class="tr mono ${cCls(r)}" data-label="Rent.">${pct(r)}</td><td class="td-act">${a.qtd>0?`<button class="btn btn-vd" onclick="abrirVenderAtivo('${a.ticker}')" title="Registrar venda (apuração de IR)">💰</button> `:''}<button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`}).join('');
   const _sortAtivosRF={produto:{fn:a=>a.ticker,type:'str'},inst:{fn:a=>a.inst||'',type:'str'},taxa:{fn:a=>a.taxa||'',type:'str'},valor:{fn:a=>a.pm,type:'num'},vencimento:{fn:a=>a.venc||'',type:'date'}};
   document.getElementById('tb-rf').innerHTML=_sortRows('rf',S.ativos.filter(a=>a.tipo==='RF'&&!a.fundo),_sortAtivosRF).map(a=>`<tr><td data-label="Produto"><strong>${a.ticker}</strong></td><td class="cm" data-label="Inst.">${a.inst||'—'}</td><td data-label="Taxa"><span class="badge b-g" style="font-size:9px">${a.taxa||'—'}</span></td><td class="tr mono" data-label="Valor">${brl(a.pm)}</td><td class="tr cm" data-label="Vencimento" style="font-size:11px">${a.venc||'—'}</td><td class="td-act"><button class="btn btn-ed" onclick="editAtivoTk('${a.ticker}')">✎</button> <button class="btn btn-d" onclick="rmAtivo('${a.ticker}')">✕</button></td></tr>`).join('');
   const satLista=_sortRows('sat',S.ativos.filter(a=>a.tipo==='SAT'),_sortAtivosBR);
@@ -6832,6 +6860,7 @@ function rcar(){
   raluguel();
   rgraos();
   rdivMonitor();
+  rVendasAtivos();
 }
 // ─── MONITORAMENTO DE DIVIDENDOS POR EMPRESA (Ações BR / Stocks EUA) ───
 // Agrupa S.dividendos por empresa, separando BR de EUA. A classificação usa
@@ -9442,6 +9471,106 @@ function rmAtivo(tk){
   S.ativos=S.ativos.filter(x=>x.ticker!==tk);persistir();toast(tk+' removido');const ap=document.querySelector('.page.active')?.id?.replace('page-','')||'carteira';render(ap);rdash()
 }
 // ═══════════════════════════════════════════════════════════
+// VENDAS DE ATIVOS (Ações BR/Stocks EUA/FIIs/Satélite) — base p/ apuração de IR
+// Cada venda reduz a quantidade do ativo e registra {qtd,precoVenda,custoBase,
+// resultado}, usando o preço médio (pm) do ativo NO MOMENTO da venda como custo
+// — é o método de "custo médio" exigido pela Receita Federal p/ renda variável.
+// Cálculo de imposto (isenção mensal de R$20.000 em ações, DARF) fica para uma
+// etapa futura: aqui só o registro histórico, que era o dado que faltava.
+// ═══════════════════════════════════════════════════════════
+let _vdTicker=null;
+function abrirVenderAtivo(tk){
+  const a=S.ativos.find(x=>x.ticker===tk);
+  if(!a||!(a.qtd>0)){toast('⚠ Ativo sem quantidade disponível para vender');return;}
+  _vdTicker=tk;
+  openM('m-venda-ativo');
+  document.getElementById('vd-tk').value=`${a.ticker} · ${a.nome||''}`;
+  document.getElementById('vd-data').value=(typeof _hojeISO==='function'?_hojeISO():new Date().toISOString().slice(0,10));
+  document.getElementById('vd-qtd').value=a.qtd;
+  document.getElementById('vd-lq').textContent=`Quantidade a vender (máx. ${a.qtd})`;
+  document.getElementById('vd-preco').value=a.preco||a.pm||'';
+  _popularContasSelect('vd-conta','');
+  _vdPreview();
+}
+function _vdPreview(){
+  const el=document.getElementById('vd-preview');if(!el)return;
+  const a=S.ativos.find(x=>x.ticker===_vdTicker);
+  if(!a){el.textContent='';return;}
+  const fmt=a.tipo==='US'?usd:brl;
+  const qtd=parseFloat(document.getElementById('vd-qtd').value)||0;
+  const preco=parseFloat(document.getElementById('vd-preco').value)||0;
+  const valorVenda=qtd*preco;
+  const custoBase=qtd*(a.pm||0);
+  const resultado=valorVenda-custoBase;
+  const cor=resultado>=0?'var(--grn)':'var(--red)';
+  el.innerHTML=`Custo médio atual: <strong>${fmt(a.pm||0)}</strong>/un · Valor da venda: <strong>${fmt(valorVenda)}</strong><br>Resultado (ganho/perda de capital): <strong style="color:${cor}">${resultado>=0?'+':'-'}${fmt(Math.abs(resultado))}</strong>`;
+}
+function confirmarVendaAtivo(){
+  const a=S.ativos.find(x=>x.ticker===_vdTicker);
+  if(!a){toast('⚠ Ativo não encontrado');return;}
+  const qtd=parseFloat(document.getElementById('vd-qtd').value);
+  const preco=parseFloat(document.getElementById('vd-preco').value);
+  const data=document.getElementById('vd-data').value||new Date().toISOString().slice(0,10);
+  if(isNaN(qtd)||qtd<=0){toast('⚠ Informe a quantidade a vender');return;}
+  if(qtd>a.qtd+1e-9){toast(`⚠ Quantidade maior que a posição atual (${a.qtd})`);return;}
+  if(isNaN(preco)||preco<=0){toast('⚠ Informe o preço de venda');return;}
+  const custoBase=+(qtd*(a.pm||0)).toFixed(2);
+  const valorVenda=+(qtd*preco).toFixed(2);
+  const resultado=+(valorVenda-custoBase).toFixed(2);
+  const contaDestino=document.getElementById('vd-conta')?.value||'';
+  let lancId=null;
+  if(contaDestino){
+    lancId=_criarLancInv(contaDestino,'credito',valorVenda,data,`Venda ${a.ticker}`,'resgate');
+  }
+  const reg={
+    id:'vd_'+Date.now()+'_'+Math.floor(Math.random()*1000),
+    data,ticker:a.ticker,tipo:a.tipo,nome:a.nome||a.ticker,
+    qtd,precoVenda:preco,custoBase,valorVenda,resultado,
+    contaDestinoId:contaDestino||null,lancId,
+  };
+  (S.vendasAtivos||(S.vendasAtivos=[])).push(reg);
+  // Reduz a posição do ativo vendido — mantém pm como custo médio da parte restante
+  a.qtd=+(a.qtd-qtd).toFixed(8);
+  if(a.qtd<0)a.qtd=0;
+  persistir();
+  closeM('m-venda-ativo');
+  toast(`✓ Venda de ${a.ticker} registrada · resultado ${resultado>=0?'+':'-'}${brl(Math.abs(resultado))}`);
+  const ap=document.querySelector('.page.active')?.id?.replace('page-','')||'carteira';
+  render(ap);rdash();
+}
+function rmVendaAtivo(id){
+  const v=(S.vendasAtivos||[]).find(x=>x.id===id);if(!v)return;
+  if(!confirm(`Remover o registro de venda de ${v.ticker} (${v.data})?\n\nIsso NÃO devolve a quantidade ao ativo automaticamente — ajuste a quantidade em Editar, se necessário.`))return;
+  if(v.lancId!=null)S.lancamentos=S.lancamentos.filter(l=>l.id!==v.lancId);
+  S.vendasAtivos=(S.vendasAtivos||[]).filter(x=>x.id!==id);
+  persistir();
+  toast('Registro de venda removido');
+  const ap=document.querySelector('.page.active')?.id?.replace('page-','')||'carteira';
+  render(ap);rdash();
+}
+function rVendasAtivos(){
+  const tb=document.getElementById('tb-vendas-ativos');if(!tb)return;
+  const lista=[...(S.vendasAtivos||[])].sort((a,b)=>(b.data||'').localeCompare(a.data||''));
+  tb.innerHTML=lista.map(v=>{
+    const fmt=v.tipo==='US'?usd:brl;
+    return `<tr><td data-label="Data">${v.data}</td><td data-label="Ativo"><strong class="mono">${v.ticker}</strong>${v.tipo==='US'?' <span class="cm" style="font-size:9px">USD</span>':''}</td><td class="mono" data-label="Qtd">${v.qtd}</td><td class="tr mono" data-label="Preço venda">${fmt(v.precoVenda)}</td><td class="tr mono" data-label="Valor venda">${fmt(v.valorVenda)}</td><td class="tr mono" data-label="Custo base">${fmt(v.custoBase)}</td><td class="tr mono ${cCls(v.resultado)}" data-label="Resultado">${v.resultado>=0?'+':'-'}${fmt(Math.abs(v.resultado))}</td><td class="td-act"><button class="btn btn-d" onclick="rmVendaAtivo('${v.id}')">✕</button></td></tr>`;
+  }).join('');
+  const vazio=document.getElementById('vendas-vazio'),tab=document.getElementById('vendas-tabela');
+  if(vazio&&tab){vazio.style.display=lista.length?'none':'block';tab.style.display=lista.length?'':'none';}
+  const resumo=document.getElementById('vendas-resumo');
+  if(resumo){
+    if(!lista.length){resumo.textContent='';}
+    else{
+      const brlSum=lista.filter(v=>v.tipo!=='US').reduce((s,v)=>s+v.resultado,0);
+      const usSum=lista.filter(v=>v.tipo==='US').reduce((s,v)=>s+v.resultado,0);
+      const partes=[];
+      if(lista.some(v=>v.tipo!=='US'))partes.push(`Resultado acumulado (BRL — ações BR/FIIs/satélite): <strong class="${cCls(brlSum)}">${brlSum>=0?'+':'-'}${brl(Math.abs(brlSum))}</strong>`);
+      if(lista.some(v=>v.tipo==='US'))partes.push(`Resultado acumulado (USD — stocks EUA): <strong class="${cCls(usSum)}">${usSum>=0?'+':'-'}${usd(Math.abs(usSum))}</strong>`);
+      resumo.innerHTML=partes.join(' · ');
+    }
+  }
+}
+// ═══════════════════════════════════════════════════════════
 // GRÃOS — CRUD de operações (originação/compra/venda + hedge)
 // ═══════════════════════════════════════════════════════════
 let _grHedgeOn=false;
@@ -10942,6 +11071,7 @@ function persistir(){
       pagamentosFatura:S.pagamentosFatura,
       graos:S.graos,
       aluguel:S.aluguel,
+      vendasAtivos:S.vendasAtivos,
     }));
   }catch(e){console.warn('persistir falhou:',e)}
   // Rede de segurança: tenta um snapshot automático (respeita intervalo/teto internamente)
@@ -10984,6 +11114,8 @@ function _aplicarDadosRestaurados(d){
     if(!Array.isArray(S.graos))S.graos=[]; // migração: backups antigos não têm grãos
     if(d.aluguel)   S.aluguel=d.aluguel;
     if(!Array.isArray(S.aluguel))S.aluguel=[]; // migração: backups antigos não têm aluguel
+    if(d.vendasAtivos)S.vendasAtivos=d.vendasAtivos;
+    if(!Array.isArray(S.vendasAtivos))S.vendasAtivos=[]; // migração: backups antigos não têm vendas
     if(d.bens)      S.bens=d.bens;
     if(d.usdBrl)    S.usdBrl=d.usdBrl;
     if(d.cotWatch)  S.cotWatch=d.cotWatch;
@@ -11211,6 +11343,7 @@ function snapshotState(){
     pagamentosFatura:S.pagamentosFatura,
     graos:S.graos,
     aluguel:S.aluguel,
+    vendasAtivos:S.vendasAtivos,
   };
 }
 
@@ -11238,6 +11371,7 @@ function aplicarSnapshot(d){
   if(d.pagamentosFatura) S.pagamentosFatura=d.pagamentosFatura;
   if(d.graos)      S.graos=d.graos;
   if(d.aluguel)    S.aluguel=d.aluguel;
+  if(d.vendasAtivos) S.vendasAtivos=d.vendasAtivos;
 }
 
 // ─── Grava na nuvem (com debounce para não gravar a cada tecla) ───
@@ -14007,6 +14141,8 @@ function aplicarSnapshot(d){
   if(!Array.isArray(S.graos))S.graos=[];
   if(d.aluguel)    S.aluguel=d.aluguel;
   if(!Array.isArray(S.aluguel))S.aluguel=[];
+  if(d.vendasAtivos)S.vendasAtivos=d.vendasAtivos;
+  if(!Array.isArray(S.vendasAtivos))S.vendasAtivos=[];
   if(Array.isArray(d.categorias))S.categorias=d.categorias;
   if(Array.isArray(d.bancosCustom))S.bancosCustom=d.bancosCustom;
   if(d.catCores&&typeof d.catCores==='object')Object.assign(CC,d.catCores);
