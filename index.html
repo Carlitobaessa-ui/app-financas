@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 111 -->
+<!-- APP_VERSION: 112 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -5745,9 +5745,7 @@ function toggleMobNav(){
   btn.classList.toggle('open', open);
   ov.classList.toggle('open', open);
   document.body.style.overflow = open ? 'hidden' : '';
-  // Ver comentário em toggleNav(): abrir/fechar a gaveta muda o layout mas
-  // não dispara 'resize' de janela — em iPad isso deixava gráficos com o
-  // tamanho errado até giro de tela. Reajusta após a transição (.25s).
+  // Fallback — ver _reajustarAposTransicaoNav() para o reajuste principal.
   setTimeout(reajustarGraficos,280);
 }
 function closeMobNav(){
@@ -10775,11 +10773,9 @@ function toggleNav(){
   btn.textContent=collapsed?'›':'‹';
   btn.title=collapsed?'Expandir menu':'Recolher menu';
   localStorage.setItem('nav_collapsed',collapsed?'1':'0');
-  // Expandir/recolher o menu muda a largura disponível para o conteúdo, mas
-  // não é um evento 'resize' de janela de verdade — em iPad/tablets isso
-  // deixava gráficos (Chart.js) e o diagrama de fluxo com o tamanho antigo
-  // até a próxima mudança real de orientação. Força o reajuste explicitamente,
-  // aguardando a transição de largura (.22s) terminar.
+  // Ver _reajustarAposTransicaoNav() — o reajuste de verdade acontece no
+  // 'transitionend' do nav. Este timeout aqui é só um fallback caso a
+  // transição não dispare (ex: prefers-reduced-motion).
   setTimeout(reajustarGraficos,260);
 }
 
@@ -15244,6 +15240,25 @@ function renderDisrupcao(dis,m){
   if(typeof _preencherSelectsBanco==='function') _preencherSelectsBanco();
   // Roda em background; fica pronto quando o usuário abrir a página Briefing.
   _briefingAutoAoAbrir();
+
+  // Reajuste ao abrir/recolher o menu: o gatilho principal é o 'transitionend'
+  // do próprio nav (dispara exatamente quando a largura/transform termina de
+  // animar, em vez de um tempo fixo chutado). Reforça com uma 2ª chamada
+  // 300ms depois porque no iPad Safari o ResizeObserver interno do Chart.js
+  // às vezes reage tarde à mudança de layout e sobrescreve nosso resize()
+  // com uma medida intermediária — isso é o que fazia o gráfico voltar a
+  // ficar torto especificamente ao REABRIR o menu (fechar não sofria porque
+  // o container só cresce; ao reabrir ele encolhe, e uma medida antiga maior
+  // que o espaço real deixa o gráfico "vazando" do container).
+  (function _reajustarAposTransicaoNav(){
+    const navEl=document.getElementById('nav');
+    if(!navEl)return;
+    navEl.addEventListener('transitionend',(e)=>{
+      if(e.propertyName!=='width' && e.propertyName!=='transform')return;
+      try{reajustarGraficos();}catch(_){}
+      setTimeout(()=>{try{reajustarGraficos();}catch(_){}},300);
+    });
+  })();
 
   // Reforço Safari/file://: re-renderiza o dashboard e reajusta os gráficos
   // após o carregamento completo da página (window.load), quando o Safari já
