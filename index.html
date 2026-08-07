@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 121 -->
+<!-- APP_VERSION: 122 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1318,6 +1318,33 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <path d="M12 4a5 5 0 0 1 5 5v3.2c0 1 .4 2 1.1 2.7l.6.6c.5.5.1 1.5-.6 1.5H6c-.7 0-1.1-1-.6-1.5l.6-.6c.7-.7 1.1-1.7 1.1-2.7V9a5 5 0 0 1 5-5Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
       <path d="M10 19a2 2 0 0 0 4 0" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
     </symbol>
+    <!-- Milhas / viagem (avião de papel) -->
+    <symbol id="ic-milhas" viewBox="0 0 24 24">
+      <path d="M21 3 3 10.5l7 2.5 2.5 7L21 3Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" stroke-linecap="round"/>
+      <path d="M10 13l4-4.5" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+    </symbol>
+    <!-- Escudo / cobertura FGC -->
+    <symbol id="ic-escudo" viewBox="0 0 24 24">
+      <path d="M12 3.5 19 6v6c0 5-3.4 8-7 9.5C8.4 20 5 17 5 12V6l7-2.5Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+      <path d="M9 12l2 2 4-4.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <!-- Relatório / declaração -->
+    <symbol id="ic-relatorio" viewBox="0 0 24 24">
+      <path d="M7 3h7l4 4v13a1 1 0 0 1-1 1H7a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"/>
+      <path d="M13.6 3.2v4.3h4.6" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>
+      <path d="M9 13.5h6M9 16.5h6M9 10.5h3" stroke="currentColor" stroke-width="1" stroke-linecap="round"/>
+    </symbol>
+    <!-- Recorrência / assinaturas (setas circulares) -->
+    <symbol id="ic-recorrencia" viewBox="0 0 24 24">
+      <path d="M5 12a7 7 0 0 1 12-4.9M19 12a7 7 0 0 1-12 4.9" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      <path d="M17 4.5v3h-3M7 19.5v-3h3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"/>
+    </symbol>
+    <!-- Horizonte / aposentadoria -->
+    <symbol id="ic-horizonte" viewBox="0 0 24 24">
+      <path d="M3 16h18" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      <path d="M6 16a6 6 0 0 1 12 0" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round"/>
+      <path d="M12 6v2M6.5 9l1.4 1.4M17.5 9l-1.4 1.4M4 13h1.5M18.5 13H20" stroke="currentColor" stroke-width="1.1" stroke-linecap="round"/>
+    </symbol>
 
     <!-- ═══ CENAS COMPOSTAS (line-art maiores) ═══ -->
     <!-- Cena agro-financeira: silos + campo + moedas (banner/cabeçalho) -->
@@ -1720,7 +1747,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <!-- COMPARAÇÃO VS. BENCHMARKS -->
   <div class="panel mb" id="panel-bench" style="margin-top:16px">
     <div class="phd">
-      <div><div class="pt" style="display:flex;align-items:center">📊 Carteira vs. Benchmarks</div><div class="ps">Rentabilidade consolidada da carteira contra CDI, IBOVESPA e S&amp;P500</div></div>
+      <div><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--accent);margin-right:6px"><use href="#ic-chart"/></svg>Carteira vs. Benchmarks</div><div class="ps">Rentabilidade consolidada da carteira contra CDI, IBOVESPA e S&amp;P500</div></div>
       <button class="btn btn-ghost" onclick="abrirConfigBench()">⚙ Taxas</button>
     </div>
     <div id="bench-kpis" class="kpi-row"></div>
@@ -1731,7 +1758,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <!-- CRIPTOMOEDAS -->
   <div class="panel mb" id="panel-cripto" style="margin-top:16px">
     <div class="phd">
-      <div><div class="pt" style="display:flex;align-items:center">₿ Criptomoedas</div><div class="ps">Cotação ao vivo via CoinGecko — classe própria, fora da apuração de IR de ações/satélite</div></div>
+      <div><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--accent);margin-right:6px"><use href="#ic-cripto"/></svg>Criptomoedas</div><div class="ps">Cotação ao vivo via CoinGecko — classe própria, fora da apuração de IR de ações/satélite</div></div>
       <button class="btn btn-g" onclick="openM('m-cripto')">+ Adicionar</button>
     </div>
     <div id="cripto-kpis" class="kpi-row" style="margin-bottom:12px"></div>
@@ -1743,7 +1770,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <!-- MILHAS & PONTOS -->
   <div class="panel mb" id="panel-milhas" style="margin-top:16px">
     <div class="phd">
-      <div><div class="pt" style="display:flex;align-items:center">✈️ Milhas &amp; Pontos</div><div class="ps">Programas de fidelidade (Livelo, Smiles, Latam Pass…) — valor de resgate estimado</div></div>
+      <div><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--accent);margin-right:6px"><use href="#ic-milhas"/></svg>Milhas &amp; Pontos</div><div class="ps">Programas de fidelidade (Livelo, Smiles, Latam Pass…) — valor de resgate estimado</div></div>
       <button class="btn btn-g" onclick="openM('m-milhas')">+ Adicionar</button>
     </div>
     <div id="milhas-kpis" class="kpi-row" style="margin-bottom:12px"></div>
@@ -1755,7 +1782,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <!-- MONITOR DE COBERTURA FGC -->
   <div class="panel mb" id="panel-fgc" style="margin-top:16px">
     <div class="phd">
-      <div><div class="pt" style="display:flex;align-items:center">🛡️ Cobertura do FGC</div><div class="ps">Soma de CDB/LCI/LCA/RDB por instituição financeira vs. limite de garantia de R$250.000</div></div>
+      <div><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--accent);margin-right:6px"><use href="#ic-escudo"/></svg>Cobertura do FGC</div><div class="ps">Soma de CDB/LCI/LCA/RDB por instituição financeira vs. limite de garantia de R$250.000</div></div>
     </div>
     <div id="fgc-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum título de renda fixa com instituição cadastrada ainda.</div>
     <div id="fgc-conteudo"></div>
@@ -1765,7 +1792,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
   <!-- DECLARAÇÃO DE BENS — IRPF -->
   <div class="panel mb" id="panel-bens-irpf" style="margin-top:16px">
     <div class="phd">
-      <div><div class="pt" style="display:flex;align-items:center">📋 Declaração de Bens — IRPF</div><div class="ps">Posição de bens e direitos formatada para a ficha "Bens e Direitos" da declaração anual</div></div>
+      <div><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--accent);margin-right:6px"><use href="#ic-relatorio"/></svg>Declaração de Bens — IRPF</div><div class="ps">Posição de bens e direitos formatada para a ficha "Bens e Direitos" da declaração anual</div></div>
       <button class="btn btn-ghost" onclick="exportarBensIrpfTxt()">⭳ Exportar .txt</button>
     </div>
     <div id="bens-irpf-conteudo"></div>
@@ -4047,7 +4074,7 @@ async function atualizarMercadoImoveis(){
   <!-- RASTREADOR DE ASSINATURAS / RECORRÊNCIAS -->
   <div class="panel mb" id="panel-assinaturas" style="margin-top:16px">
     <div class="phd">
-      <div><div class="pt" style="display:flex;align-items:center">🔁 Assinaturas &amp; Recorrências</div><div class="ps">Detecção automática de cobranças repetidas nos lançamentos e compras de cartão dos últimos 4 meses</div></div>
+      <div><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--accent);margin-right:6px"><use href="#ic-recorrencia"/></svg>Assinaturas &amp; Recorrências</div><div class="ps">Detecção automática de cobranças repetidas nos lançamentos e compras de cartão dos últimos 4 meses</div></div>
     </div>
     <div id="assin-kpis" class="kpi-row" style="margin-bottom:12px"></div>
     <div id="assin-vazio" class="empty-hint" style="display:none;padding:20px;text-align:center;color:var(--txt3);font-size:12.5px">Nenhum padrão de cobrança recorrente detectado ainda — precisa de pelo menos 2 ocorrências da mesma descrição/valor aproximado.</div>
@@ -4105,7 +4132,7 @@ async function atualizarMercadoImoveis(){
   <!-- SIMULADOR DE APOSENTADORIA / INDEPENDÊNCIA FINANCEIRA -->
   <div class="panel mb" id="panel-aposentadoria" style="margin-top:16px">
     <div class="phd">
-      <div><div class="pt" style="display:flex;align-items:center">🏖️ Simulador de Aposentadoria</div><div class="ps">Projeção de patrimônio dado aporte mensal e rentabilidade esperada (juros compostos)</div></div>
+      <div><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--accent);margin-right:6px"><use href="#ic-horizonte"/></svg>Simulador de Aposentadoria</div><div class="ps">Projeção de patrimônio dado aporte mensal e rentabilidade esperada (juros compostos)</div></div>
     </div>
     <div class="fgrid" style="margin-bottom:14px">
       <div class="fg"><label>Aporte mensal (R$)</label><input id="ap-aporte" type="number" step="0.01" oninput="_apPreview()"></div>
