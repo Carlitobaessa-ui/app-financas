@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 110 -->
+<!-- APP_VERSION: 111 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -5745,6 +5745,10 @@ function toggleMobNav(){
   btn.classList.toggle('open', open);
   ov.classList.toggle('open', open);
   document.body.style.overflow = open ? 'hidden' : '';
+  // Ver comentário em toggleNav(): abrir/fechar a gaveta muda o layout mas
+  // não dispara 'resize' de janela — em iPad isso deixava gráficos com o
+  // tamanho errado até giro de tela. Reajusta após a transição (.25s).
+  setTimeout(reajustarGraficos,280);
 }
 function closeMobNav(){
   const nav = document.getElementById('nav');
@@ -5754,6 +5758,7 @@ function closeMobNav(){
   btn.classList.remove('open');
   ov.classList.remove('open');
   document.body.style.overflow = '';
+  setTimeout(reajustarGraficos,280);
 }
 
 const fns={dashboard:rdash,carteira:rcar,cotacoes:rcot,graos:rgraosmkt, imoveis:rimoveis,dividendos:rdiv,alocacao:raloc,contas:rcontas,cartoes:rcartoes,gastos:rgas,orcamento:rorc,bens:rbens,objetivos:robjetivos,sinais:rsinais,briefing:rbriefing,assistente:rassistente,'assistente-mid':rassistenteMid,'assistente-adv':rassistenteAdv};
@@ -10770,6 +10775,12 @@ function toggleNav(){
   btn.textContent=collapsed?'›':'‹';
   btn.title=collapsed?'Expandir menu':'Recolher menu';
   localStorage.setItem('nav_collapsed',collapsed?'1':'0');
+  // Expandir/recolher o menu muda a largura disponível para o conteúdo, mas
+  // não é um evento 'resize' de janela de verdade — em iPad/tablets isso
+  // deixava gráficos (Chart.js) e o diagrama de fluxo com o tamanho antigo
+  // até a próxima mudança real de orientação. Força o reajuste explicitamente,
+  // aguardando a transição de largura (.22s) terminar.
+  setTimeout(reajustarGraficos,260);
 }
 
 // ─── PERSISTÊNCIA AUTOMÁTICA (Síntese III)
