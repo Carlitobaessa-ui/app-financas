@@ -12,7 +12,7 @@
 // Para forçar todo mundo a baixar uma atualização, basta mudar CACHE_VERSION
 // (feito a cada nova versão publicada do app).
 
-const CACHE_VERSION = 'financas-v113';
+const CACHE_VERSION = 'financas-v114';
 const APP_SHELL = [
   './',
   './index.html',
@@ -78,6 +78,21 @@ self.addEventListener('fetch', (event) => {
         caches.open(CACHE_VERSION).then((cache) => cache.put(req, copia));
         return resp;
       });
+    })
+  );
+});
+
+// Clique numa notificação (disparada via reg.showNotification() pelo próprio
+// app, ver índice.html → _notificarAlertasNovos): foca uma aba já aberta do
+// app, ou abre uma nova se não houver nenhuma.
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close();
+  event.waitUntil(
+    self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((list) => {
+      for (const c of list) {
+        if ('focus' in c) return c.focus();
+      }
+      if (self.clients.openWindow) return self.clients.openWindow('./');
     })
   );
 });

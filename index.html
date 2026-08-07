@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 113 -->
+<!-- APP_VERSION: 114 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1434,6 +1434,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="nav-group">Configurações</div>
     <button class="nav-item" onclick="abrirConfigApi()"><span class="ni"><svg class="svi"><use href="#ic-ia"/></svg></span><span class="nav-label"> Chave de API</span></button>
     <button class="nav-item" onclick="abrirConfigEnc()"><span class="ni">🔒</span><span class="nav-label"> Criptografia local</span></button>
+    <button class="nav-item" onclick="abrirConfigNotif()"><span class="ni">🔔</span><span class="nav-label"> Notificações</span></button>
     <button class="nav-item" onclick="authPasskeyRegister()"><span class="ni"><svg class="svi"><use href="#ic-faceid"/></svg></span><span class="nav-label"> Face ID / Biometria</span></button>
     <button class="nav-item" onclick="authLogout()"><span class="ni"><svg class="svi"><use href="#ic-sair"/></svg></span><span class="nav-label"> Sair</span></button>
     <div class="nav-div"></div>
@@ -4953,6 +4954,20 @@ async function atualizarMercadoImoveis(){
 </div>
 </div></div>
 
+<div class="ov" id="m-config-notif"><div class="modal" style="width:520px"><button class="mc" onclick="closeM('m-config-notif')">✕</button>
+<div class="m-eye">Configurações</div><div class="m-title">🔔 Notificações</div>
+<div style="font-size:12px;color:var(--txt3);line-height:1.55;margin-bottom:14px">
+  Mostra um alerta nativo do sistema (fora da aba do navegador) quando o app detectar algo importante <strong>enquanto estiver aberto</strong> — fatura vencendo, orçamento estourado, ativo caindo, saldo baixo, dividendo recebido. Não funciona com o app fechado; é o próprio navegador quem exibe o alerta — nenhum servidor externo está envolvido.
+</div>
+<div id="notif-status-box" style="font-size:11.5px;color:var(--txt3);margin-bottom:14px"></div>
+<div id="notif-erro" style="font-size:11.5px;color:#B4483A;margin-bottom:10px;min-height:14px"></div>
+<div class="mfoot">
+  <button class="btn btn-d" id="notif-btn-desativar" style="display:none" onclick="_uiDesativarNotif()">Desativar</button>
+  <button class="btn btn-ghost" onclick="closeM('m-config-notif')">Fechar</button>
+  <button class="btn btn-g" id="notif-btn-ativar" onclick="_uiAtivarNotif()">Ativar</button>
+</div>
+</div></div>
+
 <div class="ov" id="enc-lock-overlay" style="display:none;z-index:9999"><div class="modal" style="width:380px;text-align:center">
   <div style="font-size:32px;margin-bottom:10px">🔒</div>
   <div class="m-title" style="margin-bottom:6px">Dados protegidos</div>
@@ -5890,6 +5905,99 @@ function gerarAlertas(){
   return alertas.slice(0,5);
 }
 
+// ═══ NOTIFICAÇÕES DO SISTEMA (enquanto o app está aberto) ═══
+// Mostra notificações nativas do navegador (fora da aba) quando gerarAlertas()
+// encontra algo novo — só Notifications API + o Service Worker já registrado
+// para o cache offline. De propósito NÃO usa Push API/VAPID: não há servidor
+// nem custo algum envolvido, e o próprio escopo pedido é "enquanto o app
+// estiver aberto" — a Push API real só agregaria valor para notificar com o
+// app fechado, o que exigiria armazenar inscrições num backend.
+// Limitação honesta: se todas as abas/janelas do app estiverem fechadas, ou o
+// navegador tiver descarregado o Service Worker por inatividade, nada dispara.
+const _NOTIF_ON_KEY='notif_local_on';
+const _NOTIF_HIST_KEY='notif_local_hist';
+const _NOTIF_COOLDOWN_MS=12*60*60*1000; // não repete o mesmo alerta por 12h
+function notificacoesSuportadas(){
+  try{ return ('Notification' in window) && ('serviceWorker' in navigator); }catch(_){ return false; }
+}
+function notificacoesAtivas(){
+  try{ return localStorage.getItem(_NOTIF_ON_KEY)==='1' && typeof Notification!=='undefined' && Notification.permission==='granted'; }catch(_){ return false; }
+}
+async function ativarNotificacoes(){
+  if(!notificacoesSuportadas())throw new Error('Notificações não são suportadas neste navegador.');
+  const perm=await Notification.requestPermission();
+  if(perm!=='granted'){
+    localStorage.setItem(_NOTIF_ON_KEY,'0');
+    throw new Error(perm==='denied'?'Permissão negada pelo navegador. Habilite em Configurações do site → Notificações e tente de novo.':'Permissão não concedida.');
+  }
+  localStorage.setItem(_NOTIF_ON_KEY,'1');
+  return true;
+}
+function desativarNotificacoes(){ localStorage.setItem(_NOTIF_ON_KEY,'0'); }
+function _histNotif(){ try{ return JSON.parse(localStorage.getItem(_NOTIF_HIST_KEY)||'{}'); }catch(_){ return {}; } }
+function _salvarHistNotif(h){ try{ localStorage.setItem(_NOTIF_HIST_KEY,JSON.stringify(h)); }catch(_){} }
+// Normaliza o título (troca números/percentuais por '#') para o mesmo tipo de
+// alerta não spammar uma notificação nova a cada pequena variação do valor.
+function _normAlertaKey(a){ return (a.ic||'')+'|'+String(a.titulo||'').replace(/[\d.,%]+/g,'#'); }
+async function _notificarAlertasNovos(alertas){
+  try{
+    if(!Array.isArray(alertas)||!alertas.length)return;
+    if(!notificacoesAtivas())return;
+    const hist=_histNotif();
+    const agora=Date.now();
+    let mudou=false;
+    for(const a of alertas){
+      const k=_normAlertaKey(a);
+      if(agora-(hist[k]||0)<_NOTIF_COOLDOWN_MS)continue;
+      hist[k]=agora; mudou=true;
+      try{
+        if('serviceWorker' in navigator){
+          const reg=await navigator.serviceWorker.ready;
+          await reg.showNotification(a.titulo,{body:a.sub||'',tag:k});
+        }else{
+          new Notification(a.titulo,{body:a.sub||''});
+        }
+      }catch(_){/* uma notificação falhando não pode travar o dashboard */}
+    }
+    if(mudou)_salvarHistNotif(hist);
+  }catch(_){}
+}
+// ─── UI: modal de configuração (Configurações → Notificações) ───
+function abrirConfigNotif(){
+  const box=document.getElementById('notif-status-box');
+  const btnAtivar=document.getElementById('notif-btn-ativar');
+  const btnDesativar=document.getElementById('notif-btn-desativar');
+  document.getElementById('notif-erro').textContent='';
+  if(!notificacoesSuportadas()){
+    box.innerHTML='⚠ Seu navegador não suporta notificações do sistema.';
+    btnAtivar.style.display='none'; btnDesativar.style.display='none';
+  }else if(notificacoesAtivas()){
+    box.innerHTML='🔔 Notificações ativas neste navegador.';
+    btnAtivar.style.display='none'; btnDesativar.style.display='';
+  }else if(typeof Notification!=='undefined' && Notification.permission==='denied'){
+    box.innerHTML='⚠ Permissão bloqueada pelo navegador. Habilite manualmente em Configurações do site → Notificações, depois clique em Ativar de novo.';
+    btnAtivar.style.display=''; btnDesativar.style.display='none';
+  }else{
+    box.innerHTML='Notificações desativadas.';
+    btnAtivar.style.display=''; btnDesativar.style.display='none';
+  }
+  openM('m-config-notif');
+}
+async function _uiAtivarNotif(){
+  try{
+    await ativarNotificacoes();
+    toast('🔔 Notificações ativadas');
+    closeM('m-config-notif');
+  }catch(e){
+    const el=document.getElementById('notif-erro'); if(el)el.textContent=e.message;
+  }
+}
+function _uiDesativarNotif(){
+  desativarNotificacoes();
+  toast('Notificações desativadas');
+  closeM('m-config-notif');
+}
+
 // ─── SAÚDE FINANCEIRA
 function calcSaude(){
   const inv=totInv(),banc=saldoBancarioTotal(),fat=faturasTotalAbertas(),gas=gMes(),pat=patrimonioLiquido();
@@ -6293,6 +6401,7 @@ function rdash(){
 
   // Alertas inteligentes
   const alertas=gerarAlertas();
+  _notificarAlertasNovos(alertas); // ═══ NOTIFICAÇÕES — dispara em segundo plano, não bloqueia o render
   document.getElementById('alertas-box').innerHTML=alertas.length
     ?`<div class="alertas">${alertas.map(a=>`<div class="alerta alerta-${a.tipo}"><div class="alerta-ic">${a.ic}</div><div class="alerta-tx"><strong>${a.titulo}</strong><span>${a.sub}</span></div><button class="alerta-btn" onclick="${a.fn}">${a.acao} →</button></div>`).join('')}</div>`
     :'';
