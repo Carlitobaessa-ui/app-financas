@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 122 -->
+<!-- APP_VERSION: 123 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4958,6 +4958,7 @@ async function atualizarMercadoImoveis(){
   <div class="fg"><label>Tipo</label>
     <select id="ob-tp">
       <option value="reserva">Reserva / Proteção</option>
+      <option value="independencia_financeira">Independência Financeira</option>
       <option value="bem_imovel">Bem Imóvel</option>
       <option value="bem_movel">Bem Móvel / Veículo</option>
       <option value="viagem">Viagem</option>
@@ -9275,7 +9276,7 @@ function robjetivos(){
     const prazoDate=new Date(o.prazo);
     const meses=Math.max(0,Math.ceil((prazoDate-new Date())/(1000*60*60*24*30.44)));
     const restante=Math.max(0,o.valorAlvo-o.acumulado);
-    const tipoLabel={reserva:'Reserva',bem_imovel:'Imóvel',bem_movel:'Veículo',viagem:'Viagem',negocio:'Negócio',educacao:'Educação',outro:'Outro'}[o.tipo]||o.tipo;
+    const tipoLabel={reserva:'Reserva',independencia_financeira:'Independência Financeira',bem_imovel:'Imóvel',bem_movel:'Veículo',viagem:'Viagem',negocio:'Negócio',educacao:'Educação',outro:'Outro'}[o.tipo]||o.tipo;
 
     // SVG ring progress
     const r=18,circ=2*Math.PI*r,dash=circ*(pct/100),gap=circ-dash;
