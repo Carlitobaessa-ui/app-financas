@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 143 -->
+<!-- APP_VERSION: 144 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -2390,7 +2390,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     </div>
 
     <!-- 6. SAFRAS -->
-    <h2><span class="n">6</span> Produção de grãos <span class="badge" style="background:rgba(90,127,175,.12);color:#5A7FAF;text-transform:none;letter-spacing:0;font-weight:500;margin-left:8px" title="IBGE Produção Agrícola Municipal (PAM) — pesquisa oficial anual. Mostra o último ano-safra JÁ FECHADO, não a previsão em andamento da safra atual (isso é o que a CONAB publica mensalmente, mas a CONAB não tem API pública). Atualiza de verdade a cada clique em Atualizar Tudo.">🟢 IBGE · último ano fechado</span></h2>
+    <h2><span class="n">6</span> Produção de grãos <span class="badge" style="background:rgba(90,127,175,.12);color:#5A7FAF;text-transform:none;letter-spacing:0;font-weight:500;margin-left:8px" title="IBGE Produção Agrícola Municipal (PAM) — pesquisa oficial anual. Mostra o último ano-safra JÁ FECHADO, não a previsão em andamento da safra atual (isso é o que a CONAB publica mensalmente, mas a CONAB não tem API pública). Atualiza de verdade a cada clique em Atualizar Tudo."><span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--grn);margin-right:5px;vertical-align:1px"></span>IBGE · último ano fechado</span></h2>
     <div class="grid two">
       <div class="card">
         <div class="sub" id="pgSafraBrLab">Brasil — IBGE (PAM) · clique em ↻ Atualizar Tudo</div>
@@ -2529,9 +2529,9 @@ async function pgFetchIbgeSafra(){
 function pgFxStatusHTML(){
   if(pgFxFetchedAt){
     const f=pgFxFetchedAt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
-    return `<span class="badge live" style="margin-left:6px">🟢 ao vivo · AwesomeAPI · ${f}</span>`;
+    return `<span class="badge live" style="margin-left:6px">${_dotStatus('var(--grn)')}ao vivo · AwesomeAPI · ${f}</span>`;
   }
-  return `<span class="badge" style="margin-left:6px">⚪ valor manual — clique em Atualizar Tudo/Atualizar Mercado p/ buscar ao vivo</span>`;
+  return `<span class="badge" style="margin-left:6px">${_dotStatus('var(--txt3)')}valor manual — clique em Atualizar Tudo/Atualizar Mercado p/ buscar ao vivo</span>`;
 }
 function pgFmt(n,d=2){return (isNaN(n)?0:n).toLocaleString('pt-BR',{minimumFractionDigits:d,maximumFractionDigits:d});}
 function pgBrl(n){return 'R$ '+pgFmt(n);}
@@ -3950,7 +3950,7 @@ async function imFetchIndicadoresPublicos(){
 function imRenderIndicadores(){
   const el=imG('im-indic-publicos'); if(!el) return;
   if(!imIndicadores.fetchedAt){
-    el.innerHTML=`<span class="badge" title="Busca Selic (meta) e IPCA acumulado 12m direto do Banco Central — série SGS 432 e 433">⚪ Selic e IPCA ainda não buscados nesta sessão — clique em "Atualizar Tudo"</span>`;
+    el.innerHTML=`<span class="badge" title="Busca Selic (meta) e IPCA acumulado 12m direto do Banco Central — série SGS 432 e 433">${_dotStatus('var(--txt3)')}Selic e IPCA ainda não buscados nesta sessão — clique em "Atualizar Tudo"</span>`;
     return;
   }
   const f=imIndicadores.fetchedAt.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'});
@@ -3964,9 +3964,9 @@ function imRenderIndicadores(){
     : null;
   el.innerHTML=`
     <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
-      <span class="badge live">🟢 Selic (meta) ${selicTxt}</span>
-      <span class="badge live">🟢 IPCA acum. ${ipcaTxt}</span>
-      <span class="badge live">🟢 IGP-M acum. ${igpmTxt}</span>
+      <span class="badge live">${_dotStatus('var(--grn)')}Selic (meta) ${selicTxt}</span>
+      <span class="badge live">${_dotStatus('var(--grn)')}IPCA acum. ${ipcaTxt}</span>
+      <span class="badge live">${_dotStatus('var(--grn)')}IGP-M acum. ${igpmTxt}</span>
       ${riscoJuro?`<span class="badge ${riscoJuro.c}">${riscoJuro.t}</span>`:''}
       <span class="badge" style="opacity:.75">fonte: BCB/SGS séries 432, 433 e 189 · ${f}</span>
     </div>
@@ -5879,6 +5879,10 @@ const usd=v=>_valoresOcultos?'$ ••••':'$ '+v.toLocaleString('en-US',{min
 const pct=v=>(v>=0?'+':'')+v.toFixed(2)+'%';
 const fdt=d=>{const[y,m,dy]=d.split('-');return`${dy}/${m}/${y}`};
 const fmt=v=>v.toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:2});
+// Bolinha de status colorida (substitui os emojis 🟢🟡🔴⚪ por um indicador
+// consistente, desenhado com as próprias cores do app em vez de depender do
+// emoji do sistema operacional/fonte do usuário).
+const _dotStatus=cor=>`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${cor};margin-right:5px;vertical-align:1px"></span>`;
 // Alterna o modo e re-renderiza a página ativa pra aplicar a máscara imediatamente
 // em tudo que já está na tela (KPIs, cards, tabelas e tooltips de gráfico).
 function toggleValoresOcultos(){
@@ -6559,7 +6563,7 @@ function abrirConfigNotif(){
     box.innerHTML='⚠ Seu navegador não suporta notificações do sistema.';
     btnAtivar.style.display='none'; btnDesativar.style.display='none';
   }else if(notificacoesAtivas()){
-    box.innerHTML='🔔 Notificações ativas neste navegador.';
+    box.innerHTML='<svg class="svi" style="width:12px;height:12px;vertical-align:-2px"><use href="#ic-sino"/></svg> Notificações ativas neste navegador.';
     btnAtivar.style.display='none'; btnDesativar.style.display='';
   }else if(typeof Notification!=='undefined' && Notification.permission==='denied'){
     box.innerHTML='⚠ Permissão bloqueada pelo navegador. Habilite manualmente em Configurações do site → Notificações, depois clique em Ativar de novo.';
@@ -8228,8 +8232,8 @@ function rcot(){
   const statusEl=document.getElementById('cot-status-upd');
   if(statusEl){
     statusEl.innerHTML = S.lastUpdate
-      ? `🟢 Cotações ao vivo atualizadas em ${S.lastUpdate.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`
-      : `⚪ Ainda não atualizado ao vivo nesta sessão — clique em "Atualizar Tudo"`;
+      ? `${_dotStatus('var(--grn)')}Cotações ao vivo atualizadas em ${S.lastUpdate.toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})}`
+      : `${_dotStatus('var(--txt3)')}Ainda não atualizado ao vivo nesta sessão — clique em "Atualizar Tudo"`;
   }
   const now=new Date().toLocaleTimeString('pt-BR');
   const tbCot=document.getElementById('tb-cot');
@@ -9787,9 +9791,9 @@ function robjetivos(){
       </div>
     </div>
     <div style="display:flex;gap:16px;font-size:11px;color:var(--txt3);margin-bottom:4px">
-      <span>🔴 Fixos ${(fixosTot/S.receita*100).toFixed(0)}%</span>
-      <span>🔵 Objetivos ${(totalAporte/S.receita*100).toFixed(0)}%</span>
-      <span>🟡 Variáveis ${(varBudget/S.receita*100).toFixed(0)}%</span>
+      <span>${_dotStatus('var(--red)')}Fixos ${(fixosTot/S.receita*100).toFixed(0)}%</span>
+      <span>${_dotStatus('var(--blu)')}Objetivos ${(totalAporte/S.receita*100).toFixed(0)}%</span>
+      <span>${_dotStatus('var(--gld)')}Variáveis ${(varBudget/S.receita*100).toFixed(0)}%</span>
       ${totalAporte+fixosTot>S.receita?'<span style="color:var(--red);font-weight:600">⚠ Comprometimento acima da receita! Revise objetivos ou aumente receita.</span>':''}
     </div>
   `;
@@ -10195,7 +10199,7 @@ function rorc(){
       <select class="orc-tipo-sel" data-cat="${cat}"><option value="fixo">fixo</option><option value="variavel" selected>variável</option></select>
       <input type="number" class="orc-inp" id="or-${cat}" value="${entry.valor}" title="Limite original (base para cálculo proporcional)">
       <label style="display:flex;align-items:center;gap:3px;font-size:9.5px;color:var(--txt3);cursor:pointer;white-space:nowrap" title="Envelope: acumula saldo entre meses em vez de resetar">
-        <input type="checkbox" ${envAtivo?'checked':''} onchange="_toggleEnvelope('${cat.replace(/'/g,"\\'")}',this.checked)"> 📦
+        <input type="checkbox" ${envAtivo?'checked':''} onchange="_toggleEnvelope('${cat.replace(/'/g,"\\'")}',this.checked)"> <svg class="svi" style="width:12px;height:12px;vertical-align:-2px"><use href="#ic-caixa"/></svg>
       </label>
       <button class="btn btn-ed" style="padding:3px 7px" onclick="editCategoriaOrc('${cat.replace(/'/g,"\\'")}')" title="Renomear categoria">✎</button>
       <button class="btn btn-d" style="padding:3px 7px" onclick="rmCategoriaOrc('${cat.replace(/'/g,"\\'")}')" title="Remover categoria">✕</button>
@@ -10215,7 +10219,7 @@ function rorc(){
         <div class="mono" style="font-weight:600;color:${cor};min-width:110px;text-align:right">${saldo>=0?'+':'−'}${brl(Math.abs(saldo))}</div>
         <span style="font-size:10px;color:var(--txt3);min-width:120px">${saldo>=0?'buffer disponível':'descoberto — cobrir de outro envelope'}</span>
       </div>`;
-    }).join('') : '<div style="padding:10px 0;color:var(--txt3);font-size:12px">Nenhum envelope ativo — marque 📦 numa conta variável abaixo para começar a acumular saldo entre meses.</div>';
+    }).join('') : `<div style="padding:10px 0;color:var(--txt3);font-size:12px">Nenhum envelope ativo — marque <svg class="svi" style="width:11px;height:11px;vertical-align:-1px"><use href="#ic-caixa"/></svg> numa conta variável abaixo para começar a acumular saldo entre meses.</div>`;
   }
 
   // Wire tipo changes
@@ -16523,18 +16527,18 @@ INSTRUÇÕES DE COMPORTAMENTO:
 
 // ─── Perguntas sugeridas dinâmicas
 const QUICK_CHIPS = [
-  { emoji:'📊', txt:'Analise meu patrimônio líquido atual' },
-  { emoji:'🎯', txt:'Estou no caminho certo para meus objetivos?' },
-  { emoji:'💳', txt:'Minhas faturas estão saudáveis?' },
-  { emoji:'📈', txt:'Qual ativo está com melhor rentabilidade?' },
-  { emoji:'⚖️', txt:'Minha alocação está balanceada?' },
-  { emoji:'💰', txt:'Quanto economizo por mês efetivamente?' },
-  { emoji:'🌾', txt:'Como estão as commodities hoje?' },
-  { emoji:'🛡', txt:'Minha reserva de emergência está adequada?' },
-  { emoji:'📉', txt:'Algum ativo precisa de atenção?' },
-  { emoji:'🏠', txt:'Como está meu patrimônio em bens?' },
-  { emoji:'💵', txt:'Minha renda de dividendos é suficiente?' },
-  { emoji:'🔄', txt:'Devo rebalancear a carteira agora?' },
+  { ic:'ic-chart', txt:'Analise meu patrimônio líquido atual' },
+  { ic:'ic-alvo', txt:'Estou no caminho certo para meus objetivos?' },
+  { ic:'ic-cartao', txt:'Minhas faturas estão saudáveis?' },
+  { ic:'ic-chart', txt:'Qual ativo está com melhor rentabilidade?' },
+  { ic:'ic-balanca', txt:'Minha alocação está balanceada?' },
+  { ic:'ic-moeda', txt:'Quanto economizo por mês efetivamente?' },
+  { ic:'ic-silo', txt:'Como estão as commodities hoje?' },
+  { ic:'ic-escudo', txt:'Minha reserva de emergência está adequada?' },
+  { ic:'ic-queda', txt:'Algum ativo precisa de atenção?' },
+  { ic:'ic-terra', txt:'Como está meu patrimônio em bens?' },
+  { ic:'ic-moeda', txt:'Minha renda de dividendos é suficiente?' },
+  { ic:'ic-recorrencia', txt:'Devo rebalancear a carteira agora?' },
 ];
 
 // ─── Render assistente
@@ -16556,7 +16560,7 @@ function rassistente(){
   // Quick chips — rotaciona aleatoriamente 6
   const shuffled = [...QUICK_CHIPS].sort(()=>Math.random()-.5).slice(0,6);
   document.getElementById('quick-chips').innerHTML = shuffled.map(c=>
-    `<span class="quick-chip" onclick="quickAsk('${c.txt.replace(/'/g,"\\'")}')">${c.emoji} ${c.txt}</span>`
+    `<span class="quick-chip" onclick="quickAsk('${c.txt.replace(/'/g,"\\'")}')">${c.ic?`<svg class="svi" style="width:11px;height:11px;vertical-align:-1px"><use href="#${c.ic}"/></svg>`:c.emoji} ${c.txt}</span>`
   ).join('');
 
   // Mensagem de boas-vindas se chat vazio
@@ -16859,14 +16863,14 @@ let chatHistoryAdv=[];
 let _advTab='chat';
 
 const QUICK_CHIPS_ADV=[
-  { emoji:'🧾', txt:'Qual meu IRPF estimado considerando dividendos e ganhos de capital?' },
-  { emoji:'👨‍👩‍👧', txt:'Como estruturar uma holding familiar para o meu patrimônio?' },
-  { emoji:'🌾', txt:'Estime o valor de mercado dos meus 60 hectares rurais no Paraná' },
-  { emoji:'⚡', txt:'Qual é meu maior risco patrimonial hoje?' },
-  { emoji:'🔮', txt:'Cenário de queda de 30% na Bolsa: impacto no meu patrimônio líquido' },
-  { emoji:'💼', txt:'Posso usar os bens rurais como garantia para crédito de expansão?' },
-  { emoji:'📋', txt:'Crie um plano de desalavancagem para quitar as faturas de cartão' },
-  { emoji:'🏦', txt:'Compare: manter Tesouro IPCA+ vs aumentar posição em ações' },
+  { ic:'ic-imposto', txt:'Qual meu IRPF estimado considerando dividendos e ganhos de capital?' },
+  { ic:'ic-familia', txt:'Como estruturar uma holding familiar para o meu patrimônio?' },
+  { ic:'ic-terra', txt:'Estime o valor de mercado dos meus 60 hectares rurais no Paraná' },
+  { ic:'ic-raio', txt:'Qual é meu maior risco patrimonial hoje?' },
+  { ic:'ic-cenarios', txt:'Cenário de queda de 30% na Bolsa: impacto no meu patrimônio líquido' },
+  { ic:'ic-maleta', txt:'Posso usar os bens rurais como garantia para crédito de expansão?' },
+  { ic:'ic-lista', txt:'Crie um plano de desalavancagem para quitar as faturas de cartão' },
+  { ic:'ic-banco', txt:'Compare: manter Tesouro IPCA+ vs aumentar posição em ações' },
 ];
 
 function buildContextAdv(){
@@ -16948,7 +16952,7 @@ function rassistenteAdv(){
   // Quick chips
   const shuffled=[...QUICK_CHIPS_ADV].sort(()=>Math.random()-.5).slice(0,6);
   document.getElementById('quick-chips-adv').innerHTML=shuffled.map(c=>
-    `<span class="quick-chip" style="border-color:var(--gld-lt);color:var(--gld)" onclick="quickAdv('${c.txt.replace(/'/g,"\\'")}'">${c.emoji} ${c.txt}</span>`
+    `<span class="quick-chip" style="border-color:var(--gld-lt);color:var(--gld)" onclick="quickAdv('${c.txt.replace(/'/g,"\\'")}'">${c.ic?`<svg class="svi" style="width:11px;height:11px;vertical-align:-1px"><use href="#${c.ic}"/></svg>`:c.emoji} ${c.txt}</span>`
   ).join('');
 
   // Boas-vindas
@@ -17103,9 +17107,9 @@ function renderCenariosAdv(){
     </div>`).join('');
 
   document.getElementById('cen-resumo').innerHTML=[
-    {nm:'🟢 Otimista',desc:`Retorno ${(ret*130).toFixed(0)}% aa, inflation controlada`,val10:otimista[10]},
-    {nm:'🔵 Base',    desc:`Retorno ${(ret*100).toFixed(0)}% aa, referência atual`,val10:base[10]},
-    {nm:'🔴 Estresse',desc:`Retorno ${(ret*50).toFixed(0)}% aa, crise fiscal`,val10:estresse[10]},
+    {nm:`${_dotStatus('var(--grn)')}Otimista`,desc:`Retorno ${(ret*130).toFixed(0)}% aa, inflation controlada`,val10:otimista[10]},
+    {nm:`${_dotStatus('var(--blu)')}Base`,    desc:`Retorno ${(ret*100).toFixed(0)}% aa, referência atual`,val10:base[10]},
+    {nm:`${_dotStatus('var(--red)')}Estresse`,desc:`Retorno ${(ret*50).toFixed(0)}% aa, crise fiscal`,val10:estresse[10]},
   ].map(c=>`
     <div style="padding:12px 0;border-bottom:0.5px solid var(--bdr)">
       <div style="font-size:12.5px;font-weight:600;margin-bottom:3px">${c.nm}</div>
