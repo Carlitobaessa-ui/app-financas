@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 132 -->
+<!-- APP_VERSION: 133 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1973,7 +1973,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
 
   <!-- Agro & Índices BR -->
   <div class="panel mb">
-    <div class="phd"><div class="pt"><svg class="svi" style="width:15px;height:15px;color:var(--accent);margin-right:6px"><use href="#ic-chart"/></svg>Índices Brasileiros &amp; Ações</div><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('br')">+ Incluir</button></div>
+    <div class="phd"><div><div class="pt"><svg class="svi" style="width:15px;height:15px;color:var(--accent);margin-right:6px"><use href="#ic-chart"/></svg>Índices Brasileiros &amp; Ações</div><div class="ps">Cotações do dia dos índices e ações brasileiras que você cadastrou, com variação diária</div></div><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('br')">+ Incluir</button></div>
     <div class="pbd"><div class="tg" id="tg-br"></div></div>
   </div>
 
@@ -1986,7 +1986,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
 
   <!-- Mercado Global -->
   <div class="panel mb">
-    <div class="phd"><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--gld);margin-right:5px"><use href="#ic-chart"/></svg>Mercado Global</div><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('us')">+ Incluir</button></div>
+    <div class="phd"><div><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--gld);margin-right:5px"><use href="#ic-chart"/></svg>Mercado Global</div><div class="ps">Cotações do dia de índices e ações internacionais (EUA e outros) que você cadastrou</div></div><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('us')">+ Incluir</button></div>
     <div class="pbd"><div class="tg" id="tg-us"></div></div>
   </div>
 
@@ -2015,7 +2015,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
 
   <!-- Cripto -->
   <div class="panel mb">
-    <div class="phd"><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--gld);margin-right:5px"><use href="#ic-cripto"/></svg>Cripto</div><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('cripto')">+ Incluir</button></div>
+    <div class="phd"><div><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--gld);margin-right:5px"><use href="#ic-cripto"/></svg>Cripto</div><div class="ps">Cotações do dia das criptomoedas que você cadastrou, convertidas para reais</div></div><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('cripto')">+ Incluir</button></div>
     <div class="pbd"><div class="tg" id="tg-cripto"></div></div>
   </div>
 
@@ -2028,7 +2028,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
 
   <!-- Câmbio -->
   <div class="panel mb">
-    <div class="phd"><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--gld);margin-right:5px"><use href="#ic-moeda"/></svg>Câmbio</div><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('fx')">+ Incluir</button></div>
+    <div class="phd"><div><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--gld);margin-right:5px"><use href="#ic-moeda"/></svg>Câmbio</div><div class="ps">Cotações do dia dos pares de moeda que você cadastrou (ex.: dólar, euro em reais)</div></div><button class="btn btn-ghost" style="font-size:11px;padding:4px 11px" onclick="abrirIncluirCot('fx')">+ Incluir</button></div>
     <div class="pbd"><div class="tg" id="tg-fx"></div></div>
   </div>
 
@@ -4107,10 +4107,10 @@ async function atualizarMercadoImoveis(){
 <div class="page" id="page-dividendos">
   <div class="ph"><svg class="ph-watermark"><use href="#ic-moeda"/></svg><div><div class="ph-eye">Renda Passiva</div><div class="ph-title">Dividendos & Proventos</div><div class="ph-sub">Histórico e projeção de rendimentos</div></div><div class="ha"><button class="btn btn-ghost" onclick="abrirFotoImport('dividendos')"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportDividendos()">⭳ Importar Dividendos</button><button class="btn btn-g" onclick="openM('m-dividendo')">+ Lançar Provento</button></div></div>
   <div class="kpi-row">
-    <div class="kpi"><div class="kpi-eye">Recebido (ano)</div><div class="kpi-val cgd" id="dv-ano">—</div></div>
+    <div class="kpi"><div class="kpi-eye">Recebido (ano)<span class="info-ic" tabindex="0" data-tip="Soma de todos os proventos já recebidos no ano corrente."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val cgd" id="dv-ano">—</div></div>
     <div class="kpi"><div class="kpi-eye">Média Mensal</div><div class="kpi-val" id="dv-med">—</div></div>
-    <div class="kpi"><div class="kpi-eye">DY Médio</div><div class="kpi-val cg" id="dv-dy">—</div></div>
-    <div class="kpi"><div class="kpi-eye">A Receber (provisionado)</div><div class="kpi-val cb" id="dv-prj">—</div></div>
+    <div class="kpi"><div class="kpi-eye">DY Médio<span class="info-ic" tabindex="0" data-tip="Dividend Yield médio: proventos recebidos no período dividido pelo valor investido nos ativos que pagaram, anualizado."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val cg" id="dv-dy">—</div></div>
+    <div class="kpi"><div class="kpi-eye">A Receber (provisionado)<span class="info-ic" tabindex="0" data-tip="Proventos já anunciados/lançados com data futura, ainda não pagos — valor a cair na conta."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val cb" id="dv-prj">—</div></div>
   </div>
   <div class="g2 mb">
     <div class="panel"><div class="phd"><div class="pt">Por Mês</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-div"></canvas></div><div class="pft">Proventos recebidos, Jan–Jun do ano de referência (mais recente com dado)</div></div></div>
@@ -4127,11 +4127,11 @@ async function atualizarMercadoImoveis(){
 <div class="page" id="page-alocacao">
   <div class="ph"><svg class="ph-watermark"><use href="#ic-trigo"/></svg><div><div class="ph-eye">Estratégia</div><div class="ph-title">Alocação de Ativos</div><div class="ph-sub">Atual vs. faixas-alvo do Comitê de Investimentos</div></div></div>
   <div class="g2 mb">
-    <div class="panel"><div class="phd"><div class="pt">Atual × Faixa-alvo</div></div><div class="pbd" id="aloc-bars"></div></div>
+    <div class="panel"><div class="phd"><div><div class="pt">Atual × Faixa-alvo</div><div class="ps">Percentual atual de cada classe de ativo na carteira comparado à faixa-alvo definida abaixo</div></div></div><div class="pbd" id="aloc-bars"></div></div>
     <div class="panel"><div class="phd"><div class="pt">Distribuição</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-aloc-pie"></canvas></div><div class="pft">Distribuição atual da carteira de investimentos por classe de ativo</div></div></div>
   </div>
   <div class="panel">
-    <div class="phd"><div class="pt">Configurar Alvos</div><span class="badge b-n">Soma dos alvos = 100%</span></div>
+    <div class="phd"><div><div class="pt">Configurar Alvos</div><div class="ps">Defina a faixa percentual desejada para cada classe de ativo — usada na comparação Atual × Faixa-alvo acima</div></div><span class="badge b-n">Soma dos alvos = 100%</span></div>
     <div class="pbd"><div id="meta-form"></div><div style="display:flex;justify-content:flex-end;margin-top:16px"><button class="btn btn-g" onclick="salvarMetas()">Salvar Metas</button></div></div>
   </div>
 </div>
@@ -4352,7 +4352,7 @@ async function atualizarMercadoImoveis(){
 
   <!-- KPIs -->
   <div class="kpi-row">
-    <div class="kpi"><svg class="kpi-svi"><use href="#ic-terra"/></svg><div class="kpi-eye">Patrimônio Total Bens</div><div class="kpi-val cg" id="bn-tot">—</div><div class="kpi-d cm" id="bn-tot-d">—</div></div>
+    <div class="kpi"><svg class="kpi-svi"><use href="#ic-terra"/></svg><div class="kpi-eye">Patrimônio Total Bens<span class="info-ic" tabindex="0" data-tip="Soma do valor atual de todos os bens cadastrados (veículos, imóveis, construções e outros)."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val cg" id="bn-tot">—</div><div class="kpi-d cm" id="bn-tot-d">—</div></div>
     <div class="kpi"><svg class="kpi-svi"><use href="#ic-chart"/></svg><div class="kpi-eye">Bens Móveis</div><div class="kpi-val cb" id="bn-mov">—</div><div class="kpi-d cm" id="bn-mov-d">—</div></div>
     <div class="kpi"><svg class="kpi-svi"><use href="#ic-silo"/></svg><div class="kpi-eye">Bens Imóveis</div><div class="kpi-val cgd" id="bn-imov">—</div><div class="kpi-d cm" id="bn-imov-d">—</div></div>
     <div class="kpi"><svg class="kpi-svi"><use href="#ic-lista"/></svg><div class="kpi-eye">Nº de Bens</div><div class="kpi-val" id="bn-num">—</div><div class="kpi-d cm">cadastrados</div></div>
@@ -4360,9 +4360,9 @@ async function atualizarMercadoImoveis(){
 
   <!-- KPIs Seguros & Financiamentos -->
   <div class="kpi-row" style="margin-top:12px">
-    <div class="kpi"><svg class="kpi-svi"><use href="#ic-radar"/></svg><div class="kpi-eye">Patrimônio Segurado</div><div class="kpi-val cb" id="bn-seg">—</div><div class="kpi-d cm" id="bn-seg-d">—</div></div>
+    <div class="kpi"><svg class="kpi-svi"><use href="#ic-radar"/></svg><div class="kpi-eye">Patrimônio Segurado<span class="info-ic" tabindex="0" data-tip="Soma do valor segurado (importância segurada) dos bens que têm apólice cadastrada."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val cb" id="bn-seg">—</div><div class="kpi-d cm" id="bn-seg-d">—</div></div>
     <div class="kpi"><svg class="kpi-svi"><use href="#ic-moeda"/></svg><div class="kpi-eye">Prêmios Anuais</div><div class="kpi-val cgd" id="bn-prem">—</div><div class="kpi-d cm" id="bn-prem-d">—</div></div>
-    <div class="kpi"><svg class="kpi-svi"><use href="#ic-banco"/></svg><div class="kpi-eye">Saldo Devedor</div><div class="kpi-val cr" id="bn-div">—</div><div class="kpi-d cm" id="bn-div-d">—</div></div>
+    <div class="kpi"><svg class="kpi-svi"><use href="#ic-banco"/></svg><div class="kpi-eye">Saldo Devedor<span class="info-ic" tabindex="0" data-tip="Soma do saldo ainda a pagar de todos os financiamentos/empréstimos vinculados a bens cadastrados."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val cr" id="bn-div">—</div><div class="kpi-d cm" id="bn-div-d">—</div></div>
     <div class="kpi"><svg class="kpi-svi"><use href="#ic-cartao"/></svg><div class="kpi-eye">Parcelas/Mês</div><div class="kpi-val cr" id="bn-parc">—</div><div class="kpi-d cm" id="bn-parc-d">—</div></div>
   </div>
 
@@ -4433,7 +4433,7 @@ async function atualizarMercadoImoveis(){
   <!-- ÍNDICE DE RESILIÊNCIA -->
   <div class="panel mb">
     <div class="phd" style="border-bottom:none;padding-bottom:8px">
-      <div class="pt">Índice de Resiliência do Modelo</div>
+      <div><div class="pt">Índice de Resiliência do Modelo</div><div class="ps">Média ponderada de 6 dimensões (liquidez, diversificação, endividamento, renda passiva, resiliência agro e liquidez patrimonial) · 0 a 100</div></div>
       <div id="resil-score" style="font-family:var(--disp);font-size:20px;font-weight:700"></div>
     </div>
     <div class="pbd" style="padding-top:6px">
@@ -4454,14 +4454,14 @@ async function atualizarMercadoImoveis(){
       <div class="pbd"><div style="position:relative;height:280px"><canvas id="ch-sinais-radar"></canvas></div><div class="pft">Fotografia atual do patrimônio (6 dimensões), sem projeção temporal</div></div>
     </div>
     <div class="panel">
-      <div class="phd"><div class="pt">Sinais Fracos Detectados</div><span class="badge b-gd" id="sinais-count">—</span></div>
+      <div class="phd"><div><div class="pt">Sinais Fracos Detectados<span class="info-ic" tabindex="0" data-tip="Sinal forte = padrão já confirmado nos dados atuais; sinal fraco = tendência inicial que ainda precisa de confirmação nos próximos meses."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="ps">Alertas automáticos, positivos (↗) e negativos (↘), gerados a partir das métricas do patrimônio</div></div><span class="badge b-gd" id="sinais-count">—</span></div>
       <div class="pbd" id="sinais-fracos" style="max-height:280px;overflow-y:auto"></div>
     </div>
   </div>
 
   <!-- MATRIZ DE RISCOS -->
   <div class="panel mb">
-    <div class="phd"><div class="pt">Matriz de Riscos · Internos &amp; Externos</div>
+    <div class="phd"><div><div class="pt">Matriz de Riscos · Internos &amp; Externos</div><div class="ps">Probabilidade × impacto estimados para cada risco; severidade (crítico/atenção/controlado) combina os dois fatores</div></div>
       <div style="display:flex;gap:7px">
         <span class="badge b-r">crítico</span><span class="badge b-gd">atenção</span><span class="badge b-g">controlado</span>
       </div>
@@ -9467,7 +9467,7 @@ function robjetivos(){
   document.getElementById('obj-kpis').innerHTML=`
     <div class="kpi"><div class="kpi-ic">◎</div><div class="kpi-eye">Total Meta</div><div class="kpi-val">${brl(totalAlvo)}</div><div class="kpi-d cm">${(S.objetivos||[]).length} objetivos</div></div>
     <div class="kpi"><div class="kpi-ic">⊛</div><div class="kpi-eye">Já Acumulado</div><div class="kpi-val cg">${brl(totalAcum)}</div><div class="kpi-d cm">${totalAlvo>0?(totalAcum/totalAlvo*100).toFixed(1):0}% do total</div></div>
-    <div class="kpi"><div class="kpi-ic">▲</div><div class="kpi-eye">Aporte Mensal Total</div><div class="kpi-val cr">${brl(totalAporte)}</div><div class="kpi-d cm">${(totalAporte/S.receita*100).toFixed(1)}% da receita</div></div>
+    <div class="kpi"><div class="kpi-ic">▲</div><div class="kpi-eye">Aporte Mensal Total<span class="info-ic" tabindex="0" data-tip="Soma do aporte mensal necessário de cada objetivo para atingir a meta no prazo definido."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val cr">${brl(totalAporte)}</div><div class="kpi-d cm">${(totalAporte/S.receita*100).toFixed(1)}% da receita</div></div>
     <div class="kpi"><div class="kpi-ic">◳</div><div class="kpi-eye">Mais Distante</div><div class="kpi-val cb">${horizonte} meses</div><div class="kpi-d cm">prazo mais longo</div></div>
   `;
 
@@ -16584,10 +16584,10 @@ function rsinais(){
 
   // ── KPIs dos 3 níveis ──
   document.getElementById('sinais-kpis').innerHTML=`
-    <div class="kpi"><svg class="kpi-svi"><use href="#ic-chart"/></svg><div class="kpi-eye">Resiliência Patrimônio</div><div class="kpi-val ${d.liquidez>60?'cg':'cgd'}">${Math.round((d.liquidez+d.endividamento+d.rendaPassiva)/3)}/100</div><div class="kpi-d cm">liquidez·renda·dívida</div></div>
-    <div class="kpi"><svg class="kpi-svi"><use href="#ic-cartao"/></svg><div class="kpi-eye">Resiliência Negócios</div><div class="kpi-val cgd">58/100</div><div class="kpi-d cm">Vivenda·eTribais</div></div>
-    <div class="kpi"><svg class="kpi-svi"><use href="#ic-trigo"/></svg><div class="kpi-eye">Resiliência Agro</div><div class="kpi-val ${d.resilAgro>55?'cg':'cr'}">${Math.round(d.resilAgro)}/100</div><div class="kpi-d cm">commodity·clima</div></div>
-    <div class="kpi"><svg class="kpi-svi"><use href="#ic-radar"/></svg><div class="kpi-eye">Diversificação Global</div><div class="kpi-val ${d.diversificacao>60?'cg':'cgd'}">${Math.round(d.diversificacao)}/100</div><div class="kpi-d cm">geo·classe·setor</div></div>
+    <div class="kpi"><svg class="kpi-svi"><use href="#ic-chart"/></svg><div class="kpi-eye">Resiliência Patrimônio<span class="info-ic" tabindex="0" data-tip="Média de liquidez, renda passiva e nível de endividamento do patrimônio pessoal · 0 a 100."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val ${d.liquidez>60?'cg':'cgd'}">${Math.round((d.liquidez+d.endividamento+d.rendaPassiva)/3)}/100</div><div class="kpi-d cm">liquidez·renda·dívida</div></div>
+    <div class="kpi"><svg class="kpi-svi"><use href="#ic-cartao"/></svg><div class="kpi-eye">Resiliência Negócios<span class="info-ic" tabindex="0" data-tip="Nível de exposição a disrupção dos negócios próprios (Vivenda Decor, eTribais) · 0 a 100, estimativa qualitativa."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val cgd">58/100</div><div class="kpi-d cm">Vivenda·eTribais</div></div>
+    <div class="kpi"><svg class="kpi-svi"><use href="#ic-trigo"/></svg><div class="kpi-eye">Resiliência Agro<span class="info-ic" tabindex="0" data-tip="Capacidade de absorver choques de preço de commodity e clima na operação agro · 0 a 100."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val ${d.resilAgro>55?'cg':'cr'}">${Math.round(d.resilAgro)}/100</div><div class="kpi-d cm">commodity·clima</div></div>
+    <div class="kpi"><svg class="kpi-svi"><use href="#ic-radar"/></svg><div class="kpi-eye">Diversificação Global<span class="info-ic" tabindex="0" data-tip="Quão distribuído está o patrimônio entre geografias, classes de ativo e setores · 0 a 100."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val ${d.diversificacao>60?'cg':'cgd'}">${Math.round(d.diversificacao)}/100</div><div class="kpi-d cm">geo·classe·setor</div></div>
   `;
 
   // ── Radar de exposição ──
@@ -16666,7 +16666,7 @@ function rsinais(){
 function renderDisrupcao(dis,m){
   const wr=document.getElementById('disrupcao-wr');
   if(dis.nivel==='baixo'){
-    wr.innerHTML=`<div class="panel"><div class="phd"><div class="pt">Análise de Disrupção</div><span class="badge b-g">baixo risco</span></div>
+    wr.innerHTML=`<div class="panel"><div class="phd"><div><div class="pt">Análise de Disrupção</div><div class="ps">Avalia o risco de ruptura estrutural do modelo atual (patrimônio, negócios e agro) combinando fatores internos e externos</div></div><span class="badge b-g">baixo risco</span></div>
       <div class="pbd"><div style="display:flex;align-items:center;gap:12px">
         <svg class="svi" style="width:28px;height:28px;color:var(--grn)"><use href="#ic-radar"/></svg>
         <div style="font-size:12.5px;color:var(--txt2);line-height:1.5">Score de disrupção: <strong>${dis.score}/100</strong>. O modelo atual não apresenta risco iminente de ruptura estrutural. Manter vigilância sobre os sinais fracos e revisar trimestralmente.</div>
