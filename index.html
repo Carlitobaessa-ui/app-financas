@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 139 -->
+<!-- APP_VERSION: 140 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -13057,7 +13057,116 @@ function _briefingAutoAoAbrir(){
   setTimeout(()=>{ gerarBriefingDiario(false).catch(()=>{}); }, 1500);
 }
 
+// ═══════════════════════════════════════════════════════════
+// RESUMO SEMANAL — segundo modo do Briefing, olhando pra trás (a semana que
+// passou) em vez do estado do dia. Reaproveita os mesmos 3 agentes/contexto
+// e a mesma chave de API do Briefing Diário; só muda o prompt (inclui um
+// resumo NUMÉRICO já calculado localmente — gasto da semana vs anterior,
+// top categorias, dividendos — pra IA não ter que inferir/estimar datas, só
+// interpretar números que já estão corretos) e o cache (por semana, não por dia).
+// ═══════════════════════════════════════════════════════════
+const _BRIEFING_SEMANAL_STORE='briefing_semanal';
+
+// Segunda-feira da semana de "d" (ou hoje), como chave de cache estável —
+// mais simples e sem casos extremos que calcular número de semana ISO.
+function _inicioSemanaISO(d){
+  d=d?new Date(d):new Date();
+  const diaSemana=(d.getDay()+6)%7; // 0=segunda … 6=domingo
+  const seg=new Date(d.getFullYear(),d.getMonth(),d.getDate()-diaSemana);
+  return seg.toISOString().slice(0,10);
+}
+
+// Números da semana calculados localmente (não pela IA) — só dados que dá
+// pra derivar com precisão dos lançamentos datados existentes. De propósito
+// NÃO inclui "variação de patrimônio da semana": o app não guarda uma série
+// histórica diária de patrimônio, então mostrar isso seria inventar dado.
+function _resumoSemanaDados(){
+  const hoje=new Date();
+  const fimStr=hoje.toISOString().slice(0,10);
+  const iniAtualD=new Date(hoje); iniAtualD.setDate(hoje.getDate()-6);
+  const iniAnteriorD=new Date(hoje); iniAnteriorD.setDate(hoje.getDate()-13);
+  const iniAtualStr=iniAtualD.toISOString().slice(0,10);
+  const iniAnteriorStr=iniAnteriorD.toISOString().slice(0,10);
+  const gastosSemana=(S.gastos||[]).filter(g=>!g.forecast&&g.data>=iniAtualStr&&g.data<=fimStr);
+  const gastosAnterior=(S.gastos||[]).filter(g=>!g.forecast&&g.data>=iniAnteriorStr&&g.data<iniAtualStr);
+  const totalSemana=gastosSemana.reduce((s,g)=>s+g.valor,0);
+  const totalAnterior=gastosAnterior.reduce((s,g)=>s+g.valor,0);
+  const porCat={}; gastosSemana.forEach(g=>{porCat[g.cat]=(porCat[g.cat]||0)+g.valor;});
+  const topCats=Object.entries(porCat).sort((a,b)=>b[1]-a[1]).slice(0,3);
+  const divSemana=(S.dividendos||[]).filter(d=>d.data>=iniAtualStr&&d.data<=fimStr).reduce((s,d)=>s+d.total,0);
+  const alertasAtuais=(typeof gerarAlertas==='function'?gerarAlertas():[]);
+  return {
+    iniAtualStr,fimStr,totalSemana,totalAnterior,
+    variacaoPct: totalAnterior>0 ? ((totalSemana-totalAnterior)/totalAnterior*100) : null,
+    topCats, divSemana, alertasAtuais,
+  };
+}
+function _resumoSemanaTexto(){
+  const r=_resumoSemanaDados();
+  const linhas=[`Período analisado: ${fdt(r.iniAtualStr)} a ${fdt(r.fimStr)} (últimos 7 dias).`,
+    `Total gasto na semana: ${brl(r.totalSemana)}.`];
+  linhas.push(r.variacaoPct!=null
+    ? `Semana anterior: ${brl(r.totalAnterior)} (variação de ${r.variacaoPct>=0?'+':''}${r.variacaoPct.toFixed(0)}%).`
+    : `Sem dado comparável da semana anterior.`);
+  linhas.push(r.topCats.length ? `Maiores categorias da semana: ${r.topCats.map(([c,v])=>`${c} (${brl(v)})`).join(', ')}.` : 'Nenhum gasto categorizado na semana.');
+  linhas.push(`Dividendos recebidos na semana: ${brl(r.divSemana)}.`);
+  linhas.push(r.alertasAtuais.length ? `Alertas ativos agora: ${r.alertasAtuais.map(a=>a.titulo).join('; ')}.` : 'Nenhum alerta ativo no momento.');
+  return linhas.join('\n');
+}
+function _briefingSemanalUserPrompt(){
+  return `Gere o RESUMO SEMANAL (a semana que passou) do portfólio completo do Carlito. Os NÚMEROS DA SEMANA abaixo já foram calculados localmente a partir dos lançamentos reais — são fatos, use-os como estão, não recalcule nem contradiga:
+
+${_resumoSemanaTexto()}
+
+Com base nesses números E no restante do contexto financeiro (patrimônio, carteira, objetivos, metas de alocação), produza uma análise organizada EXATAMENTE nestes 3 blocos, em Markdown simples:
+
+**1. Como foi a semana**
+Resuma objetivamente gastos, dividendos e alertas usando os números fornecidos acima. Compare com a semana anterior quando o dado estiver disponível.
+
+**2. Destaques e pontos de atenção**
+O que se destacou (positivo ou negativo) e por quê — categorias de gasto fora do padrão, dividendos relevantes, faturas, objetivos que avançaram ou travaram.
+
+**3. Foco da próxima semana**
+No máximo 3 ações concretas e priorizadas para a semana que começa.
+
+Regras: seja quantitativo, direto e conciso (máx ~250 palavras no total). NÃO invente números que não estejam no contexto ou nos dados da semana informados acima — se não souber, diga que não há dado suficiente. Escreva em português brasileiro.`;
+}
+function _lerCacheBriefingSemanal(){ try{ const raw=localStorage.getItem(_BRIEFING_SEMANAL_STORE); return raw?JSON.parse(raw):null; }catch(_){ return null; } }
+function _salvarCacheBriefingSemanal(obj){ try{ localStorage.setItem(_BRIEFING_SEMANAL_STORE, JSON.stringify(obj)); }catch(_){} }
+
+async function _gerarBriefingSemanalAgente(agente){
+  const body={model:'claude-sonnet-4-6',max_tokens:900,system:agente.ctx(),messages:[{role:'user',content:_briefingSemanalUserPrompt()}]};
+  const r=await chamarClaudeAPI(body);
+  const d=await r.json();
+  if(d.error) throw new Error(d.error.message||'erro na API');
+  return d.content?.[0]?.text || '(sem resposta)';
+}
+async function gerarBriefingSemanal(forcar){
+  const semanaKey=_inicioSemanaISO();
+  const cache=_lerCacheBriefingSemanal();
+  if(!forcar && cache && cache.semana===semanaKey && cache.resultados){ _renderBriefing(); return; }
+  if(!temApiKey()){ _renderBriefing(); return; }
+  const resultados={};
+  _marcarBriefingGerando();
+  for(const ag of _BRIEFING_AGENTES){
+    _statusBriefingAgente(ag.id,'gerando');
+    try{ resultados[ag.id]=await _gerarBriefingSemanalAgente(ag); _statusBriefingAgente(ag.id,'ok'); }
+    catch(e){ resultados[ag.id]='⚠ Não foi possível gerar: '+e.message; _statusBriefingAgente(ag.id,'erro'); }
+  }
+  const obj={semana:semanaKey, geradoEm:new Date().toISOString(), resultados};
+  _salvarCacheBriefingSemanal(obj);
+  _renderBriefing();
+}
+
 // ── Renderização da página ──
+let _briefingModo='diario'; // 'diario' | 'semanal' — alternado pelas abas no topo do painel
+function _setBriefingModo(m){ _briefingModo=m; rbriefing(); }
+function _briefingTabsHTML(){
+  return `<div style="display:flex;gap:6px;margin-bottom:14px">
+    <button class="btn ${_briefingModo==='diario'?'btn-g':'btn-ghost'}" style="font-size:11.5px;padding:5px 12px" onclick="_setBriefingModo('diario')">Diário</button>
+    <button class="btn ${_briefingModo==='semanal'?'btn-g':'btn-ghost'}" style="font-size:11.5px;padding:5px 12px" onclick="_setBriefingModo('semanal')">Semanal</button>
+  </div>`;
+}
 function _mdBriefing(txt){
   return (txt||'')
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
@@ -13071,6 +13180,10 @@ function _mdBriefing(txt){
 }
 
 function rbriefing(){
+  if(_briefingModo==='semanal') return _rbriefingSemanal();
+  return _rbriefingDiario();
+}
+function _rbriefingDiario(){
   const cache=_lerCacheBriefing();
   const hoje=_hojeISO();
   const temHoje = cache && cache.data===hoje && cache.resultados;
@@ -13081,7 +13194,7 @@ function rbriefing(){
   if(!cont)return;
 
   if(!temApiKey() && !temHoje){
-    cont.innerHTML=`<div style="text-align:center;padding:40px 20px;color:var(--txt3)">
+    cont.innerHTML=`${_briefingTabsHTML()}<div style="text-align:center;padding:40px 20px;color:var(--txt3)">
       <div style="margin-bottom:10px"><svg class="svi" style="width:32px;height:32px;color:var(--txt3)"><use href="#ic-chave"/></svg></div>
       <div style="font-family:Space Grotesk;font-size:16px;color:var(--txt2);margin-bottom:8px">Briefing indisponível sem chave de API</div>
       <div style="font-size:13px;max-width:420px;margin:0 auto;line-height:1.6">Os agentes precisam da sua chave da Anthropic para gerar a análise diária localmente. Configure em <strong>Configurações → Chave de API</strong>.</div>
@@ -13105,7 +13218,7 @@ function rbriefing(){
     </div>`;
   }).join('');
 
-  cont.innerHTML=`
+  cont.innerHTML=`${_briefingTabsHTML()}
     <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px">
       <div style="font-size:12px;color:var(--txt3)">
         ${temHoje ? `Gerado hoje${geradoFmt?' às '+geradoFmt:''} · <span style="text-transform:capitalize">${dataFmt}</span>` : `<span style="text-transform:capitalize">${dataFmt}</span> · ainda não gerado`}
@@ -13115,6 +13228,54 @@ function rbriefing(){
     ${cards}
     <div style="font-size:11px;color:var(--txt3);margin-top:6px;line-height:1.5">
       As análises são geradas por IA a partir dos dados do seu portfólio e podem conter imprecisões. Use como apoio à decisão, não como recomendação definitiva de investimento.
+    </div>`;
+}
+function _rbriefingSemanal(){
+  const cache=_lerCacheBriefingSemanal();
+  const semanaKey=_inicioSemanaISO();
+  const temSemana = cache && cache.semana===semanaKey && cache.resultados;
+  const fim=new Date(), ini=new Date(); ini.setDate(fim.getDate()-6);
+  const periodoFmt=`${ini.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})} – ${fim.toLocaleDateString('pt-BR',{day:'2-digit',month:'2-digit'})}`;
+  const geradoFmt = temSemana && cache.geradoEm ? new Date(cache.geradoEm).toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'}) : null;
+
+  const cont=document.getElementById('briefing-body');
+  if(!cont)return;
+
+  if(!temApiKey() && !temSemana){
+    cont.innerHTML=`${_briefingTabsHTML()}<div style="text-align:center;padding:40px 20px;color:var(--txt3)">
+      <div style="margin-bottom:10px"><svg class="svi" style="width:32px;height:32px;color:var(--txt3)"><use href="#ic-chave"/></svg></div>
+      <div style="font-family:Space Grotesk;font-size:16px;color:var(--txt2);margin-bottom:8px">Resumo semanal indisponível sem chave de API</div>
+      <div style="font-size:13px;max-width:420px;margin:0 auto;line-height:1.6">Os agentes precisam da sua chave da Anthropic para gerar o resumo da semana. Configure em <strong>Configurações → Chave de API</strong>.</div>
+      <button class="btn btn-g" style="margin-top:16px" onclick="abrirConfigApi()">Configurar chave</button>
+    </div>`;
+    return;
+  }
+
+  const cards=_BRIEFING_AGENTES.map(ag=>{
+    const texto = temSemana ? cache.resultados[ag.id] : null;
+    const corpo = texto
+      ? _mdBriefing(texto)
+      : `<div id="brf-status-${ag.id}" style="color:var(--txt3);font-size:13px;padding:8px 0">Aguardando geração…</div>`;
+    return `<div class="card" style="margin-bottom:16px">
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:10px;border-bottom:0.5px solid var(--bdr)">
+        <div style="width:34px;height:34px;border-radius:9px;background:var(--grn-lt);display:flex;align-items:center;justify-content:center;font-size:16px">✦</div>
+        <div><div style="font-family:Space Grotesk;font-weight:600;font-size:14px">${ag.nome}</div>
+        <div style="font-size:11px;color:var(--txt3)">${ag.eye}</div></div>
+      </div>
+      <div style="font-size:13px;line-height:1.65;color:var(--txt2)" id="brf-corpo-${ag.id}">${corpo}</div>
+    </div>`;
+  }).join('');
+
+  cont.innerHTML=`${_briefingTabsHTML()}
+    <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;margin-bottom:16px">
+      <div style="font-size:12px;color:var(--txt3)">
+        ${temSemana ? `Gerado hoje${geradoFmt?' às '+geradoFmt:''}` : 'ainda não gerado'} · Semana de ${periodoFmt}
+      </div>
+      <button class="btn btn-g" onclick="gerarBriefingSemanal(true)">${temSemana?'↻ Atualizar Resumo':'▶ Gerar Resumo da Semana'}</button>
+    </div>
+    ${cards}
+    <div style="font-size:11px;color:var(--txt3);margin-top:6px;line-height:1.5">
+      As análises são geradas por IA a partir dos números da semana calculados localmente e do contexto do seu portfólio, e podem conter imprecisões. Use como apoio à decisão, não como recomendação definitiva de investimento.
     </div>`;
 }
 
