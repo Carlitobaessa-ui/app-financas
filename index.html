@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 140 -->
+<!-- APP_VERSION: 141 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4914,7 +4914,7 @@ async function atualizarMercadoImoveis(){
     <input id="ga-dt" type="hidden">
     <div class="dp-pop" id="ga-dt-pop"></div>
   </div><div class="fg"><label>Valor (R$)</label><input id="ga-vl" type="number" placeholder="0.00" step="0.01"></div></div>
-<div class="fgrid"><div class="fg"><label>Descrição</label><input id="ga-dc" type="text" placeholder="Descrição…" oninput="_aoDigitarDescGasto()"></div><div class="fg"><label>Categoria <span id="ga-ct-auto" class="cm" style="font-size:9.5px;display:none">· sugerida</span></label><select id="ga-ct" onchange="_gaCatDirty=true"></select></div></div>
+<div class="fgrid"><div class="fg"><label>Descrição</label><input id="ga-dc" type="text" placeholder="Descrição…" oninput="_aoDigitarDescGasto()"></div><div class="fg"><label>Categoria <span id="ga-ct-auto" class="cm" style="font-size:9.5px;display:none">· sugerida</span><button type="button" id="ga-ct-ia" class="btn btn-ghost" style="display:none;font-size:9px;padding:1px 6px;margin-left:4px" title="Perguntar à IA qual categoria faz mais sentido (consome sua chave de API)" onclick="_sugerirCategoriaViaIA('ga-dc','ga-ct','ga-ct-ia')">✦ Sugerir via IA</button></label><select id="ga-ct" onchange="_gaCatDirty=true"></select></div></div>
 <div class="fgrid">
   <div class="fg"><label>Forma de Pagamento</label>
     <select id="ga-forma" onchange="onGastoForma()">
@@ -5025,7 +5025,7 @@ async function atualizarMercadoImoveis(){
     <div class="dp-pop" id="cp-dt-pop"></div>
   </div><div class="fg"><label>Cartão</label><select id="cp-ct"></select></div></div>
 <div class="fg" style="margin-bottom:12px"><label>Descrição</label><input id="cp-dc" type="text" placeholder="Supermercado, Amazon…" oninput="_aoDigitarDescCompra()"></div>
-<div class="fgrid"><div class="fg"><label>Categoria <span id="cp-ca-auto" class="cm" style="font-size:9.5px;display:none">· sugerida</span></label><select id="cp-ca" onchange="_cpCatDirty=true"></select></div><div class="fg"><label>Valor Total (R$)</label><input id="cp-vl" type="number" placeholder="0.00" step="0.01"></div></div>
+<div class="fgrid"><div class="fg"><label>Categoria <span id="cp-ca-auto" class="cm" style="font-size:9.5px;display:none">· sugerida</span><button type="button" id="cp-ca-ia" class="btn btn-ghost" style="display:none;font-size:9px;padding:1px 6px;margin-left:4px" title="Perguntar à IA qual categoria faz mais sentido (consome sua chave de API)" onclick="_sugerirCategoriaViaIA('cp-dc','cp-ca','cp-ca-ia')">✦ Sugerir via IA</button></label><select id="cp-ca" onchange="_cpCatDirty=true"></select></div><div class="fg"><label>Valor Total (R$)</label><input id="cp-vl" type="number" placeholder="0.00" step="0.01"></div></div>
 <div class="fgrid"><div class="fg"><label>Parcelas</label><select id="cp-pr"><option value="1">À vista</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option><option value="13">13x</option><option value="14">14x</option><option value="15">15x</option><option value="16">16x</option><option value="17">17x</option><option value="18">18x</option><option value="19">19x</option><option value="20">20x</option><option value="21">21x</option><option value="22">22x</option><option value="23">23x</option><option value="24">24x</option></select></div><div class="fg"><label>Valor/Parcela</label><input id="cp-vp" type="number" readonly style="opacity:.55"></div></div>
 <div class="rec-block" data-prefix="cp"></div>
 <div class="rec-scope" id="cp-scope" style="display:none">
@@ -5765,12 +5765,17 @@ function _aoDigitarDescGasto(){
   const sugestao=_sugerirCategoria(desc);
   const sel=document.getElementById('ga-ct');
   const badge=document.getElementById('ga-ct-auto');
+  const btnIa=document.getElementById('ga-ct-ia');
   if(!sel)return;
   if(sugestao && [...sel.options].some(o=>o.value===sugestao)){
     sel.value=sugestao;
     if(badge)badge.style.display='';
-  } else if(badge){
-    badge.style.display='none';
+    if(btnIa)btnIa.style.display='none';
+  } else {
+    if(badge)badge.style.display='none';
+    // Regra local não reconheceu — oferece o botão de sugestão por IA (opt-in,
+    // só aparece; não chama a API sozinho).
+    if(btnIa)btnIa.style.display=(desc&&desc.trim().length>=3)?'inline-block':'none';
   }
 }
 let _cpCatDirty=false;
@@ -5780,12 +5785,55 @@ function _aoDigitarDescCompra(){
   const sugestao=_sugerirCategoria(desc);
   const sel=document.getElementById('cp-ca');
   const badge=document.getElementById('cp-ca-auto');
+  const btnIa=document.getElementById('cp-ca-ia');
   if(!sel)return;
   if(sugestao && [...sel.options].some(o=>o.value===sugestao)){
     sel.value=sugestao;
     if(badge)badge.style.display='';
-  } else if(badge){
-    badge.style.display='none';
+    if(btnIa)btnIa.style.display='none';
+  } else {
+    if(badge)badge.style.display='none';
+    if(btnIa)btnIa.style.display=(desc&&desc.trim().length>=3)?'inline-block':'none';
+  }
+}
+// ─── Categorização assistida por IA (opt-in) — quando a regra local (grátis,
+// instantânea, roda a cada tecla) não reconhece a descrição, o botão "✦
+// Sugerir via IA" aparece e, SÓ ao ser clicado, pergunta à IA qual categoria
+// já cadastrada faz mais sentido. Nunca dispara sozinho — cada clique
+// consome tokens da chave de API configurada em Configurações.
+async function _sugerirCategoriaViaIA(descId,selectId,btnId){
+  const desc=(document.getElementById(descId)?.value||'').trim();
+  if(!desc){ toast('⚠ Digite a descrição primeiro'); return; }
+  if(!temApiKey()){ toast('⚠ Configure sua chave de API em Configurações para usar sugestão por IA'); return; }
+  const btn=document.getElementById(btnId);
+  const textoOriginal=btn?btn.textContent:null;
+  if(btn){ btn.disabled=true; btn.textContent='✦ pensando…'; }
+  try{
+    const categorias=(S.categorias||[]).join(', ');
+    const body={
+      model:'claude-sonnet-4-6',
+      max_tokens:20,
+      system:`Você categoriza um lançamento financeiro. Responda APENAS com o nome EXATO de uma categoria da lista a seguir, sem explicação e sem pontuação extra. Se nenhuma categoria da lista fizer sentido, responda exatamente: Nenhuma.\nCategorias disponíveis: ${categorias}`,
+      messages:[{role:'user',content:`Descrição do lançamento: "${desc}"`}],
+    };
+    const r=await chamarClaudeAPI(body);
+    const d=await r.json();
+    if(d.error) throw new Error(d.error.message||'erro na API');
+    const resposta=(d.content?.[0]?.text||'').trim();
+    const sel=document.getElementById(selectId);
+    const opcao=sel?[...sel.options].find(o=>o.value.toLowerCase()===resposta.toLowerCase()):null;
+    if(opcao){
+      sel.value=opcao.value;
+      if(selectId==='ga-ct')_gaCatDirty=true; else if(selectId==='cp-ca')_cpCatDirty=true;
+      if(btn)btn.style.display='none';
+      toast(`✦ IA sugeriu: ${opcao.value}`);
+    } else {
+      toast(resposta && resposta.toLowerCase()!=='nenhuma' ? `IA sugeriu "${resposta}", mas não é uma categoria cadastrada` : 'IA não conseguiu sugerir uma categoria para essa descrição');
+    }
+  }catch(e){
+    toast('⚠ Falha ao consultar IA: '+e.message);
+  }finally{
+    if(btn){ btn.disabled=false; if(btn.style.display!=='none')btn.textContent=textoOriginal; }
   }
 }
 function popularCategorias(){
