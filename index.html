@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 134 -->
+<!-- APP_VERSION: 135 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -6467,11 +6467,16 @@ function calcSaude(){
   // clamp garante que cada pilar fique sempre em 0..100 (saldo negativo, gastos zero etc. não podem estourar a escala)
   const clamp=v=>Math.max(0,Math.min(100,v));
   const pillares=[
-    {nm:'Liquidez',score:clamp(banc/Math.max(gas,1)*50),desc:`${Math.max(0,banc/Math.max(gas,1)).toFixed(1)}x gastos`},
-    {nm:'Investimento',score:clamp(inv/Math.max(pat,1)*200),desc:`${Math.max(0,inv/Math.max(pat,1)*100).toFixed(0)}% do pat.`},
-    {nm:'Endividamento',score:clamp(100-fat/Math.max(banc+inv,1)*200),desc:`${brl(fat)} dívida`},
-    {nm:'Orçamento',score:clamp(100-(gas/2950)*100),desc:`${Math.max(0,gas/2950*100).toFixed(0)}% do limite`},
-    {nm:'Diversificação',score:clamp(S.ativos.length/8*100),desc:`${S.ativos.length} ativos`},
+    {nm:'Liquidez',score:clamp(banc/Math.max(gas,1)*50),desc:`${Math.max(0,banc/Math.max(gas,1)).toFixed(1)}x gastos`,
+      tip:'Saldo bancário ÷ gasto mensal. 2x o gasto do mês em caixa = nota 100 (reserva de curto prazo confortável).'},
+    {nm:'Investimento',score:clamp(inv/Math.max(pat,1)*200),desc:`${Math.max(0,inv/Math.max(pat,1)*100).toFixed(0)}% do pat.`,
+      tip:'% do patrimônio líquido que está investido (vs. parado em conta). 50% investido = nota 100.'},
+    {nm:'Endividamento',score:clamp(100-fat/Math.max(banc+inv,1)*200),desc:`${brl(fat)} dívida`,
+      tip:'Fatura de cartão em aberto ÷ (saldo bancário + investido). Quanto menor a dívida relativa aos seus recursos líquidos, maior a nota.'},
+    {nm:'Orçamento',score:clamp(100-(gas/2950)*100),desc:`${Math.max(0,gas/2950*100).toFixed(0)}% do limite`,
+      tip:'Gasto do mês vs. um limite de referência de R$2.950. Gastar menos que o limite mantém a nota em 100.'},
+    {nm:'Diversificação',score:clamp(S.ativos.length/8*100),desc:`${S.ativos.length} ativos`,
+      tip:'Número de ativos distintos na carteira. 8 ou mais ativos = nota 100 (menor concentração de risco).'},
   ];
   const total=clamp(Math.round(pillares.reduce((s,p)=>s+p.score,0)/pillares.length));
   return{pillares,total};
@@ -6859,7 +6864,7 @@ function rdash(){
   document.getElementById('saude-score').innerHTML=`<span class="${saudeLabel[1]}">${total}/100 · ${saudeLabel[0]}</span>`;
   document.getElementById('saude-pillares').innerHTML=pillares.map(p=>{
     const cor=p.score>=70?C.grn:p.score>=40?C.gld:C.red;
-    return`<div class="pillar"><div class="pillar-nm">${p.nm}</div><div class="pillar-track"><div class="pillar-fill" style="width:${p.score}%;background:${cor}"></div></div><div class="pillar-val" style="color:${cor}">${Math.round(p.score)} · <span style="color:var(--txt3)">${p.desc}</span></div></div>`;
+    return`<div class="pillar"><div class="pillar-nm">${p.nm}<span class="info-ic" tabindex="0" data-tip="${p.tip}"><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="pillar-track"><div class="pillar-fill" style="width:${p.score}%;background:${cor}"></div></div><div class="pillar-val" style="color:${cor}">${Math.round(p.score)} · <span style="color:var(--txt3)">${p.desc}</span></div></div>`;
   }).join('');
 
   // Alertas inteligentes
