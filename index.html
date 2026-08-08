@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 141 -->
+<!-- APP_VERSION: 142 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4324,6 +4324,12 @@ async function atualizarMercadoImoveis(){
 
   <!-- Progresso do mês -->
   <div class="panel mb"><div class="phd"><div><div class="pt">Progresso do Mês</div><div class="ps">Gasto realizado por categoria vs. limite efetivo (redistribuído)</div></div><span class="badge b-n">gastos reais vs. limites</span></div><div class="pbd" id="orc-prog"></div></div>
+
+  <!-- Envelopes (modo zero-based opcional, por categoria) -->
+  <div class="panel mb">
+    <div class="phd"><div><div class="pt">Envelopes</div><div class="ps">Modo opcional estilo YNAB: em vez de resetar o limite todo mês, o que sobra (ou falta) numa categoria-envelope acumula pro mês seguinte. Ative por categoria variável em "Contas Variáveis" abaixo.</div></div></div>
+    <div class="pbd" id="orc-envelopes"></div>
+  </div>
 
   <!-- Config -->
   <div class="g2">
@@ -9628,6 +9634,50 @@ function limiteEfetivo(cat){
   return entry.tipo==='fixo'?entry.valor:limiteVariavel(cat);
 }
 
+// ─── ENVELOPES (modo zero-based opcional, por categoria variável) ───
+// Diferente do orçamento por categoria padrão (que reseta o limite todo
+// mês), um envelope ACUMULA: o que sobrou (ou faltou) num mês carrega pro
+// próximo, no espírito do YNAB ("todo real tem destino, e o que sobra não
+// desaparece"). Não precisa de um ledger histórico separado — soma
+// (limite efetivo atual − gasto real) mês a mês, desde o mês em que o
+// envelope foi ativado até hoje. Simplificação honesta: assume que o limite
+// efetivo de hoje também valeu nos meses anteriores dentro dessa janela (o
+// app não guarda um histórico de limite mês a mês) — por isso "desde" é
+// sempre o mês da ativação pra frente, nunca retroativo a antes de existir.
+function _envelopeSaldo(cat){
+  const entry=S.orc[cat];
+  if(!entry||!entry.envelope||!entry.envelope.ativo||!entry.envelope.desde)return 0;
+  const limiteMensal=limiteEfetivo(cat);
+  const [anoIni,mesIni]=entry.envelope.desde.split('-').map(Number);
+  if(!anoIni||!mesIni)return 0;
+  const hoje=new Date();
+  let saldo=0, ano=anoIni, mes=mesIni;
+  let guarda=0; // trava de segurança — nunca itera mais de 240 meses (20 anos)
+  while((ano<hoje.getFullYear()||(ano===hoje.getFullYear()&&mes<=hoje.getMonth()+1)) && guarda<240){
+    const mesStr=`${ano}-${String(mes).padStart(2,'0')}`;
+    const gastoMes=(S.gastos||[]).filter(g=>!g.forecast&&g.cat===cat&&(g.data||'').startsWith(mesStr)).reduce((s,g)=>s+g.valor,0);
+    saldo += limiteMensal - gastoMes;
+    mes++; if(mes>12){mes=1;ano++;}
+    guarda++;
+  }
+  return saldo;
+}
+// Liga/desliga o modo envelope numa categoria. Ao ligar, começa a acumular
+// a partir do mês atual (não retroage). Ao desligar, só marca inativo —
+// o histórico fica guardado, então religar depois continua de onde parou.
+function _toggleEnvelope(cat,ativo){
+  if(!S.orc[cat])return;
+  if(ativo){
+    const mesAtual=new Date().toISOString().slice(0,7);
+    S.orc[cat].envelope={ativo:true, desde:(S.orc[cat].envelope&&S.orc[cat].envelope.desde)||mesAtual};
+  } else {
+    if(!S.orc[cat].envelope)S.orc[cat].envelope={ativo:false,desde:null};
+    else S.orc[cat].envelope.ativo=false;
+  }
+  persistir();
+  rorc();
+}
+
 // ─── RENDER OBJETIVOS
 function robjetivos(){
   const totalAlvo=(S.objetivos||[]).reduce((s,o)=>s+o.valorAlvo,0);
@@ -10134,15 +10184,35 @@ function rorc(){
   // Form variáveis — mostra limites redistribuídos
   document.getElementById('orc-form-var').innerHTML=`
     <div style="padding:8px 0 12px;font-size:11px;color:var(--txt3)">Valores redistribuídos proporcionalmente após fixos e aportes de objetivos. Budget disponível: <strong class="cgd">${brl(varBudget)}</strong></div>
-    ${Object.entries(S.orc).filter(([,v])=>v.tipo==='variavel').map(([cat,entry])=>{const efet=limiteEfetivo(cat);return`
+    ${Object.entries(S.orc).filter(([,v])=>v.tipo==='variavel').map(([cat,entry])=>{const efet=limiteEfetivo(cat);const envAtivo=!!(entry.envelope&&entry.envelope.ativo);return`
     <div class="orc-row">
       <div class="orc-dot" style="background:var(--gld)"></div>
       <div class="orc-nm">${cat}<div style="font-size:10px;color:var(--txt3)">efetivo: <strong>${brl(efet)}</strong></div></div>
       <select class="orc-tipo-sel" data-cat="${cat}"><option value="fixo">fixo</option><option value="variavel" selected>variável</option></select>
       <input type="number" class="orc-inp" id="or-${cat}" value="${entry.valor}" title="Limite original (base para cálculo proporcional)">
+      <label style="display:flex;align-items:center;gap:3px;font-size:9.5px;color:var(--txt3);cursor:pointer;white-space:nowrap" title="Envelope: acumula saldo entre meses em vez de resetar">
+        <input type="checkbox" ${envAtivo?'checked':''} onchange="_toggleEnvelope('${cat.replace(/'/g,"\\'")}',this.checked)"> 📦
+      </label>
       <button class="btn btn-ed" style="padding:3px 7px" onclick="editCategoriaOrc('${cat.replace(/'/g,"\\'")}')" title="Renomear categoria">✎</button>
       <button class="btn btn-d" style="padding:3px 7px" onclick="rmCategoriaOrc('${cat.replace(/'/g,"\\'")}')" title="Remover categoria">✕</button>
     </div>`}).join('')}`;
+
+  // ─── Envelopes ativos — saldo acumulado desde a ativação (ver _envelopeSaldo) ───
+  const envelopesAtivos=Object.entries(S.orc).filter(([,v])=>v.tipo==='variavel'&&v.envelope&&v.envelope.ativo);
+  const envEl=document.getElementById('orc-envelopes');
+  if(envEl){
+    envEl.innerHTML = envelopesAtivos.length ? envelopesAtivos.map(([cat,entry])=>{
+      const saldo=_envelopeSaldo(cat);
+      const cor=saldo>=0?C.grn:C.red;
+      const desdeFmt=entry.envelope.desde ? new Date(entry.envelope.desde+'-01').toLocaleDateString('pt-BR',{month:'short',year:'numeric'}) : '—';
+      return `<div class="orc-row">
+        <div class="orc-dot" style="background:${cor}"></div>
+        <div class="orc-nm">${cat}<div style="font-size:10px;color:var(--txt3)">acumulando desde ${desdeFmt}</div></div>
+        <div class="mono" style="font-weight:600;color:${cor};min-width:110px;text-align:right">${saldo>=0?'+':'−'}${brl(Math.abs(saldo))}</div>
+        <span style="font-size:10px;color:var(--txt3);min-width:120px">${saldo>=0?'buffer disponível':'descoberto — cobrir de outro envelope'}</span>
+      </div>`;
+    }).join('') : '<div style="padding:10px 0;color:var(--txt3);font-size:12px">Nenhum envelope ativo — marque 📦 numa conta variável abaixo para começar a acumular saldo entre meses.</div>';
+  }
 
   // Wire tipo changes
   document.querySelectorAll('.orc-tipo-sel').forEach(sel=>{
