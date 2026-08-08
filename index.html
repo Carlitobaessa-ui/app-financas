@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 126 -->
+<!-- APP_VERSION: 127 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -519,6 +519,27 @@ th.th-sort .sort-ic{font-size:8px;letter-spacing:0;margin-left:2px;color:var(--a
 .fg input,.fg select{background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:var(--r);padding:8px 11px;color:var(--txt);font-size:13px;font-family:var(--body);outline:none;transition:border-color .15s;width:100%;box-sizing:border-box;max-width:100%;text-overflow:ellipsis}
 .fg input:focus,.fg select:focus{border-color:var(--grn)}
 .fgrid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px}
+
+/* ─── DATE PICKER customizado (digitável + navegação ano→mês→dia) ──── */
+.dp-pop{display:none;position:fixed;z-index:400;background:var(--surf);border:0.5px solid var(--bdr-em);border-radius:10px;box-shadow:0 8px 28px rgba(30,28,22,.18);padding:10px;width:236px;font-family:var(--body);box-sizing:border-box}
+.dp-hd{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.dp-nav{background:none;border:none;color:var(--txt3);font-size:15px;cursor:pointer;padding:2px 9px;border-radius:6px;line-height:1.4;font-family:var(--body)}
+.dp-nav:hover{background:var(--bg2);color:var(--txt)}
+.dp-hd-lbl{background:none;border:none;font-size:12.5px;font-weight:600;color:var(--txt);cursor:pointer;padding:3px 8px;border-radius:6px;font-family:var(--body)}
+.dp-hd-lbl:hover{background:var(--bg2)}
+.dp-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.dp-grid-meses,.dp-grid-anos{grid-template-columns:repeat(3,1fr);gap:4px}
+.dp-diasem{font-size:9.5px;color:var(--txt3);text-align:center;padding:3px 0;text-transform:uppercase}
+.dp-cell{text-align:center;font-size:12px;padding:6px 0;border-radius:6px;cursor:pointer;color:var(--txt2)}
+.dp-cell.dp-empty{cursor:default}
+.dp-cell.dp-day:hover,.dp-cell.dp-mes:hover,.dp-cell.dp-ano:hover{background:var(--bg2);color:var(--txt)}
+.dp-cell.dp-sel{background:var(--grn);color:#fff;font-weight:600}
+.dp-cell.dp-hoje:not(.dp-sel){border:1px solid var(--grn-lt)}
+.dp-cell.dp-fora{opacity:.35}
+.dp-mes,.dp-ano{padding:10px 0}
+.dp-ft{margin-top:6px;text-align:center;border-top:0.5px solid var(--bdr);padding-top:6px}
+.dp-hoje-btn{background:none;border:none;color:var(--grn);font-size:11px;cursor:pointer;font-weight:600;font-family:var(--body)}
+.dp-field{position:relative}
 
 /* ─── MODAL ──── */
 .ov{display:none;position:fixed;inset:0;background:rgba(26,35,24,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center}
@@ -5086,7 +5107,11 @@ async function atualizarMercadoImoveis(){
   <div class="fg"><label>Já Acumulado (R$)</label><input id="ob-ac" type="number" placeholder="0" step="100"></div>
 </div>
 <div class="fgrid">
-  <div class="fg"><label>Prazo (data-alvo)</label><input id="ob-pr" type="date"></div>
+  <div class="fg dp-field"><label>Prazo (data-alvo)</label>
+    <input id="ob-pr-disp" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" autocomplete="off" maxlength="10">
+    <input id="ob-pr" type="hidden">
+    <div class="dp-pop" id="ob-pr-pop"></div>
+  </div>
   <div class="fg"><label>Prioridade (1 = mais urgente)</label><input id="ob-pri" type="number" min="1" max="10" placeholder="1"></div>
 </div>
 <div class="fgrid">
@@ -9550,6 +9575,159 @@ function rmObjetivo(id){
   S.objetivos=(S.objetivos||[]).filter(o=>o.id!==id);
   persistir();toast('Objetivo removido');robjetivos();rorc();
 }
+
+// ─── DATE PICKER customizado: digitável (dd/mm/aaaa) + calendário com
+// navegação Ano → Mês → Dia (rápido pra datas distantes, ex.: aposentadoria).
+// Espera no DOM: <input id="{id}-disp"> (texto visível) + <input id="{id}"
+// type="hidden"> (valor ISO yyyy-mm-dd, o que o resto do app já usa) + <div
+// id="{id}-pop" class="dp-pop"></div>. Dispara 'input' no hidden ao mudar,
+// então listeners existentes (ex.: calcPreview do Objetivo) continuam funcionando.
+const _DP_MESES=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+const _DP_MESES_ABR=['Jan','Fev','Mar','Abr','Mai','Jun','Jul','Ago','Set','Out','Nov','Dez'];
+const _DP_DIAS_SEM=['D','S','T','Q','Q','S','S'];
+let _dpOpenId=null, _dpView='days', _dpCursor=new Date();
+
+function dpAttach(id){
+  const disp=document.getElementById(id+'-disp');
+  if(!disp||disp._dpBound)return;
+  disp._dpBound=true;
+  disp.addEventListener('input',()=>_dpMaskInput(disp));
+  disp.addEventListener('focus',()=>_dpOpen(id));
+  disp.addEventListener('keydown',e=>{
+    if(e.key==='Enter'){_dpAplicarTexto(id);_dpClose(id);disp.blur();}
+    else if(e.key==='Escape'){_dpClose(id);}
+  });
+  disp.addEventListener('blur',()=>setTimeout(()=>{if(_dpOpenId!==id)_dpAplicarTexto(id)},180));
+}
+function _dpMaskInput(inp){
+  let v=inp.value.replace(/\D/g,'').slice(0,8),out=v;
+  if(v.length>4)out=v.slice(0,2)+'/'+v.slice(2,4)+'/'+v.slice(4);
+  else if(v.length>2)out=v.slice(0,2)+'/'+v.slice(2);
+  inp.value=out;
+}
+function _dpFmtIso(iso){ if(!iso)return''; const [y,m,d]=iso.split('-'); return `${d}/${m}/${y}`; }
+function _dpAplicarTexto(id){
+  const disp=document.getElementById(id+'-disp');
+  const m=disp.value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if(m){
+    const [,d,mo,y]=m, dt=new Date(+y,+mo-1,+d);
+    if(dt.getFullYear()===+y&&dt.getMonth()===+mo-1&&dt.getDate()===+d){
+      _dpSet(id,`${y}-${mo}-${d}`); return;
+    }
+  }
+  const hid=document.getElementById(id);
+  disp.value=hid.value?_dpFmtIso(hid.value):'';
+}
+function _dpSet(id,iso){
+  const hid=document.getElementById(id);
+  hid.value=iso;
+  hid.dispatchEvent(new Event('input',{bubbles:true}));
+  const disp=document.getElementById(id+'-disp');
+  if(disp)disp.value=_dpFmtIso(iso);
+}
+function _dpSetFromIso(id,iso){
+  const hid=document.getElementById(id); if(!hid)return;
+  hid.value=iso||'';
+  const disp=document.getElementById(id+'-disp');
+  if(disp)disp.value=iso?_dpFmtIso(iso):'';
+}
+function _dpOpen(id){
+  _dpOpenId=id;
+  const hid=document.getElementById(id);
+  _dpCursor=hid.value?new Date(hid.value+'T00:00:00'):new Date();
+  _dpView='days';
+  _dpRender();
+  const pop=document.getElementById(id+'-pop');
+  pop.style.display='block';
+  _dpPosicionar(id);
+}
+function _dpClose(id){
+  const alvo=id||_dpOpenId; if(!alvo)return;
+  const pop=document.getElementById(alvo+'-pop');
+  if(pop)pop.style.display='none';
+  if(_dpOpenId===alvo)_dpOpenId=null;
+}
+function _dpPosicionar(id){
+  const disp=document.getElementById(id+'-disp'), pop=document.getElementById(id+'-pop');
+  const r=disp.getBoundingClientRect();
+  const vh=window.innerHeight;
+  const abaixo=(vh-r.bottom)>300;
+  pop.style.left=r.left+'px';
+  if(abaixo){pop.style.top=(r.bottom+4)+'px';pop.style.bottom='';}
+  else{pop.style.bottom=(vh-r.top+4)+'px';pop.style.top='';}
+  pop.style.minWidth=Math.max(r.width,200)+'px';
+}
+document.addEventListener('mousedown',e=>{
+  if(!_dpOpenId)return;
+  const pop=document.getElementById(_dpOpenId+'-pop'), disp=document.getElementById(_dpOpenId+'-disp');
+  if(pop&&!pop.contains(e.target)&&e.target!==disp){_dpAplicarTexto(_dpOpenId);_dpClose(_dpOpenId);}
+});
+window.addEventListener('resize',()=>{if(_dpOpenId)_dpClose(_dpOpenId)});
+document.addEventListener('scroll',()=>{if(_dpOpenId)_dpClose(_dpOpenId)},true);
+
+function _dpRender(){
+  if(!_dpOpenId)return;
+  const pop=document.getElementById(_dpOpenId+'-pop');
+  const selIso=document.getElementById(_dpOpenId).value;
+  pop.innerHTML = _dpView==='days' ? _dpRenderDias(selIso) : _dpView==='months' ? _dpRenderMeses() : _dpRenderAnos();
+}
+function _dpRenderDias(selIso){
+  const y=_dpCursor.getFullYear(), m=_dpCursor.getMonth();
+  const offset=new Date(y,m,1).getDay();
+  const diasNoMes=new Date(y,m+1,0).getDate();
+  const hoje=new Date(); hoje.setHours(0,0,0,0);
+  let cells='';
+  for(let i=0;i<offset;i++)cells+='<div class="dp-cell dp-empty"></div>';
+  for(let d=1;d<=diasNoMes;d++){
+    const iso=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isSel=iso===selIso, isHoje=new Date(y,m,d).getTime()===hoje.getTime();
+    cells+=`<div class="dp-cell dp-day${isSel?' dp-sel':''}${isHoje?' dp-hoje':''}" onmousedown="event.preventDefault();_dpEscolheDia(${y},${m},${d})">${d}</div>`;
+  }
+  return `<div class="dp-hd">
+      <button type="button" class="dp-nav" onclick="_dpMudaMes(-1)">‹</button>
+      <button type="button" class="dp-hd-lbl" onclick="_dpIrParaMeses()">${_DP_MESES[m]} ${y}</button>
+      <button type="button" class="dp-nav" onclick="_dpMudaMes(1)">›</button>
+    </div>
+    <div class="dp-grid">${_DP_DIAS_SEM.map(d=>`<div class="dp-diasem">${d}</div>`).join('')}${cells}</div>
+    <div class="dp-ft"><button type="button" class="dp-hoje-btn" onmousedown="event.preventDefault();_dpHoje()">Hoje</button></div>`;
+}
+function _dpRenderMeses(){
+  const y=_dpCursor.getFullYear();
+  const cells=_DP_MESES_ABR.map((nm,m)=>`<div class="dp-cell dp-mes" onmousedown="event.preventDefault();_dpEscolheMes(${m})">${nm}</div>`).join('');
+  return `<div class="dp-hd">
+      <button type="button" class="dp-nav" onclick="_dpMudaAno(-1)">‹</button>
+      <button type="button" class="dp-hd-lbl" onclick="_dpIrParaAnos()">${y}</button>
+      <button type="button" class="dp-nav" onclick="_dpMudaAno(1)">›</button>
+    </div>
+    <div class="dp-grid dp-grid-meses">${cells}</div>`;
+}
+function _dpRenderAnos(){
+  const anoBase=_dpCursor.getFullYear();
+  const inicio=Math.floor(anoBase/12)*12;
+  let cells='';
+  for(let i=-1;i<=12;i++){
+    const y=inicio+i, fora=i<0||i>11;
+    cells+=`<div class="dp-cell dp-ano${fora?' dp-fora':''}" onmousedown="event.preventDefault();_dpEscolheAno(${y})">${y}</div>`;
+  }
+  return `<div class="dp-hd">
+      <button type="button" class="dp-nav" onclick="_dpMudaDecada(-1)">‹</button>
+      <span class="dp-hd-lbl" style="cursor:default">${inicio}–${inicio+11}</span>
+      <button type="button" class="dp-nav" onclick="_dpMudaDecada(1)">›</button>
+    </div>
+    <div class="dp-grid dp-grid-anos">${cells}</div>`;
+}
+function _dpMudaMes(d){_dpCursor=new Date(_dpCursor.getFullYear(),_dpCursor.getMonth()+d,1);_dpRender();}
+function _dpMudaAno(d){_dpCursor=new Date(_dpCursor.getFullYear()+d,_dpCursor.getMonth(),1);_dpRender();}
+function _dpMudaDecada(d){_dpCursor=new Date(_dpCursor.getFullYear()+d*12,_dpCursor.getMonth(),1);_dpRender();}
+function _dpIrParaMeses(){_dpView='months';_dpRender();}
+function _dpIrParaAnos(){_dpView='years';_dpRender();}
+function _dpEscolheAno(y){_dpCursor=new Date(y,_dpCursor.getMonth(),1);_dpView='months';_dpRender();}
+function _dpEscolheMes(m){_dpCursor=new Date(_dpCursor.getFullYear(),m,1);_dpView='days';_dpRender();}
+function _dpEscolheDia(y,m,d){
+  _dpSet(_dpOpenId,`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`);
+  _dpClose(_dpOpenId);
+}
+function _dpHoje(){const t=new Date();_dpEscolheDia(t.getFullYear(),t.getMonth(),t.getDate());}
 function addObjetivo(){
   const nm=document.getElementById('ob-nm').value.trim();
   const tp=document.getElementById('ob-tp').value;
@@ -9583,7 +9761,7 @@ function editObjetivo(id){
   document.getElementById('ob-tp').value=o.tipo;
   document.getElementById('ob-va').value=o.valorAlvo;
   document.getElementById('ob-ac').value=o.acumulado;
-  document.getElementById('ob-pr').value=o.prazo;
+  _dpSetFromIso('ob-pr',o.prazo);
   document.getElementById('ob-pri').value=o.prioridade;
   document.getElementById('ob-em').value=o.emoji||'◎';
   document.getElementById('ob-cor').value=o.cor||C.grn;
@@ -11344,7 +11522,8 @@ function openM(id){
     });
   }
   if(id==='m-objetivo'){
-    document.getElementById('ob-pr').value='';
+    dpAttach('ob-pr');
+    _dpSetFromIso('ob-pr','');
     document.getElementById('ob-ac').value='0';
     document.getElementById('ob-pri').value=((S.objetivos||[]).length+1);
     document.getElementById('ob-aporte-preview').textContent='—';
