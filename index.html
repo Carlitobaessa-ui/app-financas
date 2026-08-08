@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 130 -->
+<!-- APP_VERSION: 131 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4810,7 +4810,11 @@ async function atualizarMercadoImoveis(){
 <div class="ov" id="m-ativo"><div class="modal"><button class="mc" onclick="closeM('m-ativo')">✕</button><div class="m-eye">Investimentos</div><div class="m-title">Adicionar Ativo</div>
 <div class="fgrid"><div class="fg"><label>Tipo</label><select id="at-tp" onchange="onTipo()"><option value="BR">Ação BR</option><option value="US">Stock EUA</option><option value="FII">FII</option><option value="RF">Renda Fixa</option><option value="SAT">Satélite</option></select></div><div class="fg"><label>Ticker</label><input id="at-tk" type="text" placeholder="VALE3, AAPL…"></div></div>
 <div class="fgrid"><div class="fg"><label id="at-lq">Quantidade</label><input id="at-qtd" type="number" placeholder="100"></div><div class="fg"><label id="at-lp">Preço Médio</label><input id="at-pm" type="number" placeholder="0.00" step="0.01"></div></div>
-<div class="fgrid" id="at-rf-ex" style="display:none"><div class="fg"><label>Taxa</label><input id="at-taxa" type="text" placeholder="CDI+2%"></div><div class="fg"><label>Vencimento</label><input id="at-venc" type="date"></div></div>
+<div class="fgrid" id="at-rf-ex" style="display:none"><div class="fg"><label>Taxa</label><input id="at-taxa" type="text" placeholder="CDI+2%"></div><div class="fg dp-field"><label>Vencimento</label>
+    <input id="at-venc-disp" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" autocomplete="off" maxlength="10">
+    <input id="at-venc" type="hidden">
+    <div class="dp-pop" id="at-venc-pop"></div>
+  </div></div>
 <div class="fg" id="at-rf-in" style="display:none;margin-bottom:12px"><label>Instituição</label><input id="at-inst" type="text" placeholder="Banco…"></div>
 <div class="inv-link-wrap" id="at-aporte-wrap">
   <div class="inv-link-head"><span class="inv-link-ic">↧</span><label class="inv-link-lbl">Debitar aporte de uma conta</label></div>
@@ -4821,7 +4825,11 @@ async function atualizarMercadoImoveis(){
 
 <div class="ov" id="m-venda-ativo"><div class="modal"><button class="mc" onclick="closeM('m-venda-ativo')">✕</button><div class="m-eye">Investimentos</div><div class="m-title">Registrar Venda</div>
 <div style="font-size:11.5px;color:var(--txt3);line-height:1.5;margin-bottom:12px">Registra a venda para apurar ganho/perda de capital (base para IR). O cálculo de imposto devido (isenção mensal, DARF) ainda não é feito automaticamente — fica para uma etapa futura; aqui só entra o histórico com o resultado de cada venda.</div>
-<div class="fgrid"><div class="fg"><label>Ativo</label><input id="vd-tk" type="text" readonly style="opacity:.7"></div><div class="fg"><label>Data da venda</label><input id="vd-data" type="date"></div></div>
+<div class="fgrid"><div class="fg"><label>Ativo</label><input id="vd-tk" type="text" readonly style="opacity:.7"></div><div class="fg dp-field"><label>Data da venda</label>
+    <input id="vd-data-disp" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" autocomplete="off" maxlength="10">
+    <input id="vd-data" type="hidden">
+    <div class="dp-pop" id="vd-data-pop"></div>
+  </div></div>
 <div class="fgrid"><div class="fg"><label id="vd-lq">Quantidade a vender</label><input id="vd-qtd" type="number" step="any" oninput="_vdPreview()"></div><div class="fg"><label>Preço de venda (por unidade)</label><input id="vd-preco" type="number" step="0.01" oninput="_vdPreview()"></div></div>
 <div class="inv-link-wrap" id="vd-conta-wrap">
   <div class="inv-link-head"><span class="inv-link-ic">↥</span><label class="inv-link-lbl">Creditar em uma conta</label></div>
@@ -4835,7 +4843,11 @@ async function atualizarMercadoImoveis(){
 <div class="ov" id="m-aluguel"><div class="modal"><button class="mc" onclick="closeM('m-aluguel')">✕</button><div class="m-eye">Aluguel de Ações</div><div class="m-title">Contrato de Aluguel</div>
 <div class="fgrid"><div class="fg"><label>Ticker</label><input id="al-tk" type="text" placeholder="VIVT3" style="text-transform:uppercase"></div><div class="fg"><label>Papel</label><select id="al-papel"><option value="Doador">Doador (empresto — recebo taxa)</option><option value="Tomador">Tomador (tomo — pago taxa)</option></select></div></div>
 <div class="fgrid"><div class="fg"><label>Quantidade</label><input id="al-qtd" type="number" placeholder="8"></div><div class="fg"><label>Preço médio (Abertura)</label><input id="al-pm" type="number" placeholder="0.00" step="0.01"></div></div>
-<div class="fgrid"><div class="fg"><label>Preço da ação (atual)</label><input id="al-preco" type="number" placeholder="0.00" step="0.01"></div><div class="fg"><label>Vencimento</label><input id="al-venc" type="date"></div></div>
+<div class="fgrid"><div class="fg"><label>Preço da ação (atual)</label><input id="al-preco" type="number" placeholder="0.00" step="0.01"></div><div class="fg dp-field"><label>Vencimento</label>
+    <input id="al-venc-disp" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" autocomplete="off" maxlength="10">
+    <input id="al-venc" type="hidden">
+    <div class="dp-pop" id="al-venc-pop"></div>
+  </div></div>
 <div class="fgrid"><div class="fg"><label>Taxa de aluguel (opcional)</label><input id="al-taxa" type="text" placeholder="2% a.a."></div><div class="fg"><label>Nome (opcional)</label><input id="al-nome" type="text" placeholder="Telefônica Brasil"></div></div>
 <div class="inv-link-sub" style="margin-bottom:12px;padding:9px 12px;background:var(--bg);border-radius:8px">O aluguel é informativo e <strong>não entra no patrimônio líquido</strong>: como Doador, suas ações já contam na carteira; como Tomador, há obrigação de devolvê-las.</div>
 <div class="mfoot"><button class="btn btn-ghost" onclick="closeM('m-aluguel')">Cancelar</button><button class="btn btn-g" id="al-btn" onclick="addAluguel()">Adicionar</button></div></div></div>
@@ -4869,7 +4881,11 @@ async function atualizarMercadoImoveis(){
 
 <div class="ov" id="m-grao"><div class="modal"><button class="mc" onclick="closeM('m-grao')">✕</button><div class="m-eye">Commodities · Grãos</div><div class="m-title">Operação de Grãos</div>
 <div class="fgrid"><div class="fg"><label>Produto</label><select id="gr-prod" onchange="_grSymRef()"><option value="soja">Soja</option><option value="milho">Milho</option><option value="trigo">Trigo</option></select></div><div class="fg"><label>Operação</label><select id="gr-tipo" onchange="_grAjustarConta()"><option value="originacao">Originação</option><option value="compra">Compra</option><option value="venda">Venda</option></select></div></div>
-<div class="fgrid"><div class="fg"><label>Data</label><input id="gr-dt" type="date"></div><div class="fg"><label>Quantidade (sacas)</label><input id="gr-qtd" type="number" placeholder="1000" step="1"></div></div>
+<div class="fgrid"><div class="fg dp-field"><label>Data</label>
+    <input id="gr-dt-disp" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" autocomplete="off" maxlength="10">
+    <input id="gr-dt" type="hidden">
+    <div class="dp-pop" id="gr-dt-pop"></div>
+  </div><div class="fg"><label>Quantidade (sacas)</label><input id="gr-qtd" type="number" placeholder="1000" step="1"></div></div>
 <div class="fgrid"><div class="fg"><label>Preço (R$/saca)</label><input id="gr-preco" type="number" placeholder="0.00" step="0.01" oninput="_grPreview()"></div><div class="fg"><label>Total</label><input id="gr-total" type="number" readonly style="opacity:.55"></div></div>
 <div class="fgrid"><div class="fg"><label>Contraparte</label><input id="gr-cp" type="text" placeholder="Produtor / comprador…"></div><div class="fg"><label>Local / Unidade</label><input id="gr-loc" type="text" placeholder="Assis, Palotina…"></div></div>
 <div class="inv-link-wrap" id="gr-conta-wrap">
@@ -4888,7 +4904,11 @@ async function atualizarMercadoImoveis(){
 <div class="mfoot"><button class="btn btn-ghost" onclick="closeM('m-grao')">Cancelar</button><button class="btn btn-g" onclick="addGrao()">Registrar</button></div></div></div>
 
 <div class="ov" id="m-gasto"><div class="modal"><button class="mc" onclick="closeM('m-gasto')">✕</button><div class="m-eye">Controle Pessoal</div><div class="m-title">Novo Lançamento</div>
-<div class="fgrid"><div class="fg"><label>Data</label><input id="ga-dt" type="date"></div><div class="fg"><label>Valor (R$)</label><input id="ga-vl" type="number" placeholder="0.00" step="0.01"></div></div>
+<div class="fgrid"><div class="fg dp-field"><label>Data</label>
+    <input id="ga-dt-disp" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" autocomplete="off" maxlength="10">
+    <input id="ga-dt" type="hidden">
+    <div class="dp-pop" id="ga-dt-pop"></div>
+  </div><div class="fg"><label>Valor (R$)</label><input id="ga-vl" type="number" placeholder="0.00" step="0.01"></div></div>
 <div class="fgrid"><div class="fg"><label>Descrição</label><input id="ga-dc" type="text" placeholder="Descrição…" oninput="_aoDigitarDescGasto()"></div><div class="fg"><label>Categoria <span id="ga-ct-auto" class="cm" style="font-size:9.5px;display:none">· sugerida</span></label><select id="ga-ct" onchange="_gaCatDirty=true"></select></div></div>
 <div class="fgrid">
   <div class="fg"><label>Forma de Pagamento</label>
@@ -4918,7 +4938,11 @@ async function atualizarMercadoImoveis(){
 <div class="mfoot"><button class="btn btn-ghost" onclick="closeM('m-gasto')">Cancelar</button><button class="btn btn-g" onclick="addGasto()">Salvar</button></div></div></div>
 
 <div class="ov" id="m-dividendo"><div class="modal"><button class="mc" onclick="closeM('m-dividendo')">✕</button><div class="m-eye">Renda Passiva</div><div class="m-title">Lançar Provento</div>
-<div class="fgrid"><div class="fg"><label>Data</label><input id="di-dt" type="date"></div><div class="fg"><label>Ativo</label><input id="di-at" type="text" placeholder="HGLG11…"></div></div>
+<div class="fgrid"><div class="fg dp-field"><label>Data</label>
+    <input id="di-dt-disp" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" autocomplete="off" maxlength="10">
+    <input id="di-dt" type="hidden">
+    <div class="dp-pop" id="di-dt-pop"></div>
+  </div><div class="fg"><label>Ativo</label><input id="di-at" type="text" placeholder="HGLG11…"></div></div>
 <div class="fgrid"><div class="fg"><label>Tipo</label><select id="di-tp"><option>Dividendo</option><option>JCP</option><option>Rendimento FII</option><option>Amortização</option><option>Juros RF</option></select></div><div class="fg"><label>Qtd Cotas</label><input id="di-qtd" type="number" placeholder="100"></div></div>
 <div class="fgrid"><div class="fg"><label>Valor/Cota (R$)</label><input id="di-vc" type="number" placeholder="1.50" step="0.001"></div><div class="fg"><label>Total</label><input id="di-tot" type="number" readonly style="opacity:.55"></div></div>
 <div class="inv-link-wrap" id="di-credito-wrap">
@@ -4936,7 +4960,11 @@ async function atualizarMercadoImoveis(){
 <div class="mfoot"><button class="btn btn-ghost" onclick="closeM('m-conta')">Cancelar</button><button class="btn btn-g" onclick="addConta()">Adicionar</button></div></div></div>
 
 <div class="ov" id="m-lancamento"><div class="modal"><button class="mc" onclick="closeM('m-lancamento')">✕</button><div class="m-eye">Extrato Bancário</div><div class="m-title">Novo Lançamento</div>
-<div class="fgrid"><div class="fg"><label>Data</label><input id="lc-dt" type="date"></div><div class="fg"><label>Banco</label><select id="lc-bk"></select></div></div>
+<div class="fgrid"><div class="fg dp-field"><label>Data</label>
+    <input id="lc-dt-disp" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" autocomplete="off" maxlength="10">
+    <input id="lc-dt" type="hidden">
+    <div class="dp-pop" id="lc-dt-pop"></div>
+  </div><div class="fg"><label>Banco</label><select id="lc-bk"></select></div></div>
 <div class="fgrid"><div class="fg"><label>Tipo</label><select id="lc-tp" onchange="onLcTipo()"><option value="credito">Crédito</option><option value="debito">Débito</option><option value="transferencia">Transferência</option></select></div><div class="fg"><label>Valor (R$)</label><input id="lc-vl" type="number" placeholder="0.00" step="0.01"></div></div>
 <div class="fg" style="margin-bottom:12px"><label>Descrição</label><input id="lc-dc" type="text" placeholder="Salário, Pix…"></div>
 <div class="fg" id="lc-cat-wr" style="margin-bottom:12px"><label>Categoria <span style="font-weight:400;color:var(--txt3);font-size:10px">(débitos e créditos — opcional)</span></label><select id="lc-cat-m"></select><div style="font-size:10px;color:var(--txt3);margin-top:3px">Débito: entra no realizado do orçamento dessa categoria. Crédito: só classificação (ex.: identificar um resgate/provento recebido), não afeta orçamento.</div></div>
@@ -4986,7 +5014,11 @@ async function atualizarMercadoImoveis(){
 <div class="mfoot"><button class="btn btn-ghost" onclick="closeM('m-cartao')">Cancelar</button><button class="btn btn-g" onclick="addCartao()">Adicionar</button></div></div></div>
 
 <div class="ov" id="m-compra"><div class="modal"><button class="mc" onclick="closeM('m-compra')">✕</button><div class="m-eye">Cartões de Crédito</div><div class="m-title">Nova Compra</div>
-<div class="fgrid"><div class="fg"><label>Data</label><input id="cp-dt" type="date"></div><div class="fg"><label>Cartão</label><select id="cp-ct"></select></div></div>
+<div class="fgrid"><div class="fg dp-field"><label>Data</label>
+    <input id="cp-dt-disp" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" autocomplete="off" maxlength="10">
+    <input id="cp-dt" type="hidden">
+    <div class="dp-pop" id="cp-dt-pop"></div>
+  </div><div class="fg"><label>Cartão</label><select id="cp-ct"></select></div></div>
 <div class="fg" style="margin-bottom:12px"><label>Descrição</label><input id="cp-dc" type="text" placeholder="Supermercado, Amazon…" oninput="_aoDigitarDescCompra()"></div>
 <div class="fgrid"><div class="fg"><label>Categoria <span id="cp-ca-auto" class="cm" style="font-size:9.5px;display:none">· sugerida</span></label><select id="cp-ca" onchange="_cpCatDirty=true"></select></div><div class="fg"><label>Valor Total (R$)</label><input id="cp-vl" type="number" placeholder="0.00" step="0.01"></div></div>
 <div class="fgrid"><div class="fg"><label>Parcelas</label><select id="cp-pr"><option value="1">À vista</option><option value="2">2x</option><option value="3">3x</option><option value="4">4x</option><option value="5">5x</option><option value="6">6x</option><option value="7">7x</option><option value="8">8x</option><option value="9">9x</option><option value="10">10x</option><option value="11">11x</option><option value="12">12x</option><option value="13">13x</option><option value="14">14x</option><option value="15">15x</option><option value="16">16x</option><option value="17">17x</option><option value="18">18x</option><option value="19">19x</option><option value="20">20x</option><option value="21">21x</option><option value="22">22x</option><option value="23">23x</option><option value="24">24x</option></select></div><div class="fg"><label>Valor/Parcela</label><input id="cp-vp" type="number" readonly style="opacity:.55"></div></div>
@@ -5016,7 +5048,11 @@ async function atualizarMercadoImoveis(){
 <div id="pf-info" style="background:var(--bg2);border-radius:9px;padding:11px 13px;margin-bottom:14px;font-size:12px;color:var(--txt2);line-height:1.6"></div>
 <div class="fgrid">
   <div class="fg"><label>Valor do Pagamento (R$)</label><input id="pf-vl" type="number" step="0.01" placeholder="0.00"></div>
-  <div class="fg"><label>Data</label><input id="pf-dt" type="date"></div>
+  <div class="fg dp-field"><label>Data</label>
+    <input id="pf-dt-disp" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" autocomplete="off" maxlength="10">
+    <input id="pf-dt" type="hidden">
+    <div class="dp-pop" id="pf-dt-pop"></div>
+  </div>
 </div>
 <div class="fg" style="margin-bottom:12px"><label>Debitar de</label>
   <select id="pf-conta"></select>
@@ -5051,7 +5087,11 @@ async function atualizarMercadoImoveis(){
 </div>
 <div class="fgrid">
   <div class="fg"><label>Localização / Município</label><input id="bm-loc" type="text" placeholder="Assis Chateaubriand — PR"></div>
-  <div class="fg"><label>Data de Aquisição</label><input id="bm-dt" type="date"></div>
+  <div class="fg dp-field"><label>Data de Aquisição</label>
+    <input id="bm-dt-disp" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" autocomplete="off" maxlength="10">
+    <input id="bm-dt" type="hidden">
+    <div class="dp-pop" id="bm-dt-pop"></div>
+  </div>
 </div>
 <div class="fgrid">
   <div class="fg"><label>Valor de Aquisição (R$)</label><input id="bm-vaql" type="number" placeholder="0.00" step="0.01"></div>
@@ -5076,7 +5116,11 @@ async function atualizarMercadoImoveis(){
     <div class="rec-fg"><label>Franquia (R$)</label><input type="number" id="bm-seg-franq" placeholder="0.00"></div>
   </div>
   <div class="rec-row">
-    <div class="rec-fg"><label>Vigência até</label><input type="date" id="bm-seg-vig"></div>
+    <div class="rec-fg dp-field"><label>Vigência até</label>
+      <input id="bm-seg-vig-disp" type="text" inputmode="numeric" placeholder="dd/mm/aaaa" autocomplete="off" maxlength="10">
+      <input type="hidden" id="bm-seg-vig">
+      <div class="dp-pop" id="bm-seg-vig-pop"></div>
+    </div>
     <div class="rec-fg"><label>Cobertura</label><input type="text" id="bm-seg-cob" placeholder="Compreensiva, incêndio…"></div>
   </div>
 </div>
@@ -8814,7 +8858,7 @@ function pagarFat(i){
   EDIT.pagfat=null;
   document.getElementById('pf-title').textContent='Pagar Fatura · '+c.nome;
   document.getElementById('pf-info').innerHTML=`Fatura atual do <strong>${c.nome}</strong>: <strong class="cr">${brl(c.fatura)}</strong><br>Vencimento dia ${c.vencimento||'—'} · Final ${c.final||'—'}`;
-  document.getElementById('pf-dt').value=new Date().toISOString().split('T')[0];
+  _dpSetFromIso('pf-dt',new Date().toISOString().split('T')[0]);
   document.getElementById('pf-vl').value=c.fatura.toFixed(2);
   // Contas disponíveis para débito (+ opção de não debitar)
   const opts=_ordAlfa(S.contas.filter(ct=>ct.ativa!==false),ct=>ct.nome).map(ct=>`<option value="${ct.id}">${ct.nome} · ${brl(ct.saldo)}</option>`).join('');
@@ -8907,7 +8951,7 @@ function editarPagamento(pid){
   // Info mostra a fatura como ficaria SEM este pagamento (fatura atual + valor do pagamento)
   const fatSemEste=+(c.fatura+pg.valor).toFixed(2);
   document.getElementById('pf-info').innerHTML=`Fatura do <strong>${c.nome}</strong> sem este pagamento: <strong class="cr">${brl(fatSemEste)}</strong><br>Editando pagamento de ${fdt(pg.data)}`;
-  document.getElementById('pf-dt').value=pg.data;
+  _dpSetFromIso('pf-dt',pg.data);
   document.getElementById('pf-vl').value=pg.valor.toFixed(2);
   const opts=_ordAlfa(S.contas.filter(ct=>ct.ativa!==false),ct=>ct.nome).map(ct=>`<option value="${ct.id}">${ct.nome} · ${brl(ct.saldo)}</option>`).join('');
   document.getElementById('pf-conta').innerHTML=opts+'<option value="">Não debitar de conta (externo)</option>';
@@ -10022,7 +10066,7 @@ function editAtivo(idx){
   document.getElementById('at-tk').value=a.ticker;
   document.getElementById('at-qtd').value=a.qtd;
   document.getElementById('at-pm').value=a.pm;
-  if(a.tipo==='RF'){document.getElementById('at-taxa').value=a.taxa||'';document.getElementById('at-venc').value=a.venc||'';document.getElementById('at-inst').value=a.inst||'';}
+  if(a.tipo==='RF'){document.getElementById('at-taxa').value=a.taxa||'';_dpSetFromIso('at-venc',a.venc||'');document.getElementById('at-inst').value=a.inst||'';}
   _popularContasSelect('at-aporte-conta',a.contaOrigemId||'');
 }
 function editAtivoTk(tk){const idx=S.ativos.findIndex(a=>a.ticker===tk);if(idx>=0)editAtivo(idx);}
@@ -10062,7 +10106,7 @@ function editAluguel(id){
   document.getElementById('al-qtd').value=a.qtd||'';
   document.getElementById('al-pm').value=a.pm||'';
   document.getElementById('al-preco').value=a.preco!=null?a.preco:'';
-  document.getElementById('al-venc').value=a.venc||'';
+  _dpSetFromIso('al-venc',a.venc||'');
   document.getElementById('al-taxa').value=a.taxa||'';
   document.getElementById('al-nome').value=a.nome||'';
 }
@@ -10231,7 +10275,7 @@ function abrirVenderAtivo(tk){
   _vdTicker=tk;
   openM('m-venda-ativo');
   document.getElementById('vd-tk').value=`${a.ticker} · ${a.nome||''}`;
-  document.getElementById('vd-data').value=(typeof _hojeISO==='function'?_hojeISO():new Date().toISOString().slice(0,10));
+  _dpSetFromIso('vd-data',(typeof _hojeISO==='function'?_hojeISO():new Date().toISOString().slice(0,10)));
   document.getElementById('vd-qtd').value=a.qtd;
   document.getElementById('vd-lq').textContent=`Quantidade a vender (máx. ${a.qtd})`;
   document.getElementById('vd-preco').value=a.preco||a.pm||'';
@@ -10632,7 +10676,7 @@ function editGrao(id){
   document.querySelector('#m-grao .mfoot .btn-g').textContent='Salvar';
   document.getElementById('gr-prod').value=g.produto;
   document.getElementById('gr-tipo').value=g.tipo;
-  document.getElementById('gr-dt').value=g.data;
+  _dpSetFromIso('gr-dt',g.data);
   document.getElementById('gr-qtd').value=g.qtd;
   document.getElementById('gr-preco').value=g.precoSaca;
   document.getElementById('gr-cp').value=g.contraparte||'';
@@ -10989,7 +11033,7 @@ function editGasto(i){
   document.querySelector('#m-gasto .mfoot .btn-g').textContent='Salvar';
   // Edição de registro único: mantém só o toggle de forecast (definido conforme o registro)
   _prepForecastEdicao('ga', g.forecast);
-  document.getElementById('ga-dt').value=g.data;
+  _dpSetFromIso('ga-dt',g.data);
   document.getElementById('ga-vl').value=g.valor;
   document.getElementById('ga-dc').value=g.desc;
   document.getElementById('ga-ct').value=g.cat;
@@ -11067,7 +11111,7 @@ function editDividendo(i){
   EDIT.dividendo=idx;
   document.querySelector('#m-dividendo .m-title').textContent='Editar Provento';
   document.querySelector('#m-dividendo .mfoot .btn-g').textContent='Salvar';
-  document.getElementById('di-dt').value=d.data;
+  _dpSetFromIso('di-dt',d.data);
   document.getElementById('di-at').value=d.ativo;
   document.getElementById('di-tp').value=d.tipo;
   document.getElementById('di-qtd').value=d.qtd;
@@ -11138,7 +11182,7 @@ function editLanc(id){
   document.querySelector('#m-lancamento .mfoot .btn-g').textContent='Salvar';
   const rb=document.querySelector('#m-lancamento .rec-block');if(rb)rb.style.display='none';
   _prepForecastEdicao('lc', l.forecast);
-  document.getElementById('lc-dt').value=l.data;
+  _dpSetFromIso('lc-dt',l.data);
   document.getElementById('lc-bk').value=l.banco;
   document.getElementById('lc-tp').value=ehTransf?'transferencia':l.tipo;
   document.getElementById('lc-vl').value=l.valor;
@@ -11299,7 +11343,7 @@ function editCompra(id){
   document.querySelector('#m-compra .mfoot .btn-g').textContent='Salvar';
   const rb=document.querySelector('#m-compra .rec-block');if(rb)rb.style.display='none';
   _prepForecastEdicao('cp', cp.forecast);
-  document.getElementById('cp-dt').value=cp.data;
+  _dpSetFromIso('cp-dt',cp.data);
   document.getElementById('cp-ct').value=cp.cartao;
   document.getElementById('cp-dc').value=cp.desc;
   document.getElementById('cp-ca').value=cp.cat;
@@ -11488,10 +11532,11 @@ function openM(id){
     if(id==='m-lancamento'&&typeof onLcTipo==='function')onLcTipo();
     if(id==='m-bem'&&typeof onBemCat==='function')onBemCat();
   }
-  if(id==='m-gasto'){popularCategorias();document.getElementById('ga-dt').value=now;resetRec('ga');resetForecast('ga');document.getElementById('ga-forma').value='conta';onGastoForma();const rb=document.querySelector('#m-gasto .rec-block');if(rb)rb.style.display='';const sc=document.getElementById('ga-scope');if(sc)sc.style.display='none';_gaCatDirty=false;const gcAuto=document.getElementById('ga-ct-auto');if(gcAuto)gcAuto.style.display='none';}
-  if(id==='m-ativo'){_popularContasSelect('at-aporte-conta','');}
+  if(id==='m-gasto'){popularCategorias();dpAttach('ga-dt');_dpSetFromIso('ga-dt',now);resetRec('ga');resetForecast('ga');document.getElementById('ga-forma').value='conta';onGastoForma();const rb=document.querySelector('#m-gasto .rec-block');if(rb)rb.style.display='';const sc=document.getElementById('ga-scope');if(sc)sc.style.display='none';_gaCatDirty=false;const gcAuto=document.getElementById('ga-ct-auto');if(gcAuto)gcAuto.style.display='none';}
+  if(id==='m-ativo'){_popularContasSelect('at-aporte-conta','');dpAttach('at-venc');_dpSetFromIso('at-venc','');}
   if(id==='m-aluguel'){
-    ['al-tk','al-qtd','al-pm','al-preco','al-venc','al-taxa','al-nome'].forEach(x=>{const e=document.getElementById(x);if(e)e.value='';});
+    ['al-tk','al-qtd','al-pm','al-preco','al-taxa','al-nome'].forEach(x=>{const e=document.getElementById(x);if(e)e.value='';});
+    dpAttach('al-venc');_dpSetFromIso('al-venc','');
     const p=document.getElementById('al-papel');if(p)p.value='Doador';
   }
   if(id==='m-fundo'){
@@ -11506,7 +11551,7 @@ function openM(id){
     ['ml-programa','ml-saldo','ml-vlmilheiro','ml-obs'].forEach(x=>{const e=document.getElementById(x);if(e)e.value='';});
   }
   if(id==='m-grao'){
-    document.getElementById('gr-dt').value=now;
+    dpAttach('gr-dt');_dpSetFromIso('gr-dt',now);
     document.getElementById('gr-total').value='';
     _grHedgeOn=false;
     const sw=document.getElementById('gr-hedge-switch');if(sw)sw.classList.remove('on');
@@ -11514,9 +11559,9 @@ function openM(id){
     _popularContasSelect('gr-conta','');
     _grAjustarConta();_grSymRef();
   }
-  if(id==='m-dividendo'){document.getElementById('di-dt').value=now;_popularContasSelect('di-credito-conta','');}
+  if(id==='m-dividendo'){dpAttach('di-dt');_dpSetFromIso('di-dt',now);_popularContasSelect('di-credito-conta','');}
   if(id==='m-lancamento'){
-    document.getElementById('lc-dt').value=now;
+    dpAttach('lc-dt');_dpSetFromIso('lc-dt',now);
     document.getElementById('lc-tp').value='credito';
     const opts=_ordAlfa(S.contas,c=>c.nome).map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
     document.getElementById('lc-bk').innerHTML=opts;document.getElementById('lc-dest').innerHTML=opts;
@@ -11531,7 +11576,7 @@ function openM(id){
   if(id==='m-conta')document.getElementById('ct-nm-wr').style.display='none';
   if(id==='m-compra'){
     popularCategorias();
-    document.getElementById('cp-dt').value=now;
+    dpAttach('cp-dt');_dpSetFromIso('cp-dt',now);
     document.getElementById('cp-ct').innerHTML=_ordAlfa(S.cartoes,c=>c.nome).map(c=>`<option value="${c.id}">${c.nome}</option>`).join('');
     document.getElementById('cp-vp').value='';
     resetRec('cp');resetForecast('cp');
@@ -11544,7 +11589,11 @@ function openM(id){
       document.getElementById(p+'-switch')?.classList.remove('on');
       document.getElementById(p+'-panel')?.classList.remove('open');
     });
+    dpAttach('bm-dt');_dpSetFromIso('bm-dt','');
+    dpAttach('bm-seg-vig');_dpSetFromIso('bm-seg-vig','');
   }
+  if(id==='m-venda-ativo'){dpAttach('vd-data');}
+  if(id==='m-pagfat'){dpAttach('pf-dt');}
   if(id==='m-objetivo'){
     dpAttach('ob-pr');
     _dpSetFromIso('ob-pr','');
@@ -11940,7 +11989,7 @@ function editarBem(i){
   document.getElementById('bm-cat').value=b.cat; onBemCat();
   document.getElementById('bm-nm').value=b.nome;
   document.getElementById('bm-loc').value=b.loc;
-  document.getElementById('bm-dt').value=b.dtAq;
+  _dpSetFromIso('bm-dt',b.dtAq);
   document.getElementById('bm-vaql').value=b.vlAq;
   document.getElementById('bm-vatl').value=b.vlAt;
   document.getElementById('bm-obs').value=b.obs||'';
@@ -11956,7 +12005,7 @@ function editarBem(i){
     document.getElementById('bm-seg-prem').value=b.seguro.premio||'';
     document.getElementById('bm-seg-prem-per').value=b.seguro.premioPeriodo||'anual';
     document.getElementById('bm-seg-franq').value=b.seguro.franquia||'';
-    document.getElementById('bm-seg-vig').value=b.seguro.vigencia||'';
+    _dpSetFromIso('bm-seg-vig',b.seguro.vigencia||'');
     document.getElementById('bm-seg-cob').value=b.seguro.cobertura||'';
     document.getElementById('bm-seg-dia').value=b.seguro.diaDebito||'';
   }
