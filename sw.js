@@ -12,7 +12,7 @@
 // Para forçar todo mundo a baixar uma atualização, basta mudar CACHE_VERSION
 // (feito a cada nova versão publicada do app).
 
-const CACHE_VERSION = 'financas-v131';
+const CACHE_VERSION = 'financas-v132';
 const APP_SHELL = [
   './',
   './index.html',

@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 131 -->
+<!-- APP_VERSION: 132 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -9726,8 +9726,17 @@ document.addEventListener('mousedown',e=>{
   const pop=document.getElementById(_dpOpenId+'-pop'), disp=document.getElementById(_dpOpenId+'-disp');
   if(pop&&!pop.contains(e.target)&&e.target!==disp){_dpAplicarTexto(_dpOpenId);_dpClose(_dpOpenId);}
 });
-window.addEventListener('resize',()=>{if(_dpOpenId)_dpClose(_dpOpenId)});
-document.addEventListener('scroll',()=>{if(_dpOpenId)_dpClose(_dpOpenId)},true);
+// Reposiciona (em vez de fechar) em scroll/resize — evita fechar o popup sozinho
+// quando o navegador rola o modal pra trazer o campo focado à vista (ou quando o
+// teclado do celular abre e dispara um resize), que antes derrubava o calendário
+// alguns milissegundos depois de abrir.
+window.addEventListener('resize',()=>{if(_dpOpenId)_dpPosicionar(_dpOpenId)});
+document.addEventListener('scroll',(e)=>{
+  if(!_dpOpenId)return;
+  const pop=document.getElementById(_dpOpenId+'-pop');
+  if(pop&&pop.contains(e.target))return; // scroll dentro do próprio calendário não deve reposicionar/fechar
+  _dpPosicionar(_dpOpenId);
+},true);
 
 function _dpRender(){
   if(!_dpOpenId)return;
