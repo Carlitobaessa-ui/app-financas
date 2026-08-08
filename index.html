@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 135 -->
+<!-- APP_VERSION: 136 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -330,6 +330,7 @@ body.valores-ocultos .orc-inp:focus{filter:none}
 .pillar-track{height:4px;background:rgba(100,95,80,.15);border-radius:2px;overflow:hidden;margin-bottom:4px}
 .pillar-fill{height:100%;border-radius:2px;transition:width 1s ease}
 .pillar-val{font-size:11px;font-family:var(--mono);font-weight:400}
+.pillar-tip{font-size:10px;color:var(--txt3);line-height:1.4;margin-top:6px;padding-top:6px;border-top:0.5px solid var(--bdr)}
 
 /* ─── ALERTAS ──── */
 .alertas{display:flex;flex-direction:column;gap:7px;margin-bottom:18px}
@@ -542,15 +543,17 @@ th.th-sort .sort-ic{font-size:8px;letter-spacing:0;margin-left:2px;color:var(--a
 .dp-field{position:relative}
 
 /* ─── INFO ICON + TOOLTIP (explicação de painéis, KPIs e gráficos) ──── */
+/* Tooltip é renderizado via JS num único elemento fixo (#global-tip, ver script
+   no fim do body) em vez de ::after puro em CSS — o ::after ficava clipado pelo
+   overflow:hidden de containers como .kpi e .panel, sumindo ou cortando o texto. */
 .info-ic{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;color:var(--txt3);cursor:help;vertical-align:-2px;margin-left:5px;position:relative;flex-shrink:0}
 .info-ic svg{width:100%;height:100%}
 .info-ic:hover,.info-ic:focus{color:var(--grn);outline:none}
-[data-tip]{position:relative}
-[data-tip]::after{content:attr(data-tip);position:absolute;left:50%;transform:translateX(-50%) translateY(2px);bottom:calc(100% + 8px);background:var(--txt);color:var(--surf);font-size:11px;line-height:1.45;font-weight:400;text-transform:none;letter-spacing:normal;padding:8px 11px;border-radius:8px;width:max-content;max-width:230px;white-space:normal;box-shadow:0 6px 20px rgba(0,0,0,.2);z-index:500;pointer-events:none;text-align:left;opacity:0;visibility:hidden;transition:opacity .12s,transform .12s}
-[data-tip]::before{content:'';position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 3px);border:5px solid transparent;border-top-color:var(--txt);z-index:500;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .12s}
-[data-tip]:hover::after,[data-tip]:focus::after{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
-[data-tip]:hover::before,[data-tip]:focus::before{opacity:1;visibility:visible}
 .kpi[data-tip],.pt[data-tip]{cursor:help}
+.global-tip{position:fixed;left:0;top:0;background:var(--txt);color:var(--surf);font-size:11px;line-height:1.45;font-weight:400;padding:8px 11px;border-radius:8px;width:max-content;max-width:230px;white-space:normal;box-shadow:0 6px 20px rgba(0,0,0,.22);z-index:600;pointer-events:none;text-align:left;opacity:0;visibility:hidden;transform:translateY(2px);transition:opacity .12s,transform .12s}
+.global-tip.show{opacity:1;visibility:visible;transform:translateY(0)}
+.global-tip::after{content:'';position:absolute;left:var(--tip-arrow-x,50%);top:100%;transform:translateX(-50%);border:5px solid transparent;border-top-color:var(--txt)}
+.global-tip.tip-below::after{top:auto;bottom:100%;border-top-color:transparent;border-bottom-color:var(--txt)}
 
 /* ─── MODAL ──── */
 .ov{display:none;position:fixed;inset:0;background:rgba(26,35,24,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center}
@@ -5408,6 +5411,7 @@ async function atualizarMercadoImoveis(){
 </div></div>
 
 <div class="toast" id="toast"></div>
+<div class="global-tip" id="global-tip"></div>
 
 <!-- ═══ INTEGRAÇÃO NEON — Auth + Data API (persistência na nuvem, ver 03-guia.md) ═══ -->
 <script>
@@ -6864,7 +6868,7 @@ function rdash(){
   document.getElementById('saude-score').innerHTML=`<span class="${saudeLabel[1]}">${total}/100 · ${saudeLabel[0]}</span>`;
   document.getElementById('saude-pillares').innerHTML=pillares.map(p=>{
     const cor=p.score>=70?C.grn:p.score>=40?C.gld:C.red;
-    return`<div class="pillar"><div class="pillar-nm">${p.nm}<span class="info-ic" tabindex="0" data-tip="${p.tip}"><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="pillar-track"><div class="pillar-fill" style="width:${p.score}%;background:${cor}"></div></div><div class="pillar-val" style="color:${cor}">${Math.round(p.score)} · <span style="color:var(--txt3)">${p.desc}</span></div></div>`;
+    return`<div class="pillar"><div class="pillar-nm">${p.nm}</div><div class="pillar-track"><div class="pillar-fill" style="width:${p.score}%;background:${cor}"></div></div><div class="pillar-val" style="color:${cor}">${Math.round(p.score)} · <span style="color:var(--txt3)">${p.desc}</span></div><div class="pillar-tip">${p.tip}</div></div>`;
   }).join('');
 
   // Alertas inteligentes
@@ -9807,6 +9811,49 @@ function _dpEscolheDia(y,m,d){
   _dpClose(_dpOpenId);
 }
 function _dpHoje(){const t=new Date();_dpEscolheDia(t.getFullYear(),t.getMonth(),t.getDate());}
+
+// ─── TOOLTIP GLOBAL para [data-tip] (ícones (i) de explicação em painéis/KPIs) ───
+// Renderiza num único <div id="global-tip"> position:fixed, anexado direto no
+// <body>, em vez do antigo ::after puro em CSS — o ::after ficava dentro do
+// próprio elemento (.kpi/.panel têm overflow:hidden pra recortar decorações),
+// então o tooltip era cortado/escondido. position:fixed no body escapa disso.
+let _tipEl=null, _tipAlvo=null;
+function _tipMostra(el){
+  if(!_tipEl)_tipEl=document.getElementById('global-tip');
+  if(!_tipEl||!el)return;
+  const txt=el.getAttribute('data-tip'); if(!txt)return;
+  _tipAlvo=el;
+  _tipEl.textContent=txt;
+  _tipEl.classList.add('show');
+  _tipPosiciona();
+}
+function _tipEsconde(){
+  _tipAlvo=null;
+  if(_tipEl)_tipEl.classList.remove('show');
+}
+function _tipPosiciona(){
+  if(!_tipAlvo||!_tipEl)return;
+  const r=_tipAlvo.getBoundingClientRect();
+  const tw=_tipEl.offsetWidth,th=_tipEl.offsetHeight;
+  let left=r.left+r.width/2-tw/2;
+  left=Math.max(6,Math.min(left,window.innerWidth-tw-6));
+  let top=r.top-th-9, abaixo=false;
+  if(top<6){top=r.bottom+9;abaixo=true;}
+  _tipEl.style.left=left+'px';
+  _tipEl.style.top=top+'px';
+  _tipEl.classList.toggle('tip-below',abaixo);
+  _tipEl.style.setProperty('--tip-arrow-x',(r.left+r.width/2-left)+'px');
+}
+document.addEventListener('mouseover',e=>{const el=e.target.closest&&e.target.closest('[data-tip]');if(el)_tipMostra(el);});
+document.addEventListener('mouseout',e=>{
+  const el=e.target.closest&&e.target.closest('[data-tip]');
+  if(el&&(!e.relatedTarget||!el.contains(e.relatedTarget)))_tipEsconde();
+});
+document.addEventListener('focusin',e=>{const el=e.target.closest&&e.target.closest('[data-tip]');if(el)_tipMostra(el);});
+document.addEventListener('focusout',e=>{const el=e.target.closest&&e.target.closest('[data-tip]');if(el)_tipEsconde();});
+window.addEventListener('scroll',()=>{if(_tipAlvo)_tipPosiciona();},true);
+window.addEventListener('resize',()=>{if(_tipAlvo)_tipPosiciona();});
+
 function addObjetivo(){
   const nm=document.getElementById('ob-nm').value.trim();
   const tp=document.getElementById('ob-tp').value;
