@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 138 -->
+<!-- APP_VERSION: 139 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1633,6 +1633,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="nav-group">Configurações</div>
     <button class="nav-item" onclick="abrirConfigApi()"><span class="ni"><svg class="svi"><use href="#ic-ia"/></svg></span><span class="nav-label"> Chave de API</span></button>
     <button class="nav-item" onclick="abrirConfigEnc()"><span class="ni"><svg class="svi"><use href="#ic-cadeado"/></svg></span><span class="nav-label"> Criptografia local</span></button>
+    <button class="nav-item" onclick="abrirConfigTotp()"><span class="ni"><svg class="svi"><use href="#ic-chave"/></svg></span><span class="nav-label"> Bloqueio por código (2FA)</span></button>
     <button class="nav-item" onclick="abrirConfigNotif()"><span class="ni"><svg class="svi"><use href="#ic-sino"/></svg></span><span class="nav-label"> Notificações</span></button>
     <button class="nav-item" onclick="authPasskeyRegister()"><span class="ni"><svg class="svi"><use href="#ic-faceid"/></svg></span><span class="nav-label"> Face ID / Biometria</span></button>
     <button class="nav-item" onclick="authLogout()"><span class="ni"><svg class="svi"><use href="#ic-sair"/></svg></span><span class="nav-label"> Sair</span></button>
@@ -5352,6 +5353,51 @@ async function atualizarMercadoImoveis(){
 </div>
 </div></div>
 
+<div class="ov" id="m-config-totp"><div class="modal" style="width:520px"><button class="mc" onclick="closeM('m-config-totp')">✕</button>
+<div class="m-eye">Configurações</div><div class="m-title"><svg class="svi" style="width:16px;height:16px;margin-right:6px;vertical-align:-2px"><use href="#ic-chave"/></svg>Bloqueio por código (2FA)</div>
+<div style="font-size:12px;color:var(--txt3);line-height:1.55;margin-bottom:14px">
+  Trava a TELA deste app neste navegador com um código de 6 dígitos (padrão TOTP, o mesmo do Google Authenticator/Authy) — some com o app até você digitar o código, mesmo que o navegador já esteja logado. É uma camada <strong style="color:var(--txt2)">independente do seu login</strong> (Google/GitHub/e-mail): protege quem tiver acesso físico a este navegador já autenticado, não substitui a senha da sua conta. Calculado 100% no seu navegador (nenhum servidor externo envolvido).
+</div>
+<div id="totp-form-setup">
+  <div class="fg" style="margin-bottom:8px"><label>1. Escaneie ou digite manualmente no seu app autenticador</label>
+    <div class="mono" id="totp-secret-txt" style="background:var(--bg2);border:0.5px solid var(--bdr);border-radius:var(--r);padding:9px 12px;font-size:14px;letter-spacing:1px;text-align:center;margin-bottom:6px"></div>
+    <a id="totp-uri-link" href="#" style="font-size:10.5px;color:var(--accent);word-break:break-all;display:block">otpauth://…</a>
+    <div style="font-size:10.5px;color:var(--txt3);margin-top:4px">Sem leitor de QR? Abra seu app autenticador (Google Authenticator, Authy, etc.) → "Adicionar conta" → "Inserir chave manualmente" → cole o código acima.</div>
+  </div>
+  <div class="fg" style="margin-bottom:6px"><label>2. Digite o código de 6 dígitos gerado pelo app para confirmar</label>
+    <input id="totp-code-confirm" inputmode="numeric" maxlength="6" placeholder="000000" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:16px;text-align:center;letter-spacing:4px">
+  </div>
+</div>
+<div id="totp-form-recovery" style="display:none">
+  <div style="background:var(--bg2);border:0.5px solid var(--bdr);border-radius:var(--r);padding:11px 13px;font-size:12px;color:var(--txt2);margin-bottom:10px">
+    <strong>Guarde estes 8 códigos de recuperação</strong> — cada um funciona uma única vez no lugar do código de 6 dígitos, caso você perca acesso ao app autenticador. Sem eles e sem o app autenticador, você fica bloqueado neste navegador.
+  </div>
+  <div id="totp-recovery-lista" style="background:var(--bg2);border:0.5px solid var(--bdr);border-radius:var(--r);padding:10px 14px;font-size:13px;text-align:center;margin-bottom:10px"></div>
+  <label style="display:flex;gap:7px;align-items:flex-start;font-size:11.5px;color:var(--txt2);cursor:pointer">
+    <input type="checkbox" id="totp-recovery-ok" style="margin-top:2px">
+    <span>Salvei estes códigos em lugar seguro (gerenciador de senhas, papel, etc.).</span>
+  </label>
+</div>
+<div id="totp-form-ativo" style="display:none">
+  <div style="background:var(--bg2);border:0.5px solid var(--bdr);border-radius:var(--r);padding:11px 13px;font-size:12px;color:var(--txt2);margin-bottom:12px"><svg class="svi" style="width:12px;height:12px;margin-right:4px;vertical-align:-1px"><use href="#ic-chave"/></svg>Bloqueio por código ativo neste navegador.</div>
+  <div class="fg" style="margin-bottom:6px"><label>Código atual (ou de recuperação) para desativar</label>
+    <input id="totp-code-desativar" inputmode="numeric" placeholder="000000 ou XXXX-XXXX" style="width:100%;font-family:'JetBrains Mono',monospace;font-size:14px;text-align:center">
+  </div>
+</div>
+<div id="totp-status" style="font-size:11.5px;color:#B4483A;margin:8px 0;min-height:14px"></div>
+<div class="mfoot" id="totp-mfoot-setup">
+  <button class="btn btn-ghost" onclick="closeM('m-config-totp')">Cancelar</button>
+  <button class="btn btn-g" onclick="_uiConfirmarTotp()">Confirmar e Ativar</button>
+</div>
+<div class="mfoot" id="totp-mfoot-recovery" style="display:none">
+  <button class="btn btn-g" style="width:100%" onclick="_uiConcluirSetupTotp()">Concluir</button>
+</div>
+<div class="mfoot" id="totp-mfoot-ativo" style="display:none">
+  <button class="btn btn-d" onclick="_uiDesativarTotp()">Desativar</button>
+  <button class="btn btn-ghost" onclick="closeM('m-config-totp')">Fechar</button>
+</div>
+</div></div>
+
 <div class="ov" id="m-config-notif"><div class="modal" style="width:520px"><button class="mc" onclick="closeM('m-config-notif')">✕</button>
 <div class="m-eye">Configurações</div><div class="m-title"><svg class="svi" style="width:16px;height:16px;margin-right:6px;vertical-align:-2px"><use href="#ic-sino"/></svg>Notificações</div>
 <div style="font-size:12px;color:var(--txt3);line-height:1.55;margin-bottom:14px">
@@ -5373,6 +5419,15 @@ async function atualizarMercadoImoveis(){
   <input id="enc-lock-pin" type="password" autocomplete="off" placeholder="PIN" style="width:100%;text-align:center;font-family:'JetBrains Mono',monospace;font-size:16px;margin-bottom:10px" onkeydown="if(event.key==='Enter')_uiDesbloquearEnc()">
   <div id="enc-lock-status" style="font-size:11.5px;color:#B4483A;min-height:16px;margin-bottom:10px"></div>
   <button class="btn btn-g" style="width:100%" onclick="_uiDesbloquearEnc()">Desbloquear</button>
+</div></div>
+
+<div class="ov" id="totp-lock-overlay" style="display:none;z-index:10000"><div class="modal" style="width:380px;text-align:center">
+  <div style="margin-bottom:10px"><svg class="svi" style="width:32px;height:32px;color:var(--txt2)"><use href="#ic-chave"/></svg></div>
+  <div class="m-title" style="margin-bottom:6px">App bloqueado</div>
+  <div style="font-size:12px;color:var(--txt3);margin-bottom:16px">Digite o código de 6 dígitos do seu app autenticador (ou um código de recuperação) para continuar.</div>
+  <input id="totp-lock-code" type="text" inputmode="numeric" autocomplete="off" placeholder="000000" style="width:100%;text-align:center;font-family:'JetBrains Mono',monospace;font-size:18px;letter-spacing:3px;margin-bottom:10px" onkeydown="if(event.key==='Enter')_uiDesbloquearTotp()">
+  <div id="totp-lock-status" style="font-size:11.5px;color:#B4483A;min-height:16px;margin-bottom:10px"></div>
+  <button class="btn btn-g" style="width:100%" onclick="_uiDesbloquearTotp()">Desbloquear</button>
 </div></div>
 
 <div class="ov" id="m-config-brapi"><div class="modal" style="width:520px"><button class="mc" onclick="closeM('m-config-brapi')">✕</button>
@@ -12489,6 +12544,196 @@ async function _uiDesbloquearEnc(){
   }
 }
 
+// ═══════════════════════════════════════════════════════════
+// BLOQUEIO POR CÓDIGO (2FA / TOTP) — RFC 6238, mesmo algoritmo do Google
+// Authenticator/Authy. Camada INDEPENDENTE do login (Google/GitHub/e-mail via
+// Neon Auth, ver seção abaixo): não fortalece nem substitui a senha da conta,
+// só trava a TELA deste app neste navegador enquanto o código correto não é
+// digitado — útil se o navegador já estiver logado e alguém tiver acesso
+// físico ao aparelho. Secret e códigos de recuperação ficam só no
+// localStorage deste dispositivo (não sincronizam com a nuvem Neon), por
+// isso é "deste navegador" — trocar de aparelho/navegador exige reconfigurar.
+// 100% calculado no cliente via Web Crypto (HMAC-SHA1) — nenhum servidor
+// externo envolvido, custo zero.
+const _TOTP_ON_KEY='totp_on';
+const _TOTP_SECRET_KEY='totp_secret_b32';
+const _TOTP_RECOVERY_KEY='totp_recovery_hashes'; // hashes SHA-256 dos códigos — nunca o texto puro
+const _TOTP_DIGITS=6, _TOTP_PERIOD=30;
+let _totpDesbloqueado=false; // true após validar o código nesta sessão do navegador
+let _totpSetupSecret=null;   // secret gerado durante o setup, só persiste ao confirmar
+
+function totpAtivo(){ try{ return localStorage.getItem(_TOTP_ON_KEY)==='1'; }catch(_){ return false; } }
+
+// ─── Base32 (RFC 4648) — formato padrão de secret TOTP, compatível com
+// qualquer app autenticador ───
+const _B32_ALFABETO='ABCDEFGHIJKLMNOPQRSTUVWXYZ234567';
+function _b32Encode(bytes){
+  let bits=''; for(const b of bytes) bits+=b.toString(2).padStart(8,'0');
+  let out='';
+  for(let i=0;i+5<=bits.length;i+=5) out+=_B32_ALFABETO[parseInt(bits.substr(i,5),2)];
+  const rem=bits.length%5;
+  if(rem) out+=_B32_ALFABETO[parseInt(bits.slice(-rem).padEnd(5,'0'),2)];
+  return out;
+}
+function _b32Decode(str){
+  str=String(str||'').toUpperCase().replace(/[^A-Z2-7]/g,'');
+  let bits=''; for(const c of str){ const v=_B32_ALFABETO.indexOf(c); if(v<0)continue; bits+=v.toString(2).padStart(5,'0'); }
+  const bytes=[]; for(let i=0;i+8<=bits.length;i+=8) bytes.push(parseInt(bits.substr(i,8),2));
+  return new Uint8Array(bytes);
+}
+
+// ─── TOTP core (RFC 6238 sobre HOTP/RFC 4226) — HMAC-SHA1 via Web Crypto ───
+async function _totpCodigoParaContador(secretB32,contador){
+  const keyBytes=_b32Decode(secretB32);
+  const key=await crypto.subtle.importKey('raw',keyBytes,{name:'HMAC',hash:'SHA-1'},false,['sign']);
+  const buf=new ArrayBuffer(8), view=new DataView(buf);
+  view.setUint32(0,Math.floor(contador/2**32)); view.setUint32(4,contador>>>0);
+  const sig=new Uint8Array(await crypto.subtle.sign('HMAC',key,buf));
+  const offset=sig[sig.length-1]&0x0f;
+  const bin=((sig[offset]&0x7f)<<24)|((sig[offset+1]&0xff)<<16)|((sig[offset+2]&0xff)<<8)|(sig[offset+3]&0xff);
+  return (bin%(10**_TOTP_DIGITS)).toString().padStart(_TOTP_DIGITS,'0');
+}
+async function _totpCodigoAtual(secretB32,deslocPassos){
+  const contador=Math.floor(Date.now()/1000/_TOTP_PERIOD)+(deslocPassos||0);
+  return _totpCodigoParaContador(secretB32,contador);
+}
+// Valida com janela de ±1 passo (30s) pra absorver pequena diferença de relógio
+async function _totpValidar(secretB32,codigoDigitado){
+  const cod=String(codigoDigitado||'').trim().replace(/\s/g,'');
+  if(!/^\d{6}$/.test(cod))return false;
+  for(const d of [0,-1,1]){ if(await _totpCodigoAtual(secretB32,d)===cod) return true; }
+  return false;
+}
+
+// ─── Códigos de recuperação (uso único cada) ───
+async function _sha256Hex(texto){
+  const buf=await crypto.subtle.digest('SHA-256',new TextEncoder().encode(texto));
+  return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+}
+function _totpGerarCodigosRecuperacao(n){
+  const alfabeto='ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sem O/0/I/1 — evita confusão na hora de digitar
+  const codigos=[];
+  for(let i=0;i<n;i++){
+    const bytes=crypto.getRandomValues(new Uint8Array(8));
+    let s=''; for(const b of bytes) s+=alfabeto[b%alfabeto.length];
+    codigos.push(s.slice(0,4)+'-'+s.slice(4,8));
+  }
+  return codigos;
+}
+async function _totpUsarRecuperacao(codigo){
+  const cod=String(codigo||'').trim().toUpperCase();
+  if(!cod)return false;
+  let hashes; try{ hashes=JSON.parse(localStorage.getItem(_TOTP_RECOVERY_KEY)||'[]'); }catch(_){ hashes=[]; }
+  const h=await _sha256Hex(cod);
+  const idx=hashes.indexOf(h);
+  if(idx<0)return false;
+  hashes.splice(idx,1); // uso único — remove depois de usar
+  localStorage.setItem(_TOTP_RECOVERY_KEY,JSON.stringify(hashes));
+  return true;
+}
+// Tenta código de 6 dígitos OU código de recuperação, nessa ordem — usado
+// tanto pra desbloquear a tela quanto pra desativar o bloqueio.
+async function _totpValidarQualquer(codigo){
+  const secret=localStorage.getItem(_TOTP_SECRET_KEY);
+  if(secret && await _totpValidar(secret,codigo)) return true;
+  return _totpUsarRecuperacao(codigo);
+}
+
+// ─── UI: modal de configuração (Configurações → Bloqueio por código) ───
+function abrirConfigTotp(){
+  const ativo=totpAtivo();
+  document.getElementById('totp-form-setup').style.display=ativo?'none':'block';
+  document.getElementById('totp-form-recovery').style.display='none';
+  document.getElementById('totp-form-ativo').style.display=ativo?'block':'none';
+  document.getElementById('totp-mfoot-setup').style.display=ativo?'none':'flex';
+  document.getElementById('totp-mfoot-recovery').style.display='none';
+  document.getElementById('totp-mfoot-ativo').style.display=ativo?'flex':'none';
+  document.getElementById('totp-status').textContent='';
+  if(!ativo){
+    const bytes=crypto.getRandomValues(new Uint8Array(20));
+    _totpSetupSecret=_b32Encode(bytes);
+    const grupos=(_totpSetupSecret.match(/.{1,4}/g)||[]).join(' ');
+    document.getElementById('totp-secret-txt').textContent=grupos;
+    const uri=`otpauth://totp/app-financas:${encodeURIComponent(_uid||'usuario')}?secret=${_totpSetupSecret}&issuer=app-financas&digits=6&period=30`;
+    const link=document.getElementById('totp-uri-link');
+    if(link){ link.href=uri; link.textContent=uri; }
+    const inp=document.getElementById('totp-code-confirm'); if(inp)inp.value='';
+  } else {
+    const inp=document.getElementById('totp-code-desativar'); if(inp)inp.value='';
+  }
+  openM('m-config-totp');
+}
+async function _uiConfirmarTotp(){
+  const codigo=document.getElementById('totp-code-confirm').value;
+  const st=document.getElementById('totp-status'); st.textContent='';
+  if(!_totpSetupSecret){ st.textContent='Reabra a configuração e tente de novo.'; return; }
+  const ok=await _totpValidar(_totpSetupSecret,codigo);
+  if(!ok){ st.textContent='Código incorreto — confira o horário do seu celular e tente de novo.'; return; }
+  const codigos=_totpGerarCodigosRecuperacao(8);
+  const hashes=[]; for(const c of codigos) hashes.push(await _sha256Hex(c));
+  localStorage.setItem(_TOTP_SECRET_KEY,_totpSetupSecret);
+  localStorage.setItem(_TOTP_RECOVERY_KEY,JSON.stringify(hashes));
+  localStorage.setItem(_TOTP_ON_KEY,'1');
+  _totpDesbloqueado=true;
+  _totpSetupSecret=null;
+  document.getElementById('totp-form-setup').style.display='none';
+  document.getElementById('totp-mfoot-setup').style.display='none';
+  document.getElementById('totp-form-recovery').style.display='block';
+  document.getElementById('totp-mfoot-recovery').style.display='flex';
+  document.getElementById('totp-recovery-lista').innerHTML=codigos.map(c=>`<div class="mono">${c}</div>`).join('');
+  document.getElementById('totp-recovery-ok').checked=false;
+}
+function _uiConcluirSetupTotp(){
+  if(!document.getElementById('totp-recovery-ok').checked){ toast('⚠ Marque que salvou os códigos antes de continuar'); return; }
+  toast('🔐 Bloqueio por código ativado');
+  closeM('m-config-totp');
+}
+async function _uiDesativarTotp(){
+  const codigo=document.getElementById('totp-code-desativar').value;
+  const st=document.getElementById('totp-status'); st.textContent='';
+  const ok=await _totpValidarQualquer(codigo);
+  if(!ok){ st.textContent='Código inválido.'; return; }
+  localStorage.removeItem(_TOTP_ON_KEY);
+  localStorage.removeItem(_TOTP_SECRET_KEY);
+  localStorage.removeItem(_TOTP_RECOVERY_KEY);
+  _totpDesbloqueado=false;
+  toast('Bloqueio por código desativado');
+  closeM('m-config-totp');
+}
+
+// ─── UI: tela de bloqueio ao abrir o app / voltar de segundo plano ───
+async function _uiDesbloquearTotp(){
+  const codigo=document.getElementById('totp-lock-code').value;
+  const st=document.getElementById('totp-lock-status'); st.textContent='';
+  const ok=await _totpValidarQualquer(codigo);
+  if(!ok){
+    st.textContent='Código incorreto.';
+    const inp=document.getElementById('totp-lock-code'); inp.value=''; inp.focus();
+    return;
+  }
+  _totpDesbloqueado=true;
+  document.getElementById('totp-lock-overlay').style.display='none';
+  toast('🔓 Desbloqueado');
+}
+function _totpMostrarBloqueio(){
+  const ov=document.getElementById('totp-lock-overlay');
+  if(!ov)return;
+  ov.style.display='flex';
+  const inp=document.getElementById('totp-lock-code'); if(inp)inp.value='';
+  setTimeout(()=>document.getElementById('totp-lock-code')?.focus(),80);
+}
+// Re-trava sozinho se a aba ficar em segundo plano por mais de 5 minutos —
+// cobre o caso de deixar o celular/notebook aberto e alguém pegar depois.
+let _totpOcultoDesde=null;
+document.addEventListener('visibilitychange',()=>{
+  if(!totpAtivo())return;
+  if(document.hidden){ _totpOcultoDesde=Date.now(); }
+  else if(_totpOcultoDesde && (Date.now()-_totpOcultoDesde)>5*60*1000){
+    _totpDesbloqueado=false;
+    _totpMostrarBloqueio();
+  }
+});
+
 // ═══ INTEGRAÇÃO NEON — autenticação (e-mail) e sincronização (ver 03-guia.md) ═══
 // Login social: Google e GitHub habilitados (provedores OAuth configurados no projeto
 // Neon Auth). Face ID/Touch ID (passkey) fica desativado — o Neon Auth gerenciado (Better
@@ -16861,6 +17106,11 @@ function renderDisrupcao(dis,m){
     const ov=document.getElementById('enc-lock-overlay');
     if(ov){ ov.style.display='flex'; setTimeout(()=>document.getElementById('enc-lock-pin')?.focus(),80); }
   }
+  // ═══ BLOQUEIO POR CÓDIGO (2FA/TOTP) — mostra a tela de código se estiver
+  // ativo. Independente da criptografia local acima (z-index mais alto,
+  // sempre por cima); não bloqueia o resto do init() pelo mesmo motivo já
+  // documentado na criptografia — só cobre a tela até o código certo.
+  if(totpAtivo() && !_totpDesbloqueado) _totpMostrarBloqueio();
   bootAuth(); // ═══ INTEGRAÇÃO NEON — mostra login / restaura sessão
   // Síntese III — restaura dados persistidos
   const restaurado=restaurar();
