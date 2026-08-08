@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 144 -->
+<!-- APP_VERSION: 145 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1900,6 +1900,14 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     </div>
     <div id="ir-nota-us" style="font-size:11.5px;color:var(--txt3);margin-top:4px"></div>
     <div class="pft">Estimativa apenas — não distingue day-trade (alíquota 20%, sem isenção) por falta de dado de compra casada, nem deduz corretagem/custos. Stocks EUA seguem o regime de ganho de capital no exterior (Lei 14.754/2023), apurado no ajuste anual, e não entram neste cálculo mensal de DARF (código 6015). Consulte um contador antes de recolher qualquer DARF.</div>
+  </div>
+
+  <!-- OTIMIZADOR DE IR — sugestões de tax-loss harvesting -->
+  <div class="panel mb" id="panel-otimizador-ir" style="margin-top:16px">
+    <div class="phd">
+      <div><div class="pt" style="display:flex;align-items:center"><svg class="svi" style="width:15px;height:15px;color:var(--accent);margin-right:6px"><use href="#ic-lampada"/></svg>Otimizador de IR</div><div class="ps">Posições em ações, satélite ou FIIs no prejuízo hoje que, se vendidas, reduzem o imposto de futuras vendas com lucro no mesmo grupo</div></div>
+    </div>
+    <div id="otimizador-ir-conteudo"></div>
   </div>
 
   <!-- COMPARAÇÃO VS. BENCHMARKS -->
@@ -10824,6 +10832,7 @@ function rVendasAtivos(){
     }
   }
   rApuracaoIR();
+  rOtimizadorIR();
 }
 // ═══════════════════════════════════════════════════════════
 // APURAÇÃO DE IR SOBRE INVESTIMENTOS — DARF mensal (renda variável)
@@ -10900,6 +10909,62 @@ function rApuracaoIR(){
       notaUs.innerHTML=`ℹ Stocks EUA: resultado acumulado de ${usd(Math.abs(totalUs))}${totalUs<0?' (prejuízo)':''} em ${us.length} venda(s) registrada(s) — não incluído no DARF acima (segue o regime de ganho de capital no exterior, apurado no ajuste anual da declaração).`;
     } else notaUs.innerHTML='';
   }
+}
+// ═══════════════════════════════════════════════════════════
+// OTIMIZADOR DE IR — tax-loss harvesting (sugestão, não execução)
+// Reaproveita _apurarIRGrupo (mesma regra de isenção/alíquota/compensação
+// já usada na Apuração de IR) pra achar, por grupo (ações/satélite a 15%,
+// FIIs a 20%), o prejuízo acumulado hoje e quais posições em aberto estão
+// no vermelho. Só sugere — a venda de fato é feita pelo fluxo já existente
+// (abrirVenderAtivo), o usuário decide e confirma manualmente.
+// Escopo deliberadamente restrito a ações/SAT e FIIs: são os únicos grupos
+// com apuração de DARF mensal implementada no app. RF não tem ganho de
+// capital em bolsa e Stocks EUA seguem o regime anual à parte (Lei
+// 14.754/2023) — nenhum dos dois entra nesta sugestão.
+// ═══════════════════════════════════════════════════════════
+function _otimizadorIRCandidatos(){
+  const anoAtual=String(new Date().getFullYear());
+  const grupos=[
+    {key:'acoes', label:'Ações / Satélite', tipos:['BR','SAT'], isento20k:true,  aliquota:0.15},
+    {key:'fii',   label:'Fundos Imobiliários (FIIs)', tipos:['FII'], isento20k:false, aliquota:0.20},
+  ];
+  return grupos.map(g=>{
+    const vendasGrupo=(S.vendasAtivos||[]).filter(v=>g.tipos.includes(v.tipo));
+    const apur=_apurarIRGrupo(vendasGrupo,{isento20k:g.isento20k,aliquota:g.aliquota});
+    const impostoAno=apur.linhas.filter(l=>l.mes.startsWith(anoAtual)).reduce((s,l)=>s+l.imposto,0);
+    const candidatos=S.ativos
+      .filter(a=>g.tipos.includes(a.tipo)&&a.qtd>0&&a.preco&&rent(a)<0)
+      .map(a=>{
+        const custoAtivo=a.tipo==='US'?a.qtd*a.pm*S.usdBrl:a.qtd*a.pm; // não se aplica a US neste grupo, mantido por simetria com custo()
+        const prejuizo=pos(a)-custoAtivo; // negativo
+        return {ticker:a.ticker, nome:a.nome, prejuizo, economiaEstimada:Math.abs(prejuizo)*g.aliquota};
+      })
+      .sort((x,y)=>x.prejuizo-y.prejuizo);
+    return {...g, prejAcumAtual:apur.prejAcumFinal, impostoAno:+impostoAno.toFixed(2), candidatos};
+  });
+}
+function rOtimizadorIR(){
+  const el=document.getElementById('otimizador-ir-conteudo'); if(!el) return;
+  const grupos=_otimizadorIRCandidatos();
+  const comCandidatos=grupos.filter(g=>g.candidatos.length);
+  if(!comCandidatos.length){
+    el.innerHTML=`<div style="padding:10px 0;color:var(--txt3);font-size:12px">Nenhuma posição em ações, satélite ou FIIs está no prejuízo hoje (ou ainda não há cotação atualizada) — nada para sugerir no momento.</div>`;
+    return;
+  }
+  el.innerHTML = comCandidatos.map(g=>`
+    <div style="margin-bottom:14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:4px;margin-bottom:6px">
+        <div style="font-weight:600;font-size:12.5px">${g.label}</div>
+        <div style="font-size:10.5px;color:var(--txt3)">prejuízo acumulado hoje: <strong class="${g.prejAcumAtual>0?'cr':''}">${brl(g.prejAcumAtual)}</strong>${g.impostoAno>0?` · DARF já devido em ${new Date().getFullYear()}: <strong class="cr">${brl(g.impostoAno)}</strong>`:''}</div>
+      </div>
+      ${g.candidatos.map(c=>`
+        <div class="orc-row">
+          <div class="orc-nm"><strong>${c.ticker}</strong>${c.nome?`<div style="font-size:10px;color:var(--txt3)">${c.nome}</div>`:''}</div>
+          <div class="mono cr" style="min-width:100px;text-align:right" title="Prejuízo não realizado hoje nesta posição">${brl(c.prejuizo)}</div>
+          <div style="font-size:10px;color:var(--txt3);min-width:170px">economia futura est.: <strong class="cg">${brl(c.economiaEstimada)}</strong></div>
+          <button class="btn btn-ghost" style="padding:3px 9px;font-size:10.5px" onclick="abrirVenderAtivo('${c.ticker.replace(/'/g,"\\'")}')">Vender esta posição</button>
+        </div>`).join('')}
+    </div>`).join('') + `<div class="pft" style="margin-top:2px">Vender uma posição no prejuízo aumenta o prejuízo acumulado do grupo (ações/satélite ou FIIs), que abate o imposto de vendas <strong>futuras</strong> com lucro no mesmo grupo — não é retroativo a DARF já pago. Estimativa simplificada (não deduz corretagem/custos, não considera day-trade); consulte um contador antes de decidir. RF e stocks dos EUA seguem regras próprias e não entram aqui.</div>`;
 }
 // ═══════════════════════════════════════════════════════════
 // GRÃOS — CRUD de operações (originação/compra/venda + hedge)
