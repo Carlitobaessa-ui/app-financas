@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 142 -->
+<!-- APP_VERSION: 143 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1700,6 +1700,9 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="kpi"><svg class="kpi-svi"><use href="#ic-cartao"/></svg><div class="kpi-eye">Faturas Abertas</div><div class="kpi-val cr" id="k-fat">—</div><div class="kpi-d cm">dívida cartões</div></div>
     <div class="kpi"><svg class="kpi-svi"><use href="#ic-moeda"/></svg><div class="kpi-eye">Gastos do Mês</div><div class="kpi-val cr" id="k-gas">—</div><div class="kpi-d cm" id="k-gas-d">—</div></div>
   </div>
+
+  <!-- ASSISTENTE PROATIVO — sugestões de IA geradas em segundo plano (1x/dia) -->
+  <div id="assistente-proativo-box"></div>
 
   <!-- ALERTAS INTELIGENTES -->
   <div id="alertas-box"></div>
@@ -6994,6 +6997,7 @@ function rdash(){
   document.getElementById('alertas-box').innerHTML=alertas.length
     ?`<div class="alertas">${alertas.map(a=>`<div class="alerta alerta-${a.tipo}"><div class="alerta-ic">${a.ic}</div><div class="alerta-tx"><strong>${a.titulo}</strong><span>${a.sub}</span></div><button class="alerta-btn" onclick="${a.fn}">${a.acao} →</button></div>`).join('')}</div>`
     :'';
+  if(typeof _renderAssistenteProativo==='function') _renderAssistenteProativo();
 
   // Posições
   const sorted=[...S.ativos].filter(a=>a.preco).map(a=>({...a,_p:pos(a)})).sort((a,b)=>b._p-a._p).slice(0,6);
@@ -13414,6 +13418,77 @@ function _statusBriefingAgente(id,estado){
 function _renderBriefing(){ if(document.getElementById('page-briefing')?.classList.contains('active')) rbriefing(); }
 function _renderBriefingSemChave(){ if(document.getElementById('page-briefing')?.classList.contains('active')) rbriefing(); }
 
+// ═══════════════════════════════════════════════════════════
+// ASSISTENTE PROATIVO — diferente dos 3 assistentes de chat (que só
+// respondem quando perguntados), este roda em segundo plano até 1x/dia e
+// aparece no Dashboard sugerindo de 1 a 3 pontos que merecem atenção AGORA
+// — não é um resumo do que já está normal, é "o que se destaca". Reaproveita
+// a mesma chave de API e o mesmo contexto do Estrategista; frequência
+// controlada por cache diário (mesmo padrão do Briefing) pra nunca gastar
+// API à toa. Falha silenciosamente (sem toast) porque não foi uma ação que
+// o usuário pediu na hora — só não aparece nada se der erro.
+// ═══════════════════════════════════════════════════════════
+const _PROATIVO_STORE='assistente_proativo';
+function _lerCacheProativo(){ try{ const raw=localStorage.getItem(_PROATIVO_STORE); return raw?JSON.parse(raw):null; }catch(_){ return null; } }
+function _salvarCacheProativo(obj){ try{ localStorage.setItem(_PROATIVO_STORE, JSON.stringify(obj)); }catch(_){} }
+
+function _proativoUserPrompt(){
+  return `Você é um assistente financeiro proativo. Em vez de esperar uma pergunta, olhe TODO o contexto financeiro fornecido e identifique de 1 a 3 pontos que MERECEM ATENÇÃO AGORA — algo fora do padrão, uma oportunidade concreta, ou um risco real. NÃO liste o que já está normal só pra preencher espaço.
+
+Responda SOMENTE com um array JSON válido, sem markdown, sem texto antes ou depois, exatamente neste formato:
+[{"titulo":"frase curta e direta (máx 60 caracteres)","detalhe":"1-2 frases explicando o porquê, com números reais do contexto quando possível (máx 200 caracteres)"}]
+
+Se nada realmente merecer destaque hoje, responda exatamente: []
+Regra inegociável: NUNCA invente números ou fatos que não estejam no contexto fornecido. Escreva em português brasileiro.`;
+}
+async function _gerarSugestoesProativas(){
+  const body={model:'claude-sonnet-4-6',max_tokens:500,system:buildContextMid(),messages:[{role:'user',content:_proativoUserPrompt()}]};
+  const r=await chamarClaudeAPI(body);
+  const d=await r.json();
+  if(d.error) throw new Error(d.error.message||'erro na API');
+  const txt=(d.content?.[0]?.text||'').trim();
+  const jsonTxt=txt.replace(/^```json?\s*/i,'').replace(/```\s*$/,'').trim();
+  let arr; try{ arr=JSON.parse(jsonTxt); }catch(_){ arr=[]; }
+  if(!Array.isArray(arr))arr=[];
+  return arr.filter(x=>x&&x.titulo).slice(0,3);
+}
+async function gerarSugestoesProativas(forcar){
+  const hoje=_hojeISO();
+  const cache=_lerCacheProativo();
+  if(!forcar && cache && cache.data===hoje){ _renderAssistenteProativo(); return; }
+  if(!temApiKey()){ _renderAssistenteProativo(); return; }
+  try{
+    const sugestoes=await _gerarSugestoesProativas();
+    _salvarCacheProativo({data:hoje, sugestoes, geradoEm:new Date().toISOString()});
+  }catch(e){ console.warn('assistente proativo falhou:',e); }
+  _renderAssistenteProativo();
+}
+// Dispara em segundo plano ao abrir (1x/dia) — 2.5s de atraso pra rodar
+// depois do Briefing automático e não competir pela mesma chave em paralelo.
+function _proativoAutoAoAbrir(){
+  const cache=_lerCacheProativo();
+  const hoje=_hojeISO();
+  if(cache && cache.data===hoje) return;
+  if(!temApiKey()) return;
+  setTimeout(()=>{ gerarSugestoesProativas(false).catch(()=>{}); }, 2500);
+}
+function _renderAssistenteProativo(){
+  const el=document.getElementById('assistente-proativo-box');
+  if(!el)return;
+  const cache=_lerCacheProativo();
+  const hoje=_hojeISO();
+  const temHoje = cache && cache.data===hoje;
+  const sugestoes = temHoje ? (cache.sugestoes||[]) : [];
+  if(!sugestoes.length){ el.innerHTML=''; return; }
+  const esc=s=>String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  el.innerHTML=`<div class="alertas" style="margin-bottom:12px">${sugestoes.map(s=>`
+    <div class="alerta alerta-w">
+      <div class="alerta-ic">✦</div>
+      <div class="alerta-tx"><strong>${esc(s.titulo)}</strong><span>${esc(s.detalhe)}</span></div>
+      <button class="alerta-btn" onclick="goTo('assistente-mid')">Conversar →</button>
+    </div>`).join('')}</div>
+    <div style="font-size:10px;color:var(--txt3);margin:-6px 0 12px 2px">✦ Sugestões do assistente proativo, geradas por IA 1x/dia · <button class="btn btn-ghost" style="font-size:9.5px;padding:1px 6px" onclick="gerarSugestoesProativas(true)">↻ atualizar agora</button></div>`;
+}
 
 // ═══════════════════════════════════════════════════════════
 // COMPROVANTE POR FOTO — extrai dados via visão da IA e lança automaticamente
@@ -17439,6 +17514,8 @@ function renderDisrupcao(dis,m){
   if(typeof _preencherSelectsBanco==='function') _preencherSelectsBanco();
   // Roda em background; fica pronto quando o usuário abrir a página Briefing.
   _briefingAutoAoAbrir();
+  // Assistente proativo — sugestões no Dashboard, também em background (ver comentário na definição).
+  if(typeof _proativoAutoAoAbrir==='function') _proativoAutoAoAbrir();
 
   // Reajuste ao abrir/recolher o menu: o gatilho principal é o 'transitionend'
   // do próprio nav (dispara exatamente quando a largura/transform termina de
