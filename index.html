@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 136 -->
+<!-- APP_VERSION: 137 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -8179,6 +8179,9 @@ function cotSinaisSetFiltro(v){
   _cotSinaisFiltro = (_cotSinaisFiltro===v) ? null : v;
   rcotSinaisConsolidado();
 }
+// Progresso do botão "Analisar todos os pendentes" — null quando parado,
+// {atual,total} enquanto roda (ver analisarTodosSinaisPendentesCot).
+let _bulkSinaisProgresso=null;
 function rcotSinaisConsolidado(){
   const el=document.getElementById('cot-sinais-body'); if(!el)return;
   const colapsado=_fundSecaoColapsada('cotSinais','painel');
@@ -8211,13 +8214,17 @@ function rcotSinaisConsolidado(){
   if(_cotSinaisFiltro && !contagemFiltro[_cotSinaisFiltro]) _cotSinaisFiltro=null;
   const ativo=v=>_cotSinaisFiltro===v;
   const badgeStyle=(v,corFundo)=>`cursor:pointer;background:${corFundo};${ativo(v)?'outline:2px solid currentColor;font-weight:700':''}`;
-  const resumo=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
+  const btnAnalisarTodos = _bulkSinaisProgresso
+    ? `<span class="badge" style="background:var(--bg2)">✦ Analisando ${_bulkSinaisProgresso.atual}/${_bulkSinaisProgresso.total}…</span>`
+    : (nSem>0 ? `<button class="btn btn-ghost" style="font-size:11px;padding:3px 9px" onclick="analisarTodosSinaisPendentesCot()" title="Gera a análise fundamentalista por IA de todos os ${nSem} ativo(s) sem análise, um de cada vez">✦ Analisar todos os pendentes (${nSem})</button>` : '');
+  const resumo=`<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:12px">
     <span class="badge cg" style="${badgeStyle('compra','rgba(30,125,69,.10)')}" onclick="cotSinaisSetFiltro('compra')" title="Clique para filtrar">Comprar: ${nComprar}</span>
     <span class="badge cr" style="${badgeStyle('venda','rgba(192,57,43,.10)')}" onclick="cotSinaisSetFiltro('venda')" title="Clique para filtrar">Vender: ${nVender}</span>
     <span class="badge cm" style="${badgeStyle('manter','var(--bg2)')}" onclick="cotSinaisSetFiltro('manter')" title="Clique para filtrar">Manter: ${nManter}</span>
     <span class="badge cm" style="${badgeStyle('sem','var(--bg2)')}" onclick="cotSinaisSetFiltro('sem')" title="Clique para filtrar">Sem análise: ${nSem}</span>
     ${nAltoRisco?`<span class="badge cr" style="background:rgba(192,57,43,.10)">⚠ ${nAltoRisco} em alta volatilidade hoje</span>`:''}
     ${_cotSinaisFiltro?`<span class="badge" style="cursor:pointer;background:var(--bg2);text-decoration:underline" onclick="cotSinaisSetFiltro(null)">✕ limpar filtro</span>`:''}
+    ${btnAnalisarTodos}
   </div>`;
   const sinalTxt={compra:'Comprar',venda:'Vender',manter:'Manter'};
   const sinalCls={compra:'cg',venda:'cr',manter:'cm'};
@@ -8241,6 +8248,38 @@ function rcotSinaisConsolidado(){
     <thead><tr><th style="text-align:left">Ativo</th><th style="text-align:left">Categoria</th><th style="text-align:left">Preço</th><th class="tr">Var. dia</th><th class="tr">Sinal</th><th class="tr">Risco do dia</th><th style="text-align:left">Comentário (lastro)</th></tr></thead>
     <tbody>${linhasHtml}</tbody>
   </table></div>`;
+}
+
+// Gera de uma vez a análise fundamentalista (IA) de TODOS os ativos hoje
+// marcados como "sem análise" no painel consolidado de Sinais de Risco —
+// sequencial (uma chamada de API por vez, reaproveitando gerarAnaliseFundamentalista,
+// que já tem seu próprio cache/retry/erro), pra não estourar rate limit nem
+// gerar custo inesperado de uma vez. Pede confirmação antes (mostra quantos
+// ativos e avisa que consome API), e o painel se atualiza sozinho a cada
+// item concluído.
+async function analisarTodosSinaisPendentesCot(){
+  if(_bulkSinaisProgresso)return; // já rodando — evita clique duplo
+  if(!temApiKey()){ toast('⚠ Configure sua chave de API em Configurações para gerar análises'); return; }
+  const cats=[['br','BR'],['us','US'],['ouro','OURO'],['cripto','CRIPTO'],['fx','FX']];
+  const cache=_lerFundAnalises();
+  const pendentes=[];
+  cats.forEach(([key,catUp])=>{
+    (S.cotWatch[key]||[]).forEach(it=>{
+      if(it && it.tk && !_sinalDeAnaliseCot(cache[it.tk])) pendentes.push({tk:it.tk,cat:catUp,sym:it.sym||it.tk});
+    });
+  });
+  if(!pendentes.length){ toast('✓ Nenhum ativo pendente — todos já têm análise'); return; }
+  if(!confirm(`Gerar análise fundamentalista por IA para ${pendentes.length} ativo(s) pendente(s)?\n\nSão ${pendentes.length} chamadas de API em sequência (uma por ativo) — pode levar alguns minutos e consome a cota/créditos da chave de API configurada em Configurações.\n\nDeseja continuar?`))return;
+  _bulkSinaisProgresso={atual:0,total:pendentes.length};
+  rcotSinaisConsolidado();
+  for(const p of pendentes){
+    _bulkSinaisProgresso.atual++;
+    rcotSinaisConsolidado();
+    try{ await gerarAnaliseFundamentalista(p.tk,p.cat); }catch(_){}
+  }
+  _bulkSinaisProgresso=null;
+  rcotSinaisConsolidado();
+  toast(`✓ Análise concluída para ${pendentes.length} ativo(s)`);
 }
 
 // ─── Gerenciar itens de cotação por categoria
