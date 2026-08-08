@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 137 -->
+<!-- APP_VERSION: 138 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -6369,6 +6369,14 @@ function gerarAlertas(){
   // Dividendos este mês (positivo)
   const divMes=S.dividendos.filter(d=>d.data.startsWith(mes)).reduce((s,d)=>s+d.total,0);
   if(divMes>0)alertas.push({tipo:'g',ic:'◎',titulo:`${brl(divMes)} em dividendos recebidos este mês`,sub:'Renda passiva · Continue reinvestindo',acao:'Ver dividendos',fn:"goTo('dividendos')"});
+  // Reajuste de assinatura/recorrência detectado (ver _detectarAssinaturas) —
+  // compara a cobrança mais recente com a média das anteriores; só entra
+  // aqui quando já passou do limiar de 8% (não é ruído de arredondamento).
+  try{
+    (typeof _detectarAssinaturas==='function'?_detectarAssinaturas():[]).filter(x=>x.reajuste).slice(0,2).forEach(x=>{
+      alertas.push({tipo:'w',ic:'▲',titulo:`${x.desc} reajustou +${x.aumentoPct.toFixed(0)}%`,sub:`${brl(x.valorAnterior)} → ${brl(x.valorAtual)}/mês`,acao:'Ver assinaturas',fn:"goTo('gastos')"});
+    });
+  }catch(_){}
   return alertas.slice(0,5);
 }
 
@@ -9323,10 +9331,19 @@ function _detectarAssinaturas(){
     const media=valores.reduce((a,b)=>a+b,0)/valores.length;
     const min=Math.min(...valores),max=Math.max(...valores);
     if(media<=0||(max-min)/media>0.5)return; // valores muito díspares não indicam assinatura
-    const ultimo=[...lista].sort((a,b)=>(b.data||'').localeCompare(a.data||''))[0];
-    resultado.push({desc:ultimo.desc,cat:ultimo.cat,valorMedio:media,ocorrencias:lista.length,meses:meses.size,ultimaData:ultimo.data,variacao:(max-min)/media*100});
+    // Reajuste de preço: compara a cobrança MAIS RECENTE com a média das
+    // anteriores (não só min/max) — isola direção (subiu, não só "variou"),
+    // igual ao que Rocket Money/Monarch chamam de "price increase alert".
+    // Limiar de 8% pra não disparar por arredondamento/juros de parcela.
+    const ordenado=[...lista].sort((a,b)=>(a.data||'').localeCompare(b.data||''));
+    const ultimo=ordenado[ordenado.length-1];
+    const anteriores=ordenado.slice(0,-1);
+    const valorAnterior=anteriores.reduce((s,x)=>s+x.valor,0)/anteriores.length;
+    const aumentoPct=valorAnterior>0?((ultimo.valor-valorAnterior)/valorAnterior*100):0;
+    const reajuste=aumentoPct>=8;
+    resultado.push({desc:ultimo.desc,cat:ultimo.cat,valorMedio:media,ocorrencias:lista.length,meses:meses.size,ultimaData:ultimo.data,variacao:(max-min)/media*100,reajuste,aumentoPct,valorAnterior,valorAtual:ultimo.valor});
   });
-  return resultado.sort((a,b)=>b.valorMedio-a.valorMedio);
+  return resultado.sort((a,b)=>(b.reajuste-a.reajuste)||(b.valorMedio-a.valorMedio));
 }
 function rAssinaturas(){
   const kpisEl=document.getElementById('assin-kpis');if(!kpisEl)return;
@@ -9335,11 +9352,14 @@ function rAssinaturas(){
   if(!lista.length){ if(vazioEl)vazioEl.style.display='block'; if(tabEl)tabEl.style.display='none'; kpisEl.innerHTML=''; return; }
   if(vazioEl)vazioEl.style.display='none'; if(tabEl)tabEl.style.display='';
   const totalMensal=lista.reduce((s,x)=>s+x.valorMedio,0);
-  kpisEl.innerHTML=`<div class="kpi"><div class="kpi-eye">Assinaturas Detectadas</div><div class="kpi-val">${lista.length}</div></div><div class="kpi"><div class="kpi-eye">Total Estimado/Mês</div><div class="kpi-val cr">${brl(totalMensal)}</div></div><div class="kpi"><div class="kpi-eye">Estimado/Ano</div><div class="kpi-val cr">${brl(totalMensal*12)}</div></div>`;
+  const nReajustes=lista.filter(x=>x.reajuste).length;
+  kpisEl.innerHTML=`<div class="kpi"><div class="kpi-eye">Assinaturas Detectadas</div><div class="kpi-val">${lista.length}</div></div><div class="kpi"><div class="kpi-eye">Total Estimado/Mês</div><div class="kpi-val cr">${brl(totalMensal)}</div></div><div class="kpi"><div class="kpi-eye">Estimado/Ano</div><div class="kpi-val cr">${brl(totalMensal*12)}</div></div>${nReajustes?`<div class="kpi" style="border-color:var(--red)"><div class="kpi-eye">⚠ Reajustes Detectados</div><div class="kpi-val cr">${nReajustes}</div></div>`:''}`;
   const tb=document.getElementById('tb-assin');
   if(tb)tb.innerHTML=lista.map(x=>{
-    const alerta=x.variacao>10;
-    return `<tr><td data-label="Descrição"><strong>${x.desc}</strong></td><td class="tr mono" data-label="Valor médio">${brl(x.valorMedio)}</td><td class="tr mono" data-label="Ocorrências">${x.ocorrencias}× (${x.meses} meses)</td><td data-label="Categoria"><span class="badge b-g" style="font-size:9px">${x.cat||'—'}</span></td><td class="cm" data-label="Último lançamento" style="font-size:11px">${fdt(x.ultimaData)}</td><td class="tr mono ${alerta?'cr':'cm'}" data-label="Variação">${alerta?'⚠ ':''}${x.variacao.toFixed(0)}%</td></tr>`;
+    const variacaoTxt=x.reajuste
+      ? `⚠ ${brl(x.valorAnterior)} → ${brl(x.valorAtual)} (+${x.aumentoPct.toFixed(0)}%)`
+      : `${x.variacao.toFixed(0)}%`;
+    return `<tr><td data-label="Descrição"><strong>${x.desc}</strong></td><td class="tr mono" data-label="Valor médio">${brl(x.valorMedio)}</td><td class="tr mono" data-label="Ocorrências">${x.ocorrencias}× (${x.meses} meses)</td><td data-label="Categoria"><span class="badge b-g" style="font-size:9px">${x.cat||'—'}</span></td><td class="cm" data-label="Último lançamento" style="font-size:11px">${fdt(x.ultimaData)}</td><td class="tr mono ${x.reajuste?'cr':'cm'}" data-label="Variação" style="${x.reajuste?'font-weight:600':''}">${variacaoTxt}</td></tr>`;
   }).join('');
 }
 
