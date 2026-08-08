@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 133 -->
+<!-- APP_VERSION: 134 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -2235,7 +2235,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
         <div class="kpi"><div class="lab">Melhor praça agora</div><div id="pgExecPracaVal" class="val">—</div><div id="pgExecPracaMeta" class="meta">—</div></div>
       </div>
       <div class="card" style="border-left:2px solid var(--pg-corn)">
-        <div class="kpi"><div class="lab">Troca soja × KCl</div><div id="pgExecTrocaVal" class="val">—</div><div id="pgExecTrocaMeta" class="meta">—</div></div>
+        <div class="kpi"><div class="lab">Troca soja × KCl <span class="info-ic" tabindex="0" data-tip="Quantas sacas de soja equivalem a 1 tonelada de KCl, entre as cooperativas cadastradas. Menor valor = maior poder de troca do grão."><svg class="svi"><use href="#ic-info"/></svg></span></div><div id="pgExecTrocaVal" class="val">—</div><div id="pgExecTrocaMeta" class="meta">—</div></div>
       </div>
     </div>
 
@@ -2348,8 +2348,8 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <span><span class="dot" style="background:#B07D1A"></span>Milho CBOT (US$/bushel)</span>
     </div>
     <div class="grid two">
-      <div class="card"><div class="sub">Soja CBOT — US$/bushel</div><div class="chartbox"><canvas id="cSojaCbot"></canvas></div></div>
-      <div class="card"><div class="sub">Milho CBOT — US$/bushel</div><div class="chartbox"><canvas id="cMilhoCbot"></canvas></div></div>
+      <div class="card"><div class="sub">Soja CBOT — US$/bushel</div><div class="chartbox"><canvas id="cSojaCbot"></canvas></div><div class="calc">Curva de vencimentos futuros da soja na CBOT — dado simulado, sem fonte gratuita compatível com navegador.</div></div>
+      <div class="card"><div class="sub">Milho CBOT — US$/bushel</div><div class="chartbox"><canvas id="cMilhoCbot"></canvas></div><div class="calc">Curva de vencimentos futuros do milho na CBOT — dado simulado, sem fonte gratuita compatível com navegador.</div></div>
     </div>
 
     <!-- 5. SINAIS -->
@@ -3314,7 +3314,7 @@ async function atualizarMercadoGraos(){
     <div class="cc"><div class="cl">// cap_rate_aluguel</div><div class="im-cr"><input type="range" id="im-s_ra" min="3" max="8" step="0.25" value="5"><span class="cv" id="im-v_ra">5,0%</span></div></div>
   </div>
   <div class="mg" id="im-m1"></div>
-  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><path d="M1 12l4-6.5 3 4L11 4l3 8"/></svg>evolução · 60 meses</div>
+  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><path d="M1 12l4-6.5 3 4L11 4l3 8"/></svg>evolução · 60 meses<span class="info-ic" tabindex="0" data-tip="Simulação com os parâmetros dos sliders acima: aporte mensal, capital inicial, valorização anual e cap rate do aluguel — não é dado real da carteira."><svg class="svi"><use href="#ic-info"/></svg></span></div>
   <div class="lg">
     <span class="li"><span class="ld" style="background:var(--ac)"></span>patrimônio imobiliário</span>
     <span class="li"><span class="ld" style="background:var(--pu);opacity:.8"></span>total aportado</span>
@@ -3385,7 +3385,7 @@ async function atualizarMercadoGraos(){
   </div>
   <div class="gc2" id="im-gc2"></div>
   <div class="vbox" id="im-vbox"></div>
-  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><path d="M1 12l4-6.5 3 4L11 4l3 8"/></svg>patrimônio líquido · 10 anos</div>
+  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><path d="M1 12l4-6.5 3 4L11 4l3 8"/></svg>patrimônio líquido · 10 anos<span class="info-ic" tabindex="0" data-tip="Projeção com os parâmetros ao lado (valor, entrada, taxa, prazo, valorização, cap rate). Compara comprar à vista vs financiar e aplicar a diferença em renda fixa."><svg class="svi"><use href="#ic-info"/></svg></span></div>
   <div class="lg">
     <span class="li"><span class="ld" style="background:var(--ac)"></span>à vista</span>
     <span class="li"><span class="ld" style="background:var(--bl)"></span>financiado (PL)</span>
@@ -3519,7 +3519,7 @@ async function atualizarMercadoGraos(){
     <div class="card"><div class="card-h">Tributação ~11,3%</div><div style="font-size:10px;color:var(--d3);line-height:1.85">Aluguel a ~11,3% na PJ vs até 27,5% PF. Ganho de capital na venda: 6,73% PJ vs 22,5% PF. Dividendos distribuídos aos sócios atualmente isentos de IR.</div></div>
     <div class="card"><div class="card-h">Gestão centralizada</div><div style="font-size:10px;color:var(--d3);line-height:1.85">CNPJ único para todos os imóveis. Separação total da Vivenda Decor e eTribais. Facilita controle de caixa, auditoria, contratos de aluguel e governança familiar.</div></div>
   </div>
-  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><path d="M1 12l4-6.5 3 4L11 4l3 8"/></svg>economia tributária · 5 anos</div>
+  <div class="sh"><svg class="sh-ico" viewBox="0 0 15 15" fill="none" stroke="currentColor" stroke-width=".8"><path d="M1 12l4-6.5 3 4L11 4l3 8"/></svg>economia tributária · 5 anos<span class="info-ic" tabindex="0" data-tip="Diferença acumulada entre imposto sobre aluguel na PF (até 27,5%) e na Holding PJ Lucro Presumido (~11,3%), projetada com receita anual e crescimento definidos ao lado."><svg class="svi"><use href="#ic-info"/></svg></span></div>
   <div class="im-cg">
     <div class="cc"><div class="cl">// receita_anual</div><div class="im-cr"><input type="range" id="im-s_ha" min="10000" max="200000" step="5000" value="72000"><span class="cv" id="im-v_ha">R$ 72k</span></div></div>
     <div class="cc"><div class="cl">// crescimento_aa</div><div class="im-cr"><input type="range" id="im-s_hg" min="3" max="10" step="0.5" value="5"><span class="cv" id="im-v_hg">5,0%</span></div></div>
@@ -3596,7 +3596,7 @@ async function atualizarMercadoGraos(){
   <!-- RADAR + SIGNALS -->
   <div class="sr-layout">
     <div class="radar-box">
-      <div class="radar-tag">// RADAR · SINAIS FRACOS</div>
+      <div class="radar-tag">// RADAR · SINAIS FRACOS<span class="info-ic" tabindex="0" data-tip="Cada eixo é um vetor de risco/oportunidade avaliado de 0 a 10 pela curadoria do painel (não é um índice automático). A área preenchida mostra a intensidade atual."><svg class="svi"><use href="#ic-info"/></svg></span></div>
       <canvas id="im-radarC" width="228" height="228" role="img" aria-label="Radar de 8 vetores de risco e oportunidade"></canvas>
       <div style="margin-top:12px;display:flex;flex-direction:column;gap:5px">
         <div style="display:flex;align-items:center;gap:8px;font-family:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,monospace;font-size:8px;color:var(--d1)"><span style="width:18px;height:1.5px;background:var(--ac);display:inline-block"></span>intensidade atual</div>
@@ -4487,7 +4487,8 @@ async function atualizarMercadoImoveis(){
 <div class="page" id="page-briefing">
   <div class="ph"><svg class="ph-watermark"><use href="#ic-radar"/></svg>
     <div><div class="ph-eye">Análise diária dos agentes</div><div class="ph-title">Briefing Diário</div>
-    <div class="ph-sub">Metas, ações necessárias, riscos e reposicionamento</div></div>
+    <div class="ph-sub">Metas, ações necessárias, riscos e reposicionamento</div>
+    <div class="ps" style="margin-top:2px">Gerado por IA uma vez por dia (ou sob demanda no botão "Atualizar Briefing"), a partir dos dados atuais do seu portfólio — carteira, contas, cartões, objetivos e sinais de mercado.</div></div>
   </div>
   <div id="briefing-body" style="margin-top:16px"></div>
 </div>
@@ -4539,7 +4540,7 @@ async function atualizarMercadoImoveis(){
     <div class="chat-sidebar">
       <!-- Contexto atual -->
       <div class="sidebar-card">
-        <div class="sidebar-card-hd"><svg class="svi" style="width:13px;height:13px"><use href="#ic-chart"/></svg>Contexto do Portfólio</div>
+        <div class="sidebar-card-hd"><svg class="svi" style="width:13px;height:13px"><use href="#ic-chart"/></svg>Contexto do Portfólio<span class="info-ic" tabindex="0" data-tip="Retrato do seu portfólio no momento em que a conversa é aberta — é enviado ao assistente como base para as respostas."><svg class="svi"><use href="#ic-info"/></svg></span></div>
         <div class="sidebar-card-bd" id="chat-ctx"></div>
       </div>
 
@@ -4615,10 +4616,10 @@ async function atualizarMercadoImoveis(){
 
     <div class="chat-sidebar">
       <div class="sidebar-card" style="border-color:var(--blu-lt)">
-        <div class="sidebar-card-hd" style="color:var(--blu)"><svg class="svi" style="width:13px;height:13px"><use href="#ic-chart"/></svg>Ferramentas Estratégicas</div>
+        <div class="sidebar-card-hd" style="color:var(--blu)"><svg class="svi" style="width:13px;height:13px"><use href="#ic-chart"/></svg>Ferramentas Estratégicas<span class="info-ic" tabindex="0" data-tip="Atalhos que preenchem e enviam uma pergunta pronta ao assistente — cada um dispara uma análise específica sobre sua carteira atual."><svg class="svi"><use href="#ic-info"/></svg></span></div>
         <div class="sidebar-card-bd" style="padding:10px 12px">
           <div class="action-pill" style="border-color:var(--blu-lt)" onclick="quickMid('Calcule o aporte mensal ideal para atingir meus objetivos em menor prazo')"><span class="action-pill-ic"><svg class="svi" style="width:13px;height:13px"><use href="#ic-chart"/></svg></span> Calcular Aportes</div>
-          <div class="action-pill" style="border-color:var(--blu-lt)" onclick="quickMid('Analise minha carteira pelo método Barsi: quais ativos atendem os critérios e quais não atendem?')"><span class="action-pill-ic"><svg class="svi" style="width:13px;height:13px"><use href="#ic-trofeu"/></svg></span> Filtro Barsi</div>
+          <div class="action-pill" style="border-color:var(--blu-lt)" onclick="quickMid('Analise minha carteira pelo método Barsi: quais ativos atendem os critérios e quais não atendem?')"><span class="action-pill-ic"><svg class="svi" style="width:13px;height:13px"><use href="#ic-trofeu"/></svg></span> Filtro Barsi<span class="info-ic" tabindex="0" data-tip="Método de Luiz Barsi Filho: prioriza ações pagadoras de dividendos de setores perenes (bancos, energia, saneamento) com preço descontado."><svg class="svi"><use href="#ic-info"/></svg></span></div>
           <div class="action-pill" style="border-color:var(--blu-lt)" onclick="quickMid('Analise o cenário atual de soja, milho e trigo e o impacto nos meus investimentos em empresas do agronegócio')"><span class="action-pill-ic"><svg class="svi" style="width:13px;height:13px"><use href="#ic-trigo"/></svg></span> Análise Agro</div>
           <div class="action-pill" style="border-color:var(--blu-lt)" onclick="quickMid('Simule como ficaria minha carteira em 5, 10 e 20 anos reinvestindo 100% dos dividendos')"><span class="action-pill-ic"><svg class="svi" style="width:13px;height:13px"><use href="#ic-recorrencia"/></svg></span> Simular Reinvestimento</div>
           <div class="action-pill" style="border-color:var(--blu-lt)" onclick="quickMid('Qual é o cenário macro atual do Brasil e como impacta minha estratégia de investimentos?')"><span class="action-pill-ic">🇧🇷</span> Macro BR</div>
@@ -4634,7 +4635,7 @@ async function atualizarMercadoImoveis(){
       </div>
 
       <div class="sidebar-card">
-        <div class="sidebar-card-hd"><svg class="svi" style="width:13px;height:13px"><use href="#ic-chart"/></svg>Contexto da Carteira</div>
+        <div class="sidebar-card-hd"><svg class="svi" style="width:13px;height:13px"><use href="#ic-chart"/></svg>Contexto da Carteira<span class="info-ic" tabindex="0" data-tip="Retrato da carteira de investimentos no momento em que a conversa é aberta — enviado ao assistente como base para as respostas."><svg class="svi"><use href="#ic-info"/></svg></span></div>
         <div class="sidebar-card-bd" id="ctx-mid"></div>
       </div>
     </div>
@@ -4693,7 +4694,7 @@ async function atualizarMercadoImoveis(){
 
       <div class="chat-sidebar">
         <div class="sidebar-card" style="border-color:var(--gld-lt)">
-          <div class="sidebar-card-hd" style="color:var(--gld)"><svg class="svi" style="width:13px;height:13px"><use href="#ic-engrenagem"/></svg>Análises CFO</div>
+          <div class="sidebar-card-hd" style="color:var(--gld)"><svg class="svi" style="width:13px;height:13px"><use href="#ic-engrenagem"/></svg>Análises CFO<span class="info-ic" tabindex="0" data-tip="Atalhos que enviam uma pergunta pronta ao assistente — cada um dispara uma análise específica com base nos seus dados atuais."><svg class="svi"><use href="#ic-info"/></svg></span></div>
           <div class="sidebar-card-bd" style="padding:10px 12px">
             <div class="action-pill" style="border-color:var(--gld-lt)" onclick="quickAdv('Faça um planejamento fiscal completo: quais impostos incidirão sobre minha carteira, dividendos e bens neste ano?')"><span class="action-pill-ic"><svg class="svi" style="width:13px;height:13px"><use href="#ic-imposto"/></svg></span> Planejamento Fiscal</div>
             <div class="action-pill" style="border-color:var(--gld-lt)" onclick="quickAdv('Analise o risco total da minha família: concentração em ativos, exposição cambial, liquidez e pontos críticos')"><span class="action-pill-ic"><svg class="svi" style="width:13px;height:13px"><use href="#ic-raio"/></svg></span> Mapa de Risco Total</div>
@@ -4705,7 +4706,7 @@ async function atualizarMercadoImoveis(){
         </div>
 
         <div class="sidebar-card">
-          <div class="sidebar-card-hd"><svg class="svi" style="width:13px;height:13px"><use href="#ic-lampada"/></svg>Diagnóstico Rápido</div>
+          <div class="sidebar-card-hd"><svg class="svi" style="width:13px;height:13px"><use href="#ic-lampada"/></svg>Diagnóstico Rápido<span class="info-ic" tabindex="0" data-tip="Alertas automáticos com base em regras fixas (ex.: faturas acima de 50% do saldo, concentração excessiva) — recalculado sempre que a aba é aberta."><svg class="svi"><use href="#ic-info"/></svg></span></div>
           <div class="sidebar-card-bd" id="diag-adv" style="font-size:11.5px"></div>
         </div>
 
@@ -4721,7 +4722,7 @@ async function atualizarMercadoImoveis(){
   <div id="adv-fiscal-panel" style="display:none">
     <div class="g2 mb">
       <div class="panel">
-        <div class="phd"><div class="pt">Impostos Estimados — Ano Corrente</div></div>
+        <div class="phd"><div class="pt">Impostos Estimados — Ano Corrente<span class="info-ic" tabindex="0" data-tip="Estimativa simplificada com base na renda, dividendos/JCP e patrimônio atuais — não substitui o cálculo oficial do IRPF/DARF."><svg class="svi"><use href="#ic-info"/></svg></span></div></div>
         <div class="pbd" id="fiscal-impostos"></div>
       </div>
       <div class="panel">
@@ -4730,7 +4731,7 @@ async function atualizarMercadoImoveis(){
       </div>
     </div>
     <div class="panel">
-      <div class="phd"><div class="pt">Oportunidades de Otimização Fiscal</div></div>
+      <div class="phd"><div class="pt">Oportunidades de Otimização Fiscal<span class="info-ic" tabindex="0" data-tip="Lista curada de brechas e estratégias legais de redução de imposto aplicáveis ao seu perfil — avalie cada uma com um contador antes de agir."><svg class="svi"><use href="#ic-info"/></svg></span></div></div>
       <div class="pbd" id="fiscal-oportunidades"></div>
     </div>
   </div>
@@ -4744,7 +4745,7 @@ async function atualizarMercadoImoveis(){
         <div class="pbd"><div style="position:relative;height:240px"><canvas id="ch-risco-radar"></canvas></div><div class="pft">Fotografia atual da carteira (6 dimensões de risco), sem histórico</div></div>
       </div>
       <div class="panel">
-        <div class="phd"><div class="pt">Concentração de Risco</div></div>
+        <div class="phd"><div class="pt">Concentração de Risco<span class="info-ic" tabindex="0" data-tip="Pontos de concentração e vulnerabilidade identificados na carteira e no orçamento, com nível de risco e ação sugerida para cada um."><svg class="svi"><use href="#ic-info"/></svg></span></div></div>
         <div class="pbd" id="risco-conc"></div>
       </div>
     </div>
@@ -4768,11 +4769,11 @@ async function atualizarMercadoImoveis(){
     </div>
     <div class="g2">
       <div class="panel">
-        <div class="phd"><div class="pt">Cenário Estressado — Variáveis Críticas</div></div>
+        <div class="phd"><div class="pt">Cenário Estressado — Variáveis Críticas<span class="info-ic" tabindex="0" data-tip="Impacto estimado de choques isolados (queda da bolsa, câmbio, Selic, inflação, inadimplência) sobre o patrimônio atual — eventos hipotéticos, não previsão."><svg class="svi"><use href="#ic-info"/></svg></span></div></div>
         <div class="pbd" id="cen-stress"></div>
       </div>
       <div class="panel">
-        <div class="phd"><div class="pt">Sumário dos 3 Cenários</div></div>
+        <div class="phd"><div class="pt">Sumário dos 3 Cenários<span class="info-ic" tabindex="0" data-tip="Patrimônio projetado em 10 anos nos cenários otimista, base e de estresse, usando a taxa de retorno e inflação definidas nos controles acima."><svg class="svi"><use href="#ic-info"/></svg></span></div></div>
         <div class="pbd" id="cen-resumo"></div>
       </div>
     </div>
@@ -16331,10 +16332,10 @@ function renderRisco(){
   const scoreIliq=Math.max(0,100-bens/pat*80);
 
   document.getElementById('risco-kpis').innerHTML=`
-    <div class="kpi"><div class="kpi-eye">Índice Liquidez</div><div class="kpi-val ${scoreLiq>60?'cg':scoreLiq>30?'cgd':'cr'}">${scoreLiq.toFixed(0)}/100</div><div class="kpi-d cm">${brl(banc)} em conta</div></div>
-    <div class="kpi"><div class="kpi-eye">Concentração BR</div><div class="kpi-val ${scoreConc>60?'cg':'cr'}">${(ativosBR/inv*100).toFixed(0)}%</div><div class="kpi-d cm">meta: 70% Barsi</div></div>
-    <div class="kpi"><div class="kpi-eye">Cobertura Dividendos</div><div class="kpi-val ${scoreDivid>80?'cg':'cgd'}">${scoreDivid.toFixed(0)}%</div><div class="kpi-d cm">gastos cobertos</div></div>
-    <div class="kpi"><div class="kpi-eye">Endividamento</div><div class="kpi-val ${scoreEndiv>70?'cg':'cr'}">${scoreEndiv.toFixed(0)}/100</div><div class="kpi-d cm">${brl(fat)} em faturas</div></div>
+    <div class="kpi"><div class="kpi-eye">Índice Liquidez<span class="info-ic" tabindex="0" data-tip="Saldo bancário em relação aos gastos mensais, em escala 0–100. Quanto maior, mais meses de gastos o saldo em conta cobre."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val ${scoreLiq>60?'cg':scoreLiq>30?'cgd':'cr'}">${scoreLiq.toFixed(0)}/100</div><div class="kpi-d cm">${brl(banc)} em conta</div></div>
+    <div class="kpi"><div class="kpi-eye">Concentração BR<span class="info-ic" tabindex="0" data-tip="Percentual dos investimentos em ativos brasileiros. Referência: ~70%, faixa usada no método Barsi para carteiras focadas em BR."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val ${scoreConc>60?'cg':'cr'}">${(ativosBR/inv*100).toFixed(0)}%</div><div class="kpi-d cm">meta: 70% Barsi</div></div>
+    <div class="kpi"><div class="kpi-eye">Cobertura Dividendos<span class="info-ic" tabindex="0" data-tip="Dividendos recebidos por mês (média anual) divididos pelos gastos mensais. 100% significa que os dividendos pagam o custo de vida."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val ${scoreDivid>80?'cg':'cgd'}">${scoreDivid.toFixed(0)}%</div><div class="kpi-d cm">gastos cobertos</div></div>
+    <div class="kpi"><div class="kpi-eye">Endividamento<span class="info-ic" tabindex="0" data-tip="Escala 0–100 baseada na proporção entre faturas em aberto e saldo bancário — quanto maior, menor o comprometimento do saldo com dívidas de curto prazo."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val ${scoreEndiv>70?'cg':'cr'}">${scoreEndiv.toFixed(0)}/100</div><div class="kpi-d cm">${brl(fat)} em faturas</div></div>
   `;
 
   const dims=['Liquidez','Diversificação','Renda Passiva','Baixo Endivid.','Proteção Câmbio','Iliquidez Bens'];
