@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 127 -->
+<!-- APP_VERSION: 128 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -540,6 +540,17 @@ th.th-sort .sort-ic{font-size:8px;letter-spacing:0;margin-left:2px;color:var(--a
 .dp-ft{margin-top:6px;text-align:center;border-top:0.5px solid var(--bdr);padding-top:6px}
 .dp-hoje-btn{background:none;border:none;color:var(--grn);font-size:11px;cursor:pointer;font-weight:600;font-family:var(--body)}
 .dp-field{position:relative}
+
+/* ─── INFO ICON + TOOLTIP (explicação de painéis, KPIs e gráficos) ──── */
+.info-ic{display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;color:var(--txt3);cursor:help;vertical-align:-2px;margin-left:5px;position:relative;flex-shrink:0}
+.info-ic svg{width:100%;height:100%}
+.info-ic:hover,.info-ic:focus{color:var(--grn);outline:none}
+[data-tip]{position:relative}
+[data-tip]::after{content:attr(data-tip);position:absolute;left:50%;transform:translateX(-50%) translateY(2px);bottom:calc(100% + 8px);background:var(--txt);color:var(--surf);font-size:11px;line-height:1.45;font-weight:400;text-transform:none;letter-spacing:normal;padding:8px 11px;border-radius:8px;width:max-content;max-width:230px;white-space:normal;box-shadow:0 6px 20px rgba(0,0,0,.2);z-index:500;pointer-events:none;text-align:left;opacity:0;visibility:hidden;transition:opacity .12s,transform .12s}
+[data-tip]::before{content:'';position:absolute;left:50%;transform:translateX(-50%);bottom:calc(100% + 3px);border:5px solid transparent;border-top-color:var(--txt);z-index:500;pointer-events:none;opacity:0;visibility:hidden;transition:opacity .12s}
+[data-tip]:hover::after,[data-tip]:focus::after{opacity:1;visibility:visible;transform:translateX(-50%) translateY(0)}
+[data-tip]:hover::before,[data-tip]:focus::before{opacity:1;visibility:visible}
+.kpi[data-tip],.pt[data-tip]{cursor:help}
 
 /* ─── MODAL ──── */
 .ov{display:none;position:fixed;inset:0;background:rgba(26,35,24,.55);backdrop-filter:blur(4px);-webkit-backdrop-filter:blur(4px);z-index:300;align-items:center;justify-content:center}
@@ -1461,6 +1472,12 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <symbol id="ic-caixa" viewBox="0 0 24 24">
       <path d="M4 8.2 12 4l8 4.2-8 4.2-8-4.2Z" fill="none" stroke="currentColor" stroke-width="1.15" stroke-linejoin="round"/>
       <path d="M4 8.2V16l8 4.2V12.4M20 8.2V16l-8 4.2" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round"/>
+    </symbol>
+    <!-- Info / explicação (tooltip) -->
+    <symbol id="ic-info" viewBox="0 0 24 24">
+      <circle cx="12" cy="12" r="8.5" fill="none" stroke="currentColor" stroke-width="1.15"/>
+      <path d="M12 11v5.5" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"/>
+      <circle cx="12" cy="8" r="0.9" fill="currentColor"/>
     </symbol>
     <!-- Balança / exposição, equilíbrio -->
     <symbol id="ic-balanca" viewBox="0 0 24 24">
