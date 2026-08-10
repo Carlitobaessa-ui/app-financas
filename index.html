@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 148 -->
+<!-- APP_VERSION: 149 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -6961,6 +6961,16 @@ function _ehAplicacaoAutomatica(l){
   return _RE_APLIC_AUTO.test(l.desc||'');
 }
 function _lancAplicacaoAutomatica(){ return (S.lancamentos||[]).filter(_ehAplicacaoAutomatica); }
+// Exclui em massa os lançamentos de aplicação automática de saldo detectados acima.
+// Reaproveita o fluxo de exclusão em massa já existente (confirmação, backup
+// automático e recálculo de saldo das contas afetadas) em vez de duplicar a lógica.
+function excluirAplicacoesAutomaticas(){
+  const auto=_lancAplicacaoAutomatica();
+  if(!auto.length){toast('Nada para excluir');return}
+  _selLanc.clear();
+  auto.forEach(l=>_selLanc.add(l.id));
+  excluirEmMassa('contas');
+}
 // Reordena labels/data/cores de um gráfico de pizza/rosca do maior pro menor
 // valor, sem alterar os arrays originais (que às vezes são reaproveitados em
 // outra parte da tela, ex.: barras de progresso na mesma ordem fixa de
@@ -8754,7 +8764,8 @@ function rcontas(){
         const _ctsAuto=new Set(_auto.map(l=>l.banco)).size;
         _aa.style.display='flex';
         _aa.innerHTML=`<span class="recon-ic">↻</span>
-          <div class="recon-txt"><strong>${_auto.length} lançamento${_auto.length>1?'s':''} de aplicação automática de saldo</strong> em ${_ctsAuto} conta${_ctsAuto>1?'s':''} — o banco aplica e resgata o saldo todo dia (BB Rende Fácil, RF Simples Ágil e similares). Não são receita, despesa nem aporte, e já são ignorados automaticamente nos gráficos.</div>`;
+          <div class="recon-txt"><strong>${_auto.length} lançamento${_auto.length>1?'s':''} de aplicação automática de saldo</strong> em ${_ctsAuto} conta${_ctsAuto>1?'s':''} — o banco aplica e resgata o saldo todo dia (BB Rende Fácil, RF Simples Ágil e similares). Não são receita, despesa nem aporte, e já são ignorados automaticamente nos gráficos.</div>
+          <button class="btn btn-d" style="font-size:11px;padding:5px 12px;flex-shrink:0" onclick="excluirAplicacoesAutomaticas()">Excluir ${_auto.length}</button>`;
       } else { _aa.style.display='none'; }
     }
   }
