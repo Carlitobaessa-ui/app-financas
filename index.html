@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 145 -->
+<!-- APP_VERSION: 146 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1641,6 +1641,7 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
     <div class="nav-group">Backup</div>
     <button class="nav-item" onclick="abrirCentralBackup()"><span class="ni"><svg class="svi"><use href="#ic-banco"/></svg></span><span class="nav-label"> Central de Backup</span></button>
     <button class="nav-item" onclick="exportarEBackup()"><span class="ni"><svg class="svi"><use href="#ic-banco"/></svg></span><span class="nav-label"> Exportar Dados (.json)</span></button>
+    <button class="nav-item" onclick="abrirResumoEmergencia()"><span class="ni"><svg class="svi"><use href="#ic-pasta"/></svg></span><span class="nav-label"> Resumo de Emergência</span></button>
     <button class="nav-item" onclick="document.getElementById('file-import').click()"><span class="ni"><svg class="svi"><use href="#ic-lista"/></svg></span><span class="nav-label"> Importar Dados</span></button>
     <input type="file" id="file-import" accept="application/json,.json" style="display:none" onchange="importarDados(this)">
   </div>
@@ -4305,9 +4306,11 @@ async function atualizarMercadoImoveis(){
       <div class="fg"><label>Rentabilidade esperada (% a.a.)</label><input id="ap-rent" type="number" step="0.1" oninput="_apPreview()"></div>
       <div class="fg"><label>Prazo (anos)</label><input id="ap-anos" type="number" step="1" oninput="_apPreview()"></div>
       <div class="fg"><label>Renda mensal desejada na aposentadoria (R$)</label><input id="ap-renda" type="number" step="0.01" oninput="_apPreview()"></div>
+      <div class="fg"><label>Volatilidade esperada (% a.a.)<span class="info-ic" tabindex="0" data-tip="Quanto o retorno anual pode oscilar pra cima ou pra baixo da média informada. Carteiras mais concentradas em renda variável costumam ter volatilidade mais alta (15-25%); carteiras mais conservadoras, mais baixa (5-10%). Usada só na simulação Monte Carlo abaixo."><svg class="svi"><use href="#ic-info"/></svg></span></label><input id="ap-vol" type="number" step="0.5" oninput="_apPreview()"></div>
     </div>
     <div id="ap-kpis" class="kpi-row" style="margin-bottom:12px"></div>
     <div id="ap-resultado" style="font-size:12.5px;color:var(--txt2);line-height:1.7;background:var(--bg2);border:0.5px solid var(--bdr);border-radius:var(--r);padding:12px 15px;margin-bottom:10px"></div>
+    <div id="ap-montecarlo" style="border-top:0.5px solid var(--bdr);padding-top:14px;margin-bottom:10px"></div>
     <div style="text-align:right"><button class="btn btn-g" onclick="salvarAposentadoria()">Salvar parâmetros</button></div>
     <div class="pft">Projeção de patrimônio composto: parte do patrimônio líquido atual + aporte mensal, capitalizado à rentabilidade informada. Regra dos 4% (retirada segura anual) usada para estimar a renda mensal sustentável — estimativa educacional, não recomendação de investimento.</div>
   </div>
@@ -4788,13 +4791,29 @@ async function atualizarMercadoImoveis(){
       </div>
       <div class="pbd"><div style="position:relative;height:280px"><canvas id="ch-cenarios"></canvas></div><div class="pft">Projeção de 10 anos a partir do patrimônio atual, 3 cenários (retorno/inflação ajustáveis)</div></div>
     </div>
+
+    <div class="panel mb">
+      <div class="phd">
+        <div><div class="pt">Eventos Futuros na Linha do Tempo</div><div class="ps">Some entradas ou saídas pontuais num ano específico da projeção acima — herança esperada, venda de um bem, quitação antecipada de financiamento, uma despesa grande. Aplicado nos 3 cenários.</div></div>
+      </div>
+      <div class="pbd">
+        <div class="fgrid" style="margin-bottom:12px">
+          <div class="fg"><label>Nome do evento</label><input id="cev-nome" type="text" placeholder="Ex: Venda do lote em Palotina"></div>
+          <div class="fg"><label>Ano (0 a 10)</label><input id="cev-ano" type="number" min="0" max="10" step="1" value="1"></div>
+          <div class="fg"><label>Valor — positivo entra, negativo sai (R$)</label><input id="cev-valor" type="number" step="1000" placeholder="Ex: 150000 ou -80000"></div>
+        </div>
+        <div style="text-align:right;margin-bottom:12px"><button class="btn btn-g" onclick="adicionarEventoCenario()">+ Adicionar evento</button></div>
+        <div id="cen-eventos-lista"></div>
+      </div>
+    </div>
+
     <div class="g2">
       <div class="panel">
         <div class="phd"><div class="pt">Cenário Estressado — Variáveis Críticas<span class="info-ic" tabindex="0" data-tip="Impacto estimado de choques isolados (queda da bolsa, câmbio, Selic, inflação, inadimplência) sobre o patrimônio atual — eventos hipotéticos, não previsão."><svg class="svi"><use href="#ic-info"/></svg></span></div></div>
         <div class="pbd" id="cen-stress"></div>
       </div>
       <div class="panel">
-        <div class="phd"><div class="pt">Sumário dos 3 Cenários<span class="info-ic" tabindex="0" data-tip="Patrimônio projetado em 10 anos nos cenários otimista, base e de estresse, usando a taxa de retorno e inflação definidas nos controles acima."><svg class="svi"><use href="#ic-info"/></svg></span></div></div>
+        <div class="phd"><div class="pt">Sumário dos 3 Cenários<span class="info-ic" tabindex="0" data-tip="Patrimônio projetado em 10 anos nos cenários otimista, base e de estresse, usando a taxa de retorno e inflação definidas nos controles acima, já somando os eventos futuros cadastrados."><svg class="svi"><use href="#ic-info"/></svg></span></div></div>
         <div class="pbd" id="cen-resumo"></div>
       </div>
     </div>
@@ -5412,6 +5431,23 @@ async function atualizarMercadoImoveis(){
 <div class="mfoot" id="totp-mfoot-ativo" style="display:none">
   <button class="btn btn-d" onclick="_uiDesativarTotp()">Desativar</button>
   <button class="btn btn-ghost" onclick="closeM('m-config-totp')">Fechar</button>
+</div>
+</div></div>
+
+<div class="ov" id="m-resumo-emergencia"><div class="modal" style="width:520px"><button class="mc" onclick="closeM('m-resumo-emergencia')">✕</button>
+<div class="m-eye">Backup</div><div class="m-title"><svg class="svi" style="width:16px;height:16px;margin-right:6px;vertical-align:-2px"><use href="#ic-pasta"/></svg>Resumo de Emergência Patrimonial</div>
+<div style="font-size:12px;color:var(--txt3);line-height:1.55;margin-bottom:14px">
+  Gera um documento consolidado (contas, investimentos, bens, financiamentos, seguros e objetivos) pra deixar guardado num lugar seguro — útil pra família ou herdeiros em caso de necessidade. Gerado 100% no seu navegador, pronto pra imprimir ou salvar como PDF; nada é enviado a nenhum servidor.
+</div>
+<div class="fgrid" style="margin-bottom:6px">
+  <div class="fg"><label>Contador (nome/contato)</label><input id="em-contador" type="text" placeholder="Opcional"></div>
+  <div class="fg"><label>Advogado (nome/contato)</label><input id="em-advogado" type="text" placeholder="Opcional"></div>
+  <div class="fg"><label>Contato de emergência</label><input id="em-contato" type="text" placeholder="Opcional"></div>
+</div>
+<div class="fg" style="margin-bottom:6px"><label>Observações</label><textarea id="em-obs" rows="2" placeholder="Opcional — instruções, localização de documentos físicos, etc."></textarea></div>
+<div class="mfoot">
+  <button class="btn btn-ghost" onclick="closeM('m-resumo-emergencia')">Fechar</button>
+  <button class="btn btn-g" onclick="gerarResumoEmergencia()">Gerar e visualizar</button>
 </div>
 </div></div>
 
@@ -9813,12 +9849,13 @@ function robjetivos(){
 let _apInit=false;
 function rAposentadoria(){
   const kpisEl=document.getElementById('ap-kpis');if(!kpisEl)return;
-  const ap=S.aposentadoria||{aporteMensal:0,rentAA:8,anos:20,metaRendaMensal:0};
+  const ap=S.aposentadoria||{aporteMensal:0,rentAA:8,anos:20,metaRendaMensal:0,volAA:15};
   if(!_apInit){
     document.getElementById('ap-aporte').value=ap.aporteMensal||0;
     document.getElementById('ap-rent').value=ap.rentAA!=null?ap.rentAA:8;
     document.getElementById('ap-anos').value=ap.anos||20;
     document.getElementById('ap-renda').value=ap.metaRendaMensal||0;
+    document.getElementById('ap-vol').value=ap.volAA!=null?ap.volAA:15;
     _apInit=true;
   }
   _apPreview();
@@ -9830,15 +9867,56 @@ function _simularAposentadoria(patrimAtual,aporte,rentAA,anos){
   const rendaMensalSustentavel=fv*0.04/12; // regra dos 4% ao ano (retirada segura)
   return {fv,rendaMensalSustentavel,n};
 }
+// Amostra de uma normal padrão via Box-Muller — usada pra sortear o retorno
+// mensal em cada trajetória da simulação Monte Carlo abaixo.
+function _amostraNormalPadrao(){
+  let u=0,v=0;
+  while(u===0)u=Math.random();
+  while(v===0)v=Math.random();
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);
+}
+// Monte Carlo: em vez de UM caminho fixo (o _simularAposentadoria acima),
+// roda nSim trajetórias com retorno mensal sorteado de uma normal (média =
+// rentAA, desvio-padrão = volAA), e reporta em quantas dessas trajetórias a
+// renda sustentável (regra dos 4%) bateu a meta — isto é, uma PROBABILIDADE
+// de sucesso, não um número único que passa segurança falsa. Também retorna
+// os percentis 10/50/90 do patrimônio final, pra mostrar o intervalo
+// plausível de resultados (pessimista/mediano/otimista).
+function _simularMonteCarlo(patrimAtual,aporte,rentAA,volAA,anos,metaRendaMensal,nSim){
+  nSim=nSim||500;
+  const nMeses=Math.max(1,Math.round(anos*12));
+  const rMedioMensal=Math.pow(1+(rentAA/100),1/12)-1;
+  const volMensal=Math.max(0,volAA)/100/Math.sqrt(12);
+  const finais=[];
+  let sucessos=0;
+  for(let s=0;s<nSim;s++){
+    let v=patrimAtual;
+    for(let m=0;m<nMeses;m++){
+      const retornoMes=rMedioMensal+volMensal*_amostraNormalPadrao();
+      v=Math.max(0,v*(1+retornoMes)+aporte); // não modela patrimônio negativo/alavancagem
+    }
+    finais.push(v);
+    const rendaSustentavel=v*0.04/12;
+    if(metaRendaMensal<=0||rendaSustentavel>=metaRendaMensal)sucessos++;
+  }
+  finais.sort((a,b)=>a-b);
+  const pct=p=>finais[Math.min(finais.length-1,Math.max(0,Math.floor(p*finais.length)))];
+  return {
+    taxaSucesso: metaRendaMensal>0 ? (sucessos/nSim*100) : null,
+    p10:pct(0.10), p50:pct(0.50), p90:pct(0.90),
+    nSim,
+  };
+}
 function _apPreview(){
-  const kpisEl=document.getElementById('ap-kpis'),resEl=document.getElementById('ap-resultado');
+  const kpisEl=document.getElementById('ap-kpis'),resEl=document.getElementById('ap-resultado'),mcEl=document.getElementById('ap-montecarlo');
   if(!kpisEl)return;
   const aporte=parseFloat(document.getElementById('ap-aporte').value)||0;
   const rentAA=parseFloat(document.getElementById('ap-rent').value)||0;
   const anos=parseFloat(document.getElementById('ap-anos').value)||0;
   const metaRenda=parseFloat(document.getElementById('ap-renda').value)||0;
+  const volAA=parseFloat(document.getElementById('ap-vol').value)||0;
   const patrimAtual=Math.max(0,patrimonioLiquido());
-  if(anos<=0){ kpisEl.innerHTML=''; if(resEl)resEl.innerHTML='Informe um prazo em anos maior que zero.'; return; }
+  if(anos<=0){ kpisEl.innerHTML=''; if(resEl)resEl.innerHTML='Informe um prazo em anos maior que zero.'; if(mcEl)mcEl.innerHTML=''; return; }
   const {fv,rendaMensalSustentavel}=_simularAposentadoria(patrimAtual,aporte,rentAA,anos);
   const totalAportado=aporte*anos*12;
   const jurosGanhos=fv-patrimAtual-totalAportado;
@@ -9854,13 +9932,26 @@ function _apPreview(){
     }
   }
   if(resEl)resEl.innerHTML=msg;
+  if(mcEl){
+    const mc=_simularMonteCarlo(patrimAtual,aporte,rentAA,volAA,anos,metaRenda,500);
+    mcEl.innerHTML=`
+      <div style="font-weight:600;font-size:12.5px;margin-bottom:8px;display:flex;align-items:center"><svg class="svi" style="width:13px;height:13px;color:var(--accent);margin-right:5px"><use href="#ic-radar"/></svg>Simulação Monte Carlo (${mc.nSim} cenários aleatórios)</div>
+      <div class="kpi-row" style="margin-bottom:8px">
+        ${mc.taxaSucesso!=null?`<div class="kpi"><div class="kpi-eye">Probabilidade de atingir a meta</div><div class="kpi-val ${mc.taxaSucesso>=70?'cg':mc.taxaSucesso>=40?'cgd':'cr'}">${mc.taxaSucesso.toFixed(0)}%</div></div>`:''}
+        <div class="kpi"><div class="kpi-eye">Cenário pessimista (10º percentil)</div><div class="kpi-val cr">${brl(mc.p10)}</div></div>
+        <div class="kpi"><div class="kpi-eye">Cenário mediano (50º percentil)</div><div class="kpi-val">${brl(mc.p50)}</div></div>
+        <div class="kpi"><div class="kpi-eye">Cenário otimista (90º percentil)</div><div class="kpi-val cg">${brl(mc.p90)}</div></div>
+      </div>
+      <div class="pft" style="margin:0">${mc.nSim} trajetórias com retorno mensal sorteado aleatoriamente (distribuição normal, média ${rentAA}% a.a., volatilidade ${volAA}% a.a.) em vez de um único caminho fixo — mostra o intervalo plausível de resultados e a chance real de atingir a meta, não uma previsão exata.</div>`;
+  }
 }
 function salvarAposentadoria(){
   const aporte=parseFloat(document.getElementById('ap-aporte').value)||0;
   const rentAA=parseFloat(document.getElementById('ap-rent').value)||0;
   const anos=parseFloat(document.getElementById('ap-anos').value)||0;
   const metaRenda=parseFloat(document.getElementById('ap-renda').value)||0;
-  S.aposentadoria={aporteMensal:aporte,rentAA,anos,metaRendaMensal:metaRenda};
+  const volAA=parseFloat(document.getElementById('ap-vol').value)||0;
+  S.aposentadoria={aporteMensal:aporte,rentAA,anos,metaRendaMensal:metaRenda,volAA};
   persistir();
   toast('✓ Parâmetros de aposentadoria salvos');
 }
@@ -16175,6 +16266,115 @@ function backupAgora(){
 function abrirCentralBackup(){ _refletirBackupUI(); openM('m-backup'); }
 
 // ═══════════════════════════════════════════════════════════
+// RESUMO DE EMERGÊNCIA PATRIMONIAL — documento consolidado (contas,
+// investimentos, bens, financiamentos, seguros, objetivos) pronto pra
+// imprimir/salvar como PDF, pensado pra família/herdeiros em caso de
+// necessidade. Gerado 100% local (window.open + window.print), sem PDF lib
+// nova e sem nenhuma chamada de rede — mantém o app um único arquivo
+// offline-first. Não é "modo compartilhado" (sem acesso contínuo/multiusuário,
+// só um documento estático gerado sob demanda).
+// ═══════════════════════════════════════════════════════════
+function abrirResumoEmergencia(){
+  const e=S.emergencia||{};
+  document.getElementById('em-contador').value=e.contador||'';
+  document.getElementById('em-advogado').value=e.advogado||'';
+  document.getElementById('em-contato').value=e.contatoEmergencia||'';
+  document.getElementById('em-obs').value=e.observacoes||'';
+  openM('m-resumo-emergencia');
+}
+function gerarResumoEmergencia(){
+  const contador=(document.getElementById('em-contador').value||'').trim();
+  const advogado=(document.getElementById('em-advogado').value||'').trim();
+  const contatoEmergencia=(document.getElementById('em-contato').value||'').trim();
+  const observacoes=(document.getElementById('em-obs').value||'').trim();
+  S.emergencia={contador,advogado,contatoEmergencia,observacoes};
+  persistir();
+
+  const agora=new Date().toLocaleString('pt-BR',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'});
+  const pat=patrimonioLiquido(), inv=totInv(), banc=saldoBancarioTotal(), bens=valorBensTotal(), fat=faturasTotalAbertas();
+  const contasHtml=(S.contas||[]).filter(c=>c.ativa).map(c=>
+    `<tr><td>${c.nome||''}</td><td>${c.tipo||''}</td><td>${c.agencia||'—'}</td><td>${c.numero||'—'}</td><td class="tr">${brl(c.saldo||0)}</td></tr>`
+  ).join('') || '<tr><td colspan="5" style="text-align:center;color:#888">Nenhuma conta ativa</td></tr>';
+
+  const porTipo={};
+  S.ativos.forEach(a=>{ if(a.qtd>0){ porTipo[a.tipo]=(porTipo[a.tipo]||0)+pos(a); } });
+  const rotTipo={BR:'Ações BR',US:'Stocks EUA',FII:'FIIs',RF:'Renda Fixa',SAT:'Satélite'};
+  const invHtml=Object.entries(porTipo).map(([t,v])=>`<tr><td>${rotTipo[t]||t}</td><td class="tr">${brl(v)}</td></tr>`).join('') || '<tr><td colspan="2" style="text-align:center;color:#888">Nenhum investimento</td></tr>';
+  const ativosDetalheHtml=S.ativos.filter(a=>a.qtd>0).map(a=>
+    `<tr><td>${a.ticker}</td><td>${a.tipo}</td><td class="tr">${a.qtd}</td><td class="tr">${brl(pos(a))}</td></tr>`
+  ).join('') || '<tr><td colspan="4" style="text-align:center;color:#888">Nenhum ativo</td></tr>';
+
+  const cripto=(S.cripto||[]).map(c=>`<tr><td>${c.nome||c.simbolo||''}</td><td class="tr">${c.qtd||0}</td></tr>`).join('');
+
+  const bensHtml=(S.bens||[]).map(b=>{
+    const finTxt=b.fin&&b.fin.parcela?`Financiamento: ${b.fin.parcelasRest||0} parcela(s) de ${brl(b.fin.parcela)} · ${b.fin.instituicao||'—'}`:'';
+    const segTxt=b.seguro&&b.seguro.premio?`Seguro: ${b.seguro.seguradora||'—'} · segurado ${brl(b.seguro.vlSegurado||0)}`:'';
+    return `<tr><td>${b.nome||''}</td><td>${b.cat||''}</td><td class="tr">${brl(b.vlAt||0)}</td><td style="font-size:10.5px;color:#666">${[finTxt,segTxt].filter(Boolean).join(' · ')||'—'}</td></tr>`;
+  }).join('') || '<tr><td colspan="4" style="text-align:center;color:#888">Nenhum bem cadastrado</td></tr>';
+
+  const objHtml=(S.objetivos||[]).map(o=>
+    `<tr><td>${o.nome||''}</td><td class="tr">${brl(o.acumulado||0)}</td><td class="tr">${brl(o.valorAlvo||0)}</td><td class="tr">${o.prazo||'—'}</td></tr>`
+  ).join('') || '<tr><td colspan="4" style="text-align:center;color:#888">Nenhum objetivo cadastrado</td></tr>';
+
+  const contatosHtml=[
+    contador?`<div><strong>Contador:</strong> ${contador}</div>`:'',
+    advogado?`<div><strong>Advogado:</strong> ${advogado}</div>`:'',
+    contatoEmergencia?`<div><strong>Contato de emergência:</strong> ${contatoEmergencia}</div>`:'',
+  ].filter(Boolean).join('') || '<div style="color:#888">Nenhum contato preenchido.</div>';
+
+  const html = `<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8"><title>Resumo de Emergência Patrimonial</title>
+<style>
+  body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:#1a1a1a;max-width:760px;margin:32px auto;padding:0 20px;line-height:1.5}
+  h1{font-size:20px;margin-bottom:2px}
+  .sub{color:#666;font-size:12px;margin-bottom:18px}
+  h2{font-size:14px;margin:22px 0 8px;padding-bottom:4px;border-bottom:1px solid #ddd}
+  table{width:100%;border-collapse:collapse;font-size:12px;margin-bottom:4px}
+  th,td{padding:5px 6px;border-bottom:1px solid #eee;text-align:left}
+  th{color:#666;font-weight:600;font-size:10.5px;text-transform:uppercase}
+  .tr{text-align:right}
+  .kpis{display:flex;gap:18px;flex-wrap:wrap;margin:10px 0 18px;padding:12px 16px;background:#f7f7f5;border-radius:8px}
+  .kpi{font-size:12px}
+  .kpi b{display:block;font-size:16px;margin-top:2px}
+  .warn{background:#fff8e6;border:1px solid #f0d78c;border-radius:6px;padding:10px 14px;font-size:11.5px;color:#6b5a12;margin-bottom:18px}
+  .obs{white-space:pre-wrap;font-size:12px;background:#f7f7f5;border-radius:6px;padding:10px 14px}
+  .toolbar{margin-bottom:16px}
+  .toolbar button{font-size:12px;padding:7px 14px;border-radius:6px;border:1px solid #ccc;background:#fff;cursor:pointer;margin-right:8px}
+  @media print{ .toolbar{display:none} body{margin:0;max-width:none} }
+</style></head><body>
+<div class="toolbar"><button onclick="window.print()">Imprimir / Salvar como PDF</button><button onclick="window.close()">Fechar</button></div>
+<div class="warn">Documento com dados financeiros sensíveis — gerado localmente no seu navegador, sem envio a nenhum servidor. Guarde a cópia impressa/PDF num lugar seguro (cofre físico, gerenciador de senhas com anexo, etc.) e evite subir pra e-mail ou nuvem sem criptografia.</div>
+<h1>Resumo de Emergência Patrimonial</h1>
+<div class="sub">Gerado em ${agora}</div>
+<div class="kpis">
+  <div class="kpi">Patrimônio Líquido<b>${brl(pat)}</b></div>
+  <div class="kpi">Investimentos<b>${brl(inv)}</b></div>
+  <div class="kpi">Saldo Bancário<b>${brl(banc)}</b></div>
+  <div class="kpi">Bens<b>${brl(bens)}</b></div>
+  <div class="kpi">Faturas em Aberto<b>${brl(fat)}</b></div>
+</div>
+<h2>Contatos-chave</h2>
+${contatosHtml}
+<h2>Contas Bancárias</h2>
+<table><thead><tr><th>Banco</th><th>Tipo</th><th>Agência</th><th>Conta</th><th class="tr">Saldo</th></tr></thead><tbody>${contasHtml}</tbody></table>
+<h2>Investimentos — Resumo por Classe</h2>
+<table><thead><tr><th>Classe</th><th class="tr">Posição</th></tr></thead><tbody>${invHtml}</tbody></table>
+<h2>Investimentos — Detalhamento</h2>
+<table><thead><tr><th>Ticker</th><th>Classe</th><th class="tr">Qtd</th><th class="tr">Posição</th></tr></thead><tbody>${ativosDetalheHtml}</tbody></table>
+${cripto?`<h2>Criptomoedas</h2><table><thead><tr><th>Ativo</th><th class="tr">Quantidade</th></tr></thead><tbody>${cripto}</tbody></table>`:''}
+<h2>Bens Patrimoniais (financiamentos e seguros vinculados)</h2>
+<table><thead><tr><th>Bem</th><th>Categoria</th><th class="tr">Valor Atual</th><th>Financiamento / Seguro</th></tr></thead><tbody>${bensHtml}</tbody></table>
+<h2>Objetivos Financeiros</h2>
+<table><thead><tr><th>Objetivo</th><th class="tr">Acumulado</th><th class="tr">Meta</th><th>Prazo</th></tr></thead><tbody>${objHtml}</tbody></table>
+${observacoes?`<h2>Observações</h2><div class="obs">${observacoes.replace(/</g,'&lt;')}</div>`:''}
+</body></html>`;
+
+  const w=window.open('','_blank');
+  if(!w){ toast('Permita pop-ups pra visualizar o resumo'); return; }
+  w.document.open(); w.document.write(html); w.document.close();
+  closeM('m-resumo-emergencia');
+}
+
+// ═══════════════════════════════════════════════════════════
 // ROTINA DIÁRIA — limpar lançamentos previstos com data vencida
 // (previsto cuja data já passou não deve mais poluir a projeção)
 // Roda na abertura do app, no máx. 1×/dia. Snapshot de segurança antes.
@@ -17140,6 +17340,30 @@ function renderRisco(){
 
 // ── Aba Cenários
 function updateCenarios(){renderCenariosAdv()}
+// Eventos futuros (S.cenarioEventos): entradas/saídas pontuais que o usuário
+// cadastra num ano específico (0-10) da projeção — herança, venda de bem,
+// quitação de financiamento, despesa grande. Aplicados nos 3 cenários por
+// igual (a premissa é que o evento acontece independente do cenário de
+// mercado). Guardados fora de S.aposentadoria pois são específicos da tela
+// de Cenários (horizonte fixo de 10 anos), não da aposentadoria.
+function adicionarEventoCenario(){
+  const nome=(document.getElementById('cev-nome').value||'').trim();
+  const ano=parseInt(document.getElementById('cev-ano').value,10);
+  const valor=parseFloat(document.getElementById('cev-valor').value)||0;
+  if(!nome){toast('Dê um nome pro evento');return;}
+  if(!valor){toast('Informe um valor diferente de zero');return;}
+  if(isNaN(ano)||ano<0||ano>10){toast('Ano deve ser entre 0 e 10');return;}
+  (S.cenarioEventos||(S.cenarioEventos=[])).push({id:'cev_'+Date.now()+'_'+Math.floor(Math.random()*1000),nome,ano,valor});
+  document.getElementById('cev-nome').value='';
+  document.getElementById('cev-valor').value='';
+  persistir();
+  renderCenariosAdv();
+}
+function rmEventoCenario(id){
+  S.cenarioEventos=(S.cenarioEventos||[]).filter(e=>e.id!==id);
+  persistir();
+  renderCenariosAdv();
+}
 function renderCenariosAdv(){
   const ret=parseFloat(document.getElementById('sc-retorno')?.value||10)/100;
   const inf=parseFloat(document.getElementById('sc-inflacao')?.value||5)/100;
@@ -17148,10 +17372,33 @@ function renderCenariosAdv(){
   const pat=patrimonioLiquido();
   const aporte=totalAportesMensal()*12;
   const anos=Array.from({length:11},(_,i)=>i);
-  const sim=(taxaR,taxaI,ap)=>anos.map(a=>+(pat*Math.pow(1+taxaR,a)+ap*((Math.pow(1+taxaR,a)-1)/taxaR)).toFixed(0));
-  const otimista=sim(ret*1.3, inf*0.7, aporte*1.2);
-  const base=sim(ret, inf, aporte);
-  const estresse=sim(ret*0.5, inf*1.5, aporte*0.7);
+  const eventos=S.cenarioEventos||[];
+  // Simulação ano a ano (equivalente à fórmula fechada de antes quando não
+  // há eventos — mesma premissa de aporte anual + capitalização composta),
+  // mas assim dá pra somar o valor de um evento exatamente no ano em que ele
+  // acontece, em vez de só uma trajetória suave.
+  const sim=(taxaR,ap)=>{
+    let v=pat; const out=[+v.toFixed(0)];
+    for(let a=1;a<=10;a++){
+      v=v*(1+taxaR)+ap;
+      eventos.forEach(e=>{ if(e.ano===a) v+=(e.valor||0); });
+      v=Math.max(0,v);
+      out.push(+v.toFixed(0));
+    }
+    return out;
+  };
+  const otimista=sim(ret*1.3, aporte*1.2);
+  const base=sim(ret, aporte);
+  const estresse=sim(ret*0.5, aporte*0.7);
+  const listaEl=document.getElementById('cen-eventos-lista');
+  if(listaEl){
+    listaEl.innerHTML = eventos.length ? [...eventos].sort((a,b)=>a.ano-b.ano).map(e=>`
+      <div class="orc-row">
+        <div class="orc-nm"><strong>${e.nome}</strong><div style="font-size:10px;color:var(--txt3)">Ano ${e.ano}</div></div>
+        <div class="mono ${e.valor>=0?'cg':'cr'}" style="min-width:110px;text-align:right">${e.valor>=0?'+':'-'}${brl(Math.abs(e.valor))}</div>
+        <button class="btn btn-d" style="padding:3px 7px" onclick="rmEventoCenario('${e.id}')" title="Remover evento">✕</button>
+      </div>`).join('') : `<div style="padding:6px 0;color:var(--txt3);font-size:11.5px">Nenhum evento cadastrado — a projeção acima usa só aporte anual constante e crescimento composto.</div>`;
+  }
   mkCh('ch-cenarios',{type:'line',data:{labels:anos.map(a=>`Ano ${a}`),datasets:[
     {label:'Otimista',data:otimista,borderColor:C.grn,backgroundColor:'rgba(74,122,86,.06)',fill:false,tension:0.4,pointRadius:3,borderWidth:1.5},
     {label:'Base',    data:base,    borderColor:C.blu,backgroundColor:'rgba(74,109,160,.06)',fill:false,tension:0.4,pointRadius:3,borderWidth:1.5},
