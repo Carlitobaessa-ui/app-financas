@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 146 -->
+<!-- APP_VERSION: 147 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -17079,7 +17079,7 @@ function rassistenteMid(){
   // Quick chips
   const shuffled=[...QUICK_CHIPS_MID].sort(()=>Math.random()-.5).slice(0,6);
   document.getElementById('quick-chips-mid').innerHTML=shuffled.map(c=>
-    `<span class="quick-chip" style="border-color:var(--blu-lt);color:var(--blu)" onclick="quickMid('${c.txt.replace(/'/g,"\\'")}'">${c.ic?`<svg class="svi" style="width:11px;height:11px;vertical-align:-1px"><use href="#${c.ic}"/></svg>`:c.emoji} ${c.txt}</span>`
+    `<span class="quick-chip" style="border-color:var(--blu-lt);color:var(--blu)" onclick="quickMid('${c.txt.replace(/'/g,"\\'")}')">${c.ic?`<svg class="svi" style="width:11px;height:11px;vertical-align:-1px"><use href="#${c.ic}"/></svg>`:c.emoji} ${c.txt}</span>`
   ).join('');
 
   // Mensagem de boas-vindas
@@ -17217,7 +17217,7 @@ function rassistenteAdv(){
   // Quick chips
   const shuffled=[...QUICK_CHIPS_ADV].sort(()=>Math.random()-.5).slice(0,6);
   document.getElementById('quick-chips-adv').innerHTML=shuffled.map(c=>
-    `<span class="quick-chip" style="border-color:var(--gld-lt);color:var(--gld)" onclick="quickAdv('${c.txt.replace(/'/g,"\\'")}'">${c.ic?`<svg class="svi" style="width:11px;height:11px;vertical-align:-1px"><use href="#${c.ic}"/></svg>`:c.emoji} ${c.txt}</span>`
+    `<span class="quick-chip" style="border-color:var(--gld-lt);color:var(--gld)" onclick="quickAdv('${c.txt.replace(/'/g,"\\'")}')">${c.ic?`<svg class="svi" style="width:11px;height:11px;vertical-align:-1px"><use href="#${c.ic}"/></svg>`:c.emoji} ${c.txt}</span>`
   ).join('');
 
   // Boas-vindas
