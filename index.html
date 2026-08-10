@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 152 -->
+<!-- APP_VERSION: 153 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -1560,6 +1560,112 @@ body{overflow-x:hidden;width:100%;max-width:100vw}
       <g stroke="currentColor" fill="none" stroke-width="1">
         <circle cx="92" cy="62" r="11"/>
         <path d="M93.5 56c-.7-.9-1.9-1.1-2.9-.9-1.2.3-1.9 1.1-1.9 2.2 0 2.6 4.6 1.4 4.6 4 0 1.1-.9 2-2.1 2.2-1.1.3-2.2-.1-2.9-.9M91 53v18"/>
+      </g>
+    </symbol>
+
+    <!-- Cena: pilha de moedas + moeda caindo (Dividendos & Proventos) -->
+    <symbol id="scene-dividendos" viewBox="0 0 120 90">
+      <g stroke="currentColor" fill="none" stroke-width="1">
+        <ellipse cx="30" cy="72" rx="16" ry="5"/>
+        <ellipse cx="30" cy="64" rx="16" ry="5"/>
+        <ellipse cx="30" cy="56" rx="16" ry="5"/>
+        <path d="M14 56v16M46 56v16M14 64v8M46 64v8"/>
+        <path d="M27 51c-.8-1-2.1-1.2-3.2-.9-1.3.3-2.1 1.2-2.1 2.4 0 2.8 5 1.5 5 4.4 0 1.2-1 2.2-2.3 2.4-1.2.3-2.4-.1-3.2-1M30 48v18" stroke-width="0.9"/>
+      </g>
+      <g stroke="currentColor" fill="none" stroke-width="0.9" opacity="0.85">
+        <circle cx="88" cy="34" r="10"/>
+        <path d="M89.3 29c-.6-.8-1.6-1-2.5-.8-1.1.2-1.7 1-1.7 2 0 2.3 4 1.2 4 3.6 0 1-.8 1.8-1.9 2-1 .2-2-.1-2.5-.8M88 27v14"/>
+        <path d="M88 46v10M84 52l4 4 4-4" stroke-width="0.7"/>
+      </g>
+    </symbol>
+
+    <!-- Cena: donut + barras (Alocação de Ativos) -->
+    <symbol id="scene-alocacao" viewBox="0 0 120 90">
+      <g stroke="currentColor" fill="none" stroke-width="1">
+        <circle cx="32" cy="50" r="18"/>
+        <circle cx="32" cy="50" r="7"/>
+        <path d="M32 32v13M32 45l13-8M32 55l-15 6" stroke-width="0.9"/>
+      </g>
+      <g stroke="currentColor" fill="none" stroke-width="1">
+        <path d="M74 80V56M88 80V44M102 80V64"/>
+        <path d="M68 80h40" stroke-width="0.8" opacity="0.5"/>
+      </g>
+    </symbol>
+
+    <!-- Cena: cartão + onda de aproximação (Cartões de Crédito) -->
+    <symbol id="scene-cartoes" viewBox="0 0 120 90">
+      <g stroke="currentColor" fill="none" stroke-width="1">
+        <rect x="18" y="34" width="60" height="38" rx="5"/>
+        <rect x="26" y="44" width="12" height="9" rx="1.5"/>
+        <path d="M18 56h60" stroke-width="0.8" opacity="0.6"/>
+        <path d="M50 64h20" stroke-width="0.8" opacity="0.5"/>
+      </g>
+      <g stroke="currentColor" fill="none" stroke-width="0.9" opacity="0.85">
+        <path d="M96 44a9 9 0 0 1 0 18M100 40a15 15 0 0 1 0 26" stroke-width="0.8"/>
+        <circle cx="90" cy="53" r="4"/>
+      </g>
+    </symbol>
+
+    <!-- Cena: recibo + moeda (Extrato de Despesas) -->
+    <symbol id="scene-gastos" viewBox="0 0 120 90">
+      <g stroke="currentColor" fill="none" stroke-width="1">
+        <path d="M24 20h36v54l-5-4-5 4-5-4-5 4-5-4-5 4-5-4-5 4V20Z"/>
+        <path d="M30 30h24M30 38h24M30 46h16" stroke-width="0.8" opacity="0.6"/>
+      </g>
+      <g stroke="currentColor" fill="none" stroke-width="0.9" opacity="0.85">
+        <circle cx="92" cy="56" r="10"/>
+        <path d="M87 56h10"/>
+      </g>
+    </symbol>
+
+    <!-- Cena: alvo + trajetória (Objetivos) -->
+    <symbol id="scene-objetivos" viewBox="0 0 120 90">
+      <g stroke="currentColor" fill="none" stroke-width="1">
+        <circle cx="40" cy="45" r="22"/>
+        <circle cx="40" cy="45" r="13"/>
+        <circle cx="40" cy="45" r="4"/>
+      </g>
+      <g stroke="currentColor" fill="none" stroke-width="0.9" opacity="0.85">
+        <path d="M70 78 96 24" stroke-linecap="round"/>
+        <path d="M96 24l-9 1 4 8Z"/>
+      </g>
+    </symbol>
+
+    <!-- Cena: envelope + moedas (Orçamento por envelopes) -->
+    <symbol id="scene-orcamento" viewBox="0 0 120 90">
+      <g stroke="currentColor" fill="none" stroke-width="1">
+        <rect x="16" y="30" width="56" height="38" rx="3"/>
+        <path d="M16 32l28 22 28-22"/>
+      </g>
+      <g stroke="currentColor" fill="none" stroke-width="0.9" opacity="0.85">
+        <circle cx="94" cy="46" r="9"/>
+        <circle cx="86" cy="58" r="9"/>
+        <path d="M94 41c-.6-.8-1.6-1-2.4-.8-1 .2-1.6 1-1.6 2 0 2.2 3.8 1.1 3.8 3.4 0 1-.8 1.8-1.8 2-1 .2-1.9-.1-2.4-.8" stroke-width="0.7"/>
+      </g>
+    </symbol>
+
+    <!-- Cena: documento + pulso de dados (Briefing Diário) -->
+    <symbol id="scene-briefing" viewBox="0 0 120 90">
+      <g stroke="currentColor" fill="none" stroke-width="1">
+        <path d="M20 16h32l10 10v46H20V16Z"/>
+        <path d="M52 16v10h10"/>
+        <path d="M28 38h26M28 46h26M28 54h18" stroke-width="0.8" opacity="0.6"/>
+      </g>
+      <g stroke="currentColor" fill="none" stroke-width="0.9" opacity="0.85">
+        <path d="M78 60l8-24 6 34 6-20 4 10 6-6"/>
+      </g>
+    </symbol>
+
+    <!-- Cena: balão de chat + faísca (Assistentes de IA) -->
+    <symbol id="scene-assistente" viewBox="0 0 120 90">
+      <g stroke="currentColor" fill="none" stroke-width="1">
+        <path d="M18 22h48a8 8 0 0 1 8 8v20a8 8 0 0 1-8 8H46l-12 10v-10h-16a8 8 0 0 1-8-8V30a8 8 0 0 1 8-8Z"/>
+        <circle cx="34" cy="40" r="2" fill="currentColor" stroke="none"/>
+        <circle cx="44" cy="40" r="2" fill="currentColor" stroke="none"/>
+        <circle cx="54" cy="40" r="2" fill="currentColor" stroke="none"/>
+      </g>
+      <g stroke="currentColor" fill="none" stroke-width="0.9" opacity="0.85">
+        <path d="M92 24v14M85 31h14M96 44l3 7 7 3-7 3-3 7-3-7-7-3 7-3Z"/>
       </g>
     </symbol>
 
@@ -4128,7 +4234,7 @@ async function atualizarMercadoImoveis(){
 
 <!-- DIVIDENDOS -->
 <div class="page" id="page-dividendos">
-  <div class="ph"><svg class="ph-watermark"><use href="#ic-moeda"/></svg><div><div class="ph-eye">Renda Passiva</div><div class="ph-title">Dividendos & Proventos</div><div class="ph-sub">Histórico e projeção de rendimentos</div></div><div class="ha"><button class="btn btn-ghost" onclick="abrirFotoImport('dividendos')"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportDividendos()">⭳ Importar Dividendos</button><button class="btn btn-g" onclick="openM('m-dividendo')">+ Lançar Provento</button></div></div>
+  <div class="ph"><svg class="ph-scene"><use href="#scene-dividendos"/></svg><svg class="ph-watermark"><use href="#ic-moeda"/></svg><div><div class="ph-eye">Renda Passiva</div><div class="ph-title">Dividendos & Proventos</div><div class="ph-sub">Histórico e projeção de rendimentos</div></div><div class="ha"><button class="btn btn-ghost" onclick="abrirFotoImport('dividendos')"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportDividendos()">⭳ Importar Dividendos</button><button class="btn btn-g" onclick="openM('m-dividendo')">+ Lançar Provento</button></div></div>
   <div class="kpi-row">
     <div class="kpi"><div class="kpi-eye">Recebido (ano)<span class="info-ic" tabindex="0" data-tip="Soma de todos os proventos já recebidos no ano corrente."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val cgd" id="dv-ano">—</div></div>
     <div class="kpi"><div class="kpi-eye">Média Mensal</div><div class="kpi-val" id="dv-med">—</div></div>
@@ -4148,7 +4254,7 @@ async function atualizarMercadoImoveis(){
 
 <!-- ALOCAÇÃO -->
 <div class="page" id="page-alocacao">
-  <div class="ph"><svg class="ph-watermark"><use href="#ic-trigo"/></svg><div><div class="ph-eye">Estratégia</div><div class="ph-title">Alocação de Ativos</div><div class="ph-sub">Atual vs. faixas-alvo do Comitê de Investimentos</div></div></div>
+  <div class="ph"><svg class="ph-scene"><use href="#scene-alocacao"/></svg><svg class="ph-watermark"><use href="#ic-trigo"/></svg><div><div class="ph-eye">Estratégia</div><div class="ph-title">Alocação de Ativos</div><div class="ph-sub">Atual vs. faixas-alvo do Comitê de Investimentos</div></div></div>
   <div class="g2 mb">
     <div class="panel"><div class="phd"><div><div class="pt">Atual × Faixa-alvo</div><div class="ps">Percentual atual de cada classe de ativo na carteira comparado à faixa-alvo definida abaixo</div></div></div><div class="pbd" id="aloc-bars"></div></div>
     <div class="panel"><div class="phd"><div class="pt">Distribuição</div></div><div class="pbd"><div class="chart-m"><canvas id="ch-aloc-pie"></canvas></div><div class="pft">Distribuição atual da carteira de investimentos por classe de ativo</div></div></div>
@@ -4195,7 +4301,7 @@ async function atualizarMercadoImoveis(){
 
 <!-- CARTÕES -->
 <div class="page" id="page-cartoes">
-  <div class="ph"><div><div class="ph-eye">Bancário</div><div class="ph-title">Cartões de Crédito</div><div class="ph-sub">Limites, faturas e histórico de compras</div></div><div class="ha"><button class="btn btn-ghost" onclick="abrirCapturaFoto()"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportFatura()">⭳ Importar Fatura</button><button class="btn btn-ghost" onclick="openM('m-compra')">+ Compra</button><button class="btn btn-g" onclick="openM('m-cartao')">+ Novo Cartão</button></div></div>
+  <div class="ph"><svg class="ph-scene"><use href="#scene-cartoes"/></svg><div><div class="ph-eye">Bancário</div><div class="ph-title">Cartões de Crédito</div><div class="ph-sub">Limites, faturas e histórico de compras</div></div><div class="ha"><button class="btn btn-ghost" onclick="abrirCapturaFoto()"><svg class="svi" style="width:14px;height:14px;margin-right:5px;vertical-align:-2px"><use href="#ic-camera"/></svg>Foto</button><button class="btn btn-ghost" onclick="abrirImportFatura()">⭳ Importar Fatura</button><button class="btn btn-ghost" onclick="openM('m-compra')">+ Compra</button><button class="btn btn-g" onclick="openM('m-cartao')">+ Novo Cartão</button></div></div>
   <div class="kpi-row">
     <div class="kpi"><div class="kpi-eye">Total Fatura Aberta<span class="info-ic" tabindex="0" data-tip="Soma das faturas em aberto de todos os cartões cadastrados, no ciclo atual."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val cr" id="ct-fat">—</div><div class="kpi-d cm" id="ct-fat-d">—</div></div>
     <div class="kpi"><div class="kpi-eye">Limite Disponível</div><div class="kpi-val cg" id="ct-disp">—</div><div class="kpi-d cm" id="ct-disp-d">—</div></div>
@@ -4231,7 +4337,7 @@ async function atualizarMercadoImoveis(){
 
 <!-- GASTOS -->
 <div class="page" id="page-gastos">
-  <div class="ph"><svg class="ph-watermark"><use href="#ic-lista"/></svg><div><div class="ph-eye">Controle Pessoal</div><div class="ph-title">Extrato de Despesas</div><div class="ph-sub">Lançamentos categorizados do mês</div></div><button class="btn btn-g" onclick="openM('m-gasto')">+ Novo Lançamento</button></div>
+  <div class="ph"><svg class="ph-scene"><use href="#scene-gastos"/></svg><svg class="ph-watermark"><use href="#ic-lista"/></svg><div><div class="ph-eye">Controle Pessoal</div><div class="ph-title">Extrato de Despesas</div><div class="ph-sub">Lançamentos categorizados do mês</div></div><button class="btn btn-g" onclick="openM('m-gasto')">+ Novo Lançamento</button></div>
   <div class="kpi-row">
     <div class="kpi"><div class="kpi-eye">Total do Mês<span class="info-ic" tabindex="0" data-tip="Gastos avulsos realizados e previstos do mês, mais provisórios de Bens (financiamento/seguro) e categorias do Orçamento."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val cr" id="g-tot">—</div></div>
     <div class="kpi"><div class="kpi-eye">Mês Anterior</div><div class="kpi-val" id="g-ant">—</div></div>
@@ -4266,7 +4372,7 @@ async function atualizarMercadoImoveis(){
 
 <!-- OBJETIVOS -->
 <div class="page" id="page-objetivos">
-  <div class="ph"><svg class="ph-watermark"><use href="#ic-alvo"/></svg>
+  <div class="ph"><svg class="ph-scene"><use href="#scene-objetivos"/></svg><svg class="ph-watermark"><use href="#ic-alvo"/></svg>
     <div>
       <div class="ph-eye">Controle · Planejamento</div>
       <div class="ph-title">Objetivos Financeiros</div>
@@ -4327,7 +4433,7 @@ async function atualizarMercadoImoveis(){
 
 <!-- ORÇAMENTO (upgraded) -->
 <div class="page" id="page-orcamento">
-  <div class="ph"><svg class="ph-watermark"><use href="#ic-orcamento"/></svg>
+  <div class="ph"><svg class="ph-scene"><use href="#scene-orcamento"/></svg><svg class="ph-watermark"><use href="#ic-orcamento"/></svg>
     <div>
       <div class="ph-eye">Controle</div>
       <div class="ph-title">Orçamento Mensal</div>
@@ -4518,7 +4624,7 @@ async function atualizarMercadoImoveis(){
 
 <!-- BRIEFING DIÁRIO -->
 <div class="page" id="page-briefing">
-  <div class="ph"><svg class="ph-watermark"><use href="#ic-radar"/></svg>
+  <div class="ph"><svg class="ph-scene"><use href="#scene-briefing"/></svg><svg class="ph-watermark"><use href="#ic-radar"/></svg>
     <div><div class="ph-eye">Análise diária dos agentes</div><div class="ph-title">Briefing Diário</div>
     <div class="ph-sub">Metas, ações necessárias, riscos e reposicionamento</div>
     <div class="ps" style="margin-top:2px">Gerado por IA uma vez por dia (ou sob demanda no botão "Atualizar Briefing"), a partir dos dados atuais do seu portfólio — carteira, contas, cartões, objetivos e sinais de mercado.</div></div>
@@ -4528,7 +4634,7 @@ async function atualizarMercadoImoveis(){
 
 <!-- ASSISTENTE IA -->
 <div class="page" id="page-assistente">
-  <div class="ph">
+  <div class="ph"><svg class="ph-scene"><use href="#scene-assistente"/></svg>
     <div>
       <div class="ph-eye">Inteligência Artificial</div>
       <div class="ph-title">Assistente Financeiro</div>
@@ -4609,7 +4715,7 @@ async function atualizarMercadoImoveis(){
 </div>
 <!-- ASSISTENTE INTERMEDIÁRIO -->
 <div class="page" id="page-assistente-mid">
-  <div class="ph">
+  <div class="ph"><svg class="ph-scene"><use href="#scene-assistente"/></svg>
     <div>
       <div class="ph-eye" style="color:var(--blu)">Assistente Estrategista · Nível Intermediário</div>
       <div class="ph-title">Assistente Estrategista</div>
@@ -4677,7 +4783,7 @@ async function atualizarMercadoImoveis(){
 
 <!-- ASSISTENTE AVANÇADO -->
 <div class="page" id="page-assistente-adv">
-  <div class="ph">
+  <div class="ph"><svg class="ph-scene"><use href="#scene-assistente"/></svg>
     <div>
       <div class="ph-eye" style="color:var(--gld)">Assistente CFO · Nível Avançado</div>
       <div class="ph-title">Assistente CFO</div>
