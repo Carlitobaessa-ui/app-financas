@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 150 -->
+<!-- APP_VERSION: 151 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4184,6 +4184,7 @@ async function atualizarMercadoImoveis(){
         <select id="fil-tipo" onchange="rcontas()" style="font-size:11px;padding:4px 8px;background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:4px;color:var(--txt);font-family:var(--body)"><option value="">Todos os tipos</option><option value="credito">Crédito</option><option value="debito">Débito</option><option value="transferencia">Transferência</option></select>
         <select id="fil-ext-cat" onchange="rcontas()" style="font-size:11px;padding:4px 8px;background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:4px;color:var(--txt);font-family:var(--body)"><option value="">Todas as categorias</option></select>
         <select id="fil-ext-mesano" onchange="rcontas()" style="font-size:11px;padding:4px 8px;background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:4px;color:var(--txt);font-family:var(--body)"></select>
+        <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="filtrarMesAtualContas()" title="Filtra o extrato só pelos lançamentos do mês corrente">Mês atual</button>
       </div>
     </div>
     <div class="sel-bar" id="sel-bar-contas" style="display:none"></div>
@@ -8678,6 +8679,15 @@ function _injetarFcTabs(sec,tbId){
   bar.innerHTML=html;
 }
 
+// Atalho de um clique pro filtro Mês/Ano do Extrato Unificado: pula direto pra
+// "mês atual" sem precisar procurar na lista (o mês atual sempre está na lista,
+// ver rcontas(), mesmo que ainda não tenha nenhum lançamento nele).
+function filtrarMesAtualContas(){
+  const sel=document.getElementById('fil-ext-mesano');
+  if(!sel)return;
+  sel.value=_ymAtualStr();
+  rcontas();
+}
 function rcontas(){
   // Sincroniza visibilidade da coluna de seleção + barra
   {const p=document.getElementById('tb-ext')?.closest('.panel');
@@ -8737,7 +8747,12 @@ function rcontas(){
   if(smAnoExt&&smAnoExt.options.length===0){
     const _mesesSet=new Set();
     S.lancamentos.forEach(l=>{if(l.data&&l.data.length>=7)_mesesSet.add(l.data.slice(0,7));});
-    smAnoExt.innerHTML='<option value="">Todos os meses</option>'+[..._mesesSet].sort((a,b)=>b.localeCompare(a)).map(ym=>`<option value="${ym}">${_MESES_ABREV[parseInt(ym.slice(5,7),10)-1]+'/'+ym.slice(0,4)}</option>`).join('');
+    // Garante que o mês corrente sempre apareça na lista, mesmo que ainda não
+    // tenha nenhum lançamento (ex.: início do mês, antes do 1º lançamento) —
+    // sem isso, "mostrar o mês corrente" só funcionava depois do 1º lançamento
+    // ser criado naquele mês. Marca com ★ pra ficar fácil de achar no dropdown.
+    _mesesSet.add(_ymAtualStr());
+    smAnoExt.innerHTML='<option value="">Todos os meses</option>'+[..._mesesSet].sort((a,b)=>b.localeCompare(a)).map(ym=>`<option value="${ym}">${ym===_ymAtualStr()?'★ ':''}${_MESES_ABREV[parseInt(ym.slice(5,7),10)-1]+'/'+ym.slice(0,4)}${ym===_ymAtualStr()?' (mês atual)':''}</option>`).join('');
   }
   const fb=sel.value,ft=document.getElementById('fil-tipo').value;
   const fcatExt=document.getElementById('fil-ext-cat')?.value||'';
@@ -13322,6 +13337,10 @@ const _BRIEFING_AGENTES=[
 ];
 
 function _hojeISO(){ return new Date().toISOString().slice(0,10); }
+// Mês/ano corrente no formato "AAAA-MM" (data LOCAL, não UTC — evita virar o mês
+// errado perto da meia-noite em fusos como o do Brasil). Usado pelo filtro de
+// Mês/Ano do Extrato Unificado (Contas Correntes) pra sempre oferecer o mês atual.
+function _ymAtualStr(){ const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
 
 // Prompt estruturado que cada agente responde no briefing
 function _briefingUserPrompt(){
