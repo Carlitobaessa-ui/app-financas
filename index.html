@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 151 -->
+<!-- APP_VERSION: 152 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4215,6 +4215,7 @@ async function atualizarMercadoImoveis(){
         <select id="fil-cart" onchange="rcartoes()" style="font-size:11px;padding:4px 8px;background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:4px;color:var(--txt);font-family:var(--body)"><option value="">Todos os cartões</option></select>
         <select id="fil-cc-cat" onchange="rcartoes()" style="font-size:11px;padding:4px 8px;background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:4px;color:var(--txt);font-family:var(--body)"><option value="">Todas as categorias</option></select>
         <select id="fil-mesano" onchange="rcartoes()" style="font-size:11px;padding:4px 8px;background:var(--bg);border:0.5px solid var(--bdr-em);border-radius:4px;color:var(--txt);font-family:var(--body)"></select>
+        <button class="btn btn-ghost" style="font-size:11px;padding:4px 10px" onclick="filtrarMesAtualCartoes()" title="Filtra as compras só pelo mês corrente (calendário), independente do ciclo da fatura">Mês atual</button>
       </div>
     </div>
     <div class="sel-bar" id="sel-bar-cartoes" style="display:none"></div>
@@ -8992,6 +8993,16 @@ function rmLanc(id){
 }
 
 // ─── CARTÕES
+// Atalho de um clique pro filtro Mês/Ano de Cartões: pula direto pro mês atual
+// do calendário (o mês atual sempre está na lista, ver rcartoes()). Diferente
+// do padrão da tela (mês da fatura aberta), que pode ficar num mês diferente
+// perto da virada do fechamento do cartão.
+function filtrarMesAtualCartoes(){
+  const sel=document.getElementById('fil-mesano');
+  if(!sel)return;
+  sel.value=_ymAtualStr();
+  rcartoes();
+}
 function rcartoes(){
   {const p=document.getElementById('tb-comp')?.closest('.panel');
    if(p){p.querySelectorAll('th.sel-col').forEach(th=>th.style.display=_selModeCartoes?'':'none');}
@@ -9034,12 +9045,14 @@ function rcartoes(){
   if(smAno.options.length===0){
     // Lista de meses com pelo menos 1 lançamento (real ou previsto), mais recente
     // primeiro. Sempre inclui o mês da fatura aberta mesmo se ele ainda não tiver
-    // nenhuma compra (evita a lista ficar sem a opção padrão).
-    const _mesesSet=new Set([_mesCcCat]);
+    // nenhuma compra (evita a lista ficar sem a opção padrão), e também o mês
+    // corrente do calendário (pode divergir do mês da fatura aberta perto da
+    // virada do fechamento) — usado pelo atalho "Mês atual" abaixo.
+    const _mesesSet=new Set([_mesCcCat,_ymAtualStr()]);
     S.compras.forEach(cp=>{if(cp.data&&cp.data.length>=7)_mesesSet.add(cp.data.slice(0,7));});
     [..._mesesSet].sort((a,b)=>b.localeCompare(a)).forEach(ym=>{
       const o=document.createElement('option');o.value=ym;
-      o.textContent=_MESES_ABREV[parseInt(ym.slice(5,7),10)-1]+'/'+ym.slice(0,4);
+      o.textContent=(ym===_ymAtualStr()?'★ ':'')+_MESES_ABREV[parseInt(ym.slice(5,7),10)-1]+'/'+ym.slice(0,4)+(ym===_ymAtualStr()?' (mês atual)':'');
       smAno.appendChild(o);
     });
     smAno.value=_mesCcCat; // padrão: fatura atual
