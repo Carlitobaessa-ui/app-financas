@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 149 -->
+<!-- APP_VERSION: 150 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -430,6 +430,8 @@ th.th-sort .sort-ic{font-size:8px;letter-spacing:0;margin-left:2px;color:var(--a
 .btn-d{background:var(--red-lt);color:var(--red);border:0.5px solid rgba(163,58,46,.2);font-size:11px;padding:3px 9px}
 .btn-ed{background:var(--blu-dim);color:var(--blu);border:0.5px solid rgba(74,109,160,.2);font-size:11px;padding:3px 9px}
 .btn-vd{background:var(--gld-dim);color:var(--gld);border:0.5px solid rgba(193,95,60,.25);font-size:11px;padding:3px 9px}
+.btn-cp{background:var(--grn-dim);color:var(--grn);border:0.5px solid rgba(74,122,86,.2);font-size:11px;padding:3px 9px}
+.btn-cp:hover{background:var(--grn);color:#fff}
 .btn-ed:hover{background:var(--blu);color:#fff}
 .rec-scope{background:var(--blu-dim);border:0.5px solid rgba(74,109,160,.25);border-radius:10px;padding:11px 13px;margin-bottom:13px}
 .rec-scope-lbl{font-size:11.5px;color:var(--txt2);margin-bottom:8px;line-height:1.45}
@@ -8812,7 +8814,7 @@ function rcontas(){
     // primeiro para então buscar seu banco/nome. Chamar BG(l.banco) direto
     // (como antes) nunca reconhecia o valor e sempre caía em "Outro Banco".
     const _ctB=S.contas.find(c=>c.id===l.banco);
-    const m=BG(_ctB?_ctB.banco:l.banco),t=ti[l.tipo]||{cl:'',lb:l.tipo,sy:''};const _ant=(l.data||'')<_hojeISO();const _pv=l.forecast&&_ant;const _cls=_pv?'prev-venc':(_ant?'lanc-ant':'');return`<tr${_cls?` class="${_cls}"`:''}${l.forecast&&!_ant?' style="opacity:.92"':''}>${_selModeContas?`<td class="sel-col"><input type="checkbox" class="sel-chk" ${_selLanc.has(l.id)?'checked':''} onclick="selToggle('contas',${l.id},this.checked)"></td>`:''}<td class="cm mono" data-label="Data" style="font-size:11px">${fdt(l.data)}</td><td data-label="Banco"><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:12px">${_ctB?.nome||m.nome}</span></div></td><td data-label="Descrição" style="font-size:12px">${l.desc}${l.forecast?' <span class="fc-badge">previsto</span>':''}</td><td data-label="Categoria">${l.cat?`<span class="badge b-n" style="font-size:9px">${l.cat}</span>`:'<span style="color:var(--txt3);font-size:11px">—</span>'}</td><td data-label="Tipo"><span class="badge b-n" style="font-size:9px">${t.lb}</span></td><td class="tr mono ${t.cl}" data-label="Valor">${t.sy}${brl(l.valor)}</td><td class="tr mono cm" data-label="Saldo" style="font-size:11px">${l.forecast?'—':brl(_sMap[l.id]!=null?_sMap[l.id]:0)}</td><td class="td-act"><button class="btn btn-ed" onclick="editLanc(${l.id})">✎</button> <button class="btn btn-d" onclick="rmLanc(${l.id})">✕</button></td></tr>`}).join('').concat(_tblMaisHTML('contas',ext.length,_extPag.length,_selModeContas?9:8)):`<tr><td colspan="${_selModeContas?9:8}" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prev?'Nenhum lançamento previsto':'Nenhum lançamento'}</td></tr>`;
+    const m=BG(_ctB?_ctB.banco:l.banco),t=ti[l.tipo]||{cl:'',lb:l.tipo,sy:''};const _ant=(l.data||'')<_hojeISO();const _pv=l.forecast&&_ant;const _cls=_pv?'prev-venc':(_ant?'lanc-ant':'');return`<tr${_cls?` class="${_cls}"`:''}${l.forecast&&!_ant?' style="opacity:.92"':''}>${_selModeContas?`<td class="sel-col"><input type="checkbox" class="sel-chk" ${_selLanc.has(l.id)?'checked':''} onclick="selToggle('contas',${l.id},this.checked)"></td>`:''}<td class="cm mono" data-label="Data" style="font-size:11px">${fdt(l.data)}</td><td data-label="Banco"><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:12px">${_ctB?.nome||m.nome}</span></div></td><td data-label="Descrição" style="font-size:12px">${l.desc}${l.forecast?' <span class="fc-badge">previsto</span>':''}</td><td data-label="Categoria">${l.cat?`<span class="badge b-n" style="font-size:9px">${l.cat}</span>`:'<span style="color:var(--txt3);font-size:11px">—</span>'}</td><td data-label="Tipo"><span class="badge b-n" style="font-size:9px">${t.lb}</span></td><td class="tr mono ${t.cl}" data-label="Valor">${t.sy}${brl(l.valor)}</td><td class="tr mono cm" data-label="Saldo" style="font-size:11px">${l.forecast?'—':brl(_sMap[l.id]!=null?_sMap[l.id]:0)}</td><td class="td-act"><button class="btn btn-ed" onclick="editLanc(${l.id})">✎</button> <button class="btn btn-cp" onclick="duplicarLanc(${l.id})" title="Duplicar">⧉</button> <button class="btn btn-d" onclick="rmLanc(${l.id})">✕</button></td></tr>`}).join('').concat(_tblMaisHTML('contas',ext.length,_extPag.length,_selModeContas?9:8)):`<tr><td colspan="${_selModeContas?9:8}" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prev?'Nenhum lançamento previsto':'Nenhum lançamento'}</td></tr>`;
   // Aviso de previstos vencidos (apenas na aba Previstos)
   {
     const tabela=document.getElementById('tb-ext').closest('table');
@@ -8912,6 +8914,41 @@ function _expandirTransf(ids){
   ids.forEach(id=>{ const l=S.lancamentos.find(x=>x.id===id); _irmaosTransf(l).forEach(s=>set.add(s.id)); });
   return [...set];
 }
+// Duplica um lançamento, criando uma cópia independente com id novo (útil para
+// lançamentos parecidos, como uma compra repetida ou uma conta mensal digitada
+// de novo). Não herda recId (a cópia não faz parte de nenhuma série recorrente)
+// nem transfPar (evita vincular a cópia a uma transferência que não é dela).
+// Se o lançamento faz parte de uma transferência, duplica as DUAS pernas juntas
+// com um novo par — duplicar só uma perna deixaria origem/destino desbalanceados.
+function duplicarLanc(id){
+  const l=S.lancamentos.find(x=>x.id===id);
+  if(!l)return;
+  const irmaos=_irmaosTransf(l);
+  if(irmaos.length){
+    const par=irmaos[0];
+    const origem=l.tipo==='transferencia'?l:par;
+    const destino=l.tipo==='transferencia'?par:l;
+    const nid=Math.max(0,...S.lancamentos.map(x=>x.id))+1;
+    const tPar='tp'+nid;
+    const novoOrigem={...origem,id:nid,recId:undefined,transfPar:tPar};
+    const novoDestino={...destino,id:nid+1,recId:undefined,transfPar:tPar};
+    S.lancamentos.push(novoOrigem,novoDestino);
+    if(!novoOrigem.forecast){
+      const co=S.contas.find(c=>c.id===novoOrigem.banco);if(co)co.saldo-=novoOrigem.valor;
+      const cd=S.contas.find(c=>c.id===novoDestino.banco);if(cd)cd.saldo+=novoDestino.valor;
+    }
+    persistir();rcontas();rdash();toast('✓ Transferência duplicada');
+    return;
+  }
+  const nid=Math.max(0,...S.lancamentos.map(x=>x.id))+1;
+  const novo={...l,id:nid,recId:undefined,transfPar:undefined};
+  S.lancamentos.push(novo);
+  if(!novo.forecast){
+    const c=S.contas.find(c=>c.id===novo.banco);
+    if(c){if(novo.tipo==='credito')c.saldo+=novo.valor;if(novo.tipo==='debito')c.saldo-=novo.valor;}
+  }
+  persistir();rcontas();rdash();toast('✓ Lançamento duplicado');
+}
 function rmLanc(id){
   const l=S.lancamentos.find(x=>x.id===id);
   // Reverte o saldo salvo das contas afetadas (preservando divergências prévias),
@@ -9005,7 +9042,7 @@ function rcartoes(){
   });
   const _compPag=comp.slice(0,_tblLim.cartoes);
   _injetarFcTabs('cartoes','tb-comp');
-  document.getElementById('tb-comp').innerHTML=comp.length?_compPag.map(cp=>{const ct=S.cartoes.find(c=>c.id===cp.cartao),m=ct?BG(ct.banco):BG('outro');const _ant=(cp.data||'')<_hojeISO();return`<tr${_ant?' class="lanc-ant"':''}${cp.forecast&&!_ant?' style="opacity:.92"':''}>${_selModeCartoes?`<td class="sel-col"><input type="checkbox" class="sel-chk" ${_selComp.has(cp.id)?'checked':''} onclick="selToggle('cartoes',${cp.id},this.checked)"></td>`:''}<td class="cm mono" data-label="Data" style="font-size:11px">${fdt(cp.data)}</td><td data-label="Cartão"><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:11px">${ct?.nome||'—'}</span></div></td><td data-label="Descrição">${cp.desc}${cp.forecast?' <span class="fc-badge">previsto</span>':''}</td><td data-label="Categoria"><span class="badge b-n" style="font-size:9px">${cp.cat}</span></td><td class="tr mono cr" data-label="Valor">${brl(cp.valor)}</td><td class="tr" data-label="Parcelas" style="font-size:11px;color:var(--txt3)">${cp.parcelas>1?cp.parcelas+'x de '+brl(cp.valor/cp.parcelas):'À vista'}</td><td class="td-act"><button class="btn btn-ed" onclick="editCompra(${cp.id})">✎</button> <button class="btn btn-d" onclick="rmCompra(${cp.id})">✕</button></td></tr>`}).join('').concat(_tblMaisHTML('cartoes',comp.length,_compPag.length,_selModeCartoes?8:7)):`<tr><td colspan="${_selModeCartoes?8:7}" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prevC?'Nenhuma compra prevista':'Nenhuma compra'}</td></tr>`;
+  document.getElementById('tb-comp').innerHTML=comp.length?_compPag.map(cp=>{const ct=S.cartoes.find(c=>c.id===cp.cartao),m=ct?BG(ct.banco):BG('outro');const _ant=(cp.data||'')<_hojeISO();return`<tr${_ant?' class="lanc-ant"':''}${cp.forecast&&!_ant?' style="opacity:.92"':''}>${_selModeCartoes?`<td class="sel-col"><input type="checkbox" class="sel-chk" ${_selComp.has(cp.id)?'checked':''} onclick="selToggle('cartoes',${cp.id},this.checked)"></td>`:''}<td class="cm mono" data-label="Data" style="font-size:11px">${fdt(cp.data)}</td><td data-label="Cartão"><div style="display:flex;align-items:center;gap:7px"><div style="width:22px;height:22px;border-radius:4px;background:${m.bg};color:${m.ic};display:flex;align-items:center;justify-content:center;font-size:8.5px;font-weight:700;flex-shrink:0">${m.abrev}</div><span style="font-size:11px">${ct?.nome||'—'}</span></div></td><td data-label="Descrição">${cp.desc}${cp.forecast?' <span class="fc-badge">previsto</span>':''}</td><td data-label="Categoria"><span class="badge b-n" style="font-size:9px">${cp.cat}</span></td><td class="tr mono cr" data-label="Valor">${brl(cp.valor)}</td><td class="tr" data-label="Parcelas" style="font-size:11px;color:var(--txt3)">${cp.parcelas>1?cp.parcelas+'x de '+brl(cp.valor/cp.parcelas):'À vista'}</td><td class="td-act"><button class="btn btn-ed" onclick="editCompra(${cp.id})">✎</button> <button class="btn btn-cp" onclick="duplicarCompra(${cp.id})" title="Duplicar">⧉</button> <button class="btn btn-d" onclick="rmCompra(${cp.id})">✕</button></td></tr>`}).join('').concat(_tblMaisHTML('cartoes',comp.length,_compPag.length,_selModeCartoes?8:7)):`<tr><td colspan="${_selModeCartoes?8:7}" style="text-align:center;padding:24px;color:var(--txt3);font-size:12px">${_prevC?'Nenhuma compra prevista':'Nenhuma compra'}</td></tr>`;
   // Respeita o filtro de cartão selecionado (fc) — antes somava todos os cartões
   // juntos mesmo com um cartão específico escolhido no filtro acima.
   // "Pagamento cartão crédito"/"Transferência" ficam fora: são meio de pagamento ou
@@ -9226,6 +9263,19 @@ function _rmCompraAplicar(alvos){
     S.compras=S.compras.filter(c=>c.id!==cp.id);
   });
   persistir();rcartoes();rdash();
+}
+// Duplica uma compra do cartão, criando uma cópia independente com id novo
+// (útil pra registrar rapidamente uma compra parecida ou repetida no mesmo
+// cartão). Não herda recId — a cópia não faz parte de nenhuma série recorrente.
+function duplicarCompra(id){
+  const cp=S.compras.find(c=>c.id===id);
+  if(!cp)return;
+  const nid=Math.max(0,...S.compras.map(c=>c.id))+1;
+  const nova={...cp,id:nid,recId:undefined};
+  S.compras.unshift(nova);
+  if(!nova.forecast){const c=S.cartoes.find(c=>c.id===nova.cartao);if(c)c.fatura=+(c.fatura+nova.valor/nova.parcelas).toFixed(2);}
+  persistir();rcartoes();rdash();
+  toast('✓ Compra duplicada');
 }
 
 // ═══════════════════════════════════════════════════════════
