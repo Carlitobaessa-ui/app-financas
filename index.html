@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 159 -->
+<!-- APP_VERSION: 160 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -836,7 +836,11 @@ th.th-sort .sort-ic{font-size:8px;letter-spacing:0;margin-left:2px;color:var(--a
   .chat-input-bar{padding:10px 12px}
   .msg-bubble{font-size:12.5px;padding:9px 13px}
   .bottom-nav-item .ni{font-size:18px}
-  .bottom-nav-item span{display:none}
+  /* :not(.ni) — sem isso, esconde também o <span class="ni"> que embrulha o
+     ícone (também é um <span>), apagando o botão inteiro em telas bem
+     pequenas. A intenção aqui é esconder só o rótulo de texto, mantendo o
+     ícone visível. */
+  .bottom-nav-item span:not(.ni){display:none}
   .pillar{padding:8px 10px}
   .cbot-row,.cbot-head{grid-template-columns:2fr 1fr}
   .cbot-row>div:nth-child(n+3),.cbot-head>div:nth-child(n+3){display:none}
