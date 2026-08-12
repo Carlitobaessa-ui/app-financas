@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 154 -->
+<!-- APP_VERSION: 155 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -4608,13 +4608,13 @@ async function atualizarMercadoImoveis(){
     <div class="pbd" id="matriz-riscos"></div>
   </div>
 
-  <!-- PROJEÇÃO DE IMPACTOS NO TEMPO -->
+  <!-- PREDIÇÃO — MONTE CARLO DO PATRIMÔNIO -->
   <div class="panel mb">
-    <div class="phd"><div class="pt">Projeção de Impactos no Tempo</div><div class="ps">Horizonte curto (6m) · médio (2a) · longo (5a+)</div></div>
+    <div class="phd"><div class="pt">Predição — Monte Carlo do Patrimônio</div><div class="ps">Simulação probabilística a partir do fluxo de caixa previsto (lançamentos, faturas e dívidas reais) · 1, 2 e 5 anos</div></div>
     <div class="pbd">
-      <div style="position:relative;height:240px;margin-bottom:10px"><canvas id="ch-impactos"></canvas></div>
+      <div style="position:relative;height:240px;margin-bottom:10px"><canvas id="ch-predicao"></canvas></div>
       <div id="impactos-leg" style="display:grid;grid-template-columns:repeat(3,1fr);gap:12px"></div>
-      <div class="pft">Projeção do patrimônio líquido atual em 3 cenários, de hoje até 5 anos</div>
+      <div class="pft" id="predicao-metod">Projeção do patrimônio líquido atual em cenários probabilísticos, de hoje até 5 anos</div>
     </div>
   </div>
 
@@ -17732,6 +17732,13 @@ function calcSinais(){
   };
 }
 
+// Pesos usados no Índice de Resiliência (ver rsinais()) — extraído para reuso na
+// simulação de predição (_simularPredicaoPatrimonio), garantindo que os dois
+// lugares fiquem sempre em sincronia caso os pesos mudem.
+function _pesosResilScore(dims){
+  return dims.liquidez*0.2+dims.diversificacao*0.18+dims.resilAgro*0.15+dims.endividamento*0.17+dims.rendaPassiva*0.18+dims.iliquidez*0.12;
+}
+
 // Detecta sinais fracos (early warnings) nos 3 níveis
 function detectarSinaisFracos(m){
   const sinais=[];
@@ -17798,12 +17805,84 @@ function avaliarDisrupcao(m){
   return { score:Math.min(100,score), nivel, fatores };
 }
 
+// ── PREDIÇÃO — Monte Carlo do patrimônio líquido total ──────────────────────────
+// Diferente do Monte Carlo de Aposentadoria (que usa aporte/rentabilidade digitados
+// à mão), esta simulação parte de dados JÁ REGISTRADOS no app:
+//   · drift/volatilidade de CAIXA: média e desvio-padrão do fluxo de caixa
+//     (créditos − débitos) dos PRÓXIMOS 12 MESES, calculados com calcMes(ym,true) —
+//     ou seja, já embutem lançamentos previstos, faturas de cartão, financiamentos,
+//     seguros e orçamento recorrente cadastrados (mesma base do gráfico de evolução
+//     patrimonial do Dashboard).
+//   · retorno/volatilidade de MERCADO: aplicados só sobre a fatia do patrimônio hoje
+//     investida (totInv()/patrimônio líquido), usando as mesmas premissas do
+//     simulador de Aposentadoria (editáveis lá; fallback 8% a.a. / 15% a.a. se o
+//     usuário nunca configurou).
+// Em cada horizonte, também estima um Índice de Resiliência aproximado: os
+// componentes ligados à posição de caixa (liquidez, endividamento) evoluem com a
+// trajetória simulada do patrimônio; os componentes estruturais (diversificação,
+// resiliência agro, renda passiva, iliquidez) — que não se movem sozinhos junto
+// com o patrimônio — permanecem na fotografia atual. É uma aproximação, não uma
+// simulação completa de todas as dimensões.
+function _simularPredicaoPatrimonio(horizontesMeses,limiarResil,nSim){
+  nSim=nSim||400;
+  const m=calcSinais(), d=m.dims;
+  const pat0=m.pat;
+  const investShare=pat0>0?Math.min(1,Math.max(0,m.inv/pat0)):0;
+
+  const _hojeYmP=(typeof _hojeISO==='function'?_hojeISO():new Date().toISOString()).slice(0,7);
+  const _hojeDtP=new Date(_hojeYmP+'-01T00:00:00');
+  const fluxos12=[];
+  for(let k=0;k<12;k++){
+    const dt=new Date(_hojeDtP.getFullYear(),_hojeDtP.getMonth()+k,1);
+    const ym=dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0');
+    const r=calcMes(ym,true);
+    fluxos12.push(r.cred-r.deb);
+  }
+  const driftCaixa=fluxos12.reduce((s,v)=>s+v,0)/fluxos12.length;
+  const volCaixa=Math.sqrt(fluxos12.reduce((s,v)=>s+Math.pow(v-driftCaixa,2),0)/fluxos12.length);
+
+  const retMercadoAA=(S.aposentadoria&&S.aposentadoria.rentAA!=null)?S.aposentadoria.rentAA:8;
+  const volMercadoAA=(S.aposentadoria&&S.aposentadoria.volAA!=null)?S.aposentadoria.volAA:15;
+  const rMercadoMensal=Math.pow(1+(retMercadoAA/100),1/12)-1;
+  const volMercadoMensal=Math.max(0,volMercadoAA)/100/Math.sqrt(12);
+
+  const nMax=Math.max(...horizontesMeses);
+  const porHorizonte={}; horizontesMeses.forEach(h=>porHorizonte[h]={valores:[],resils:[]});
+
+  for(let s=0;s<nSim;s++){
+    let v=pat0;
+    for(let mes=1;mes<=nMax;mes++){
+      const retMercado=rMercadoMensal+volMercadoMensal*_amostraNormalPadrao();
+      const fluxoCaixa=driftCaixa+volCaixa*_amostraNormalPadrao();
+      v=v*(1+retMercado*investShare)+fluxoCaixa;
+      if(porHorizonte[mes]){
+        porHorizonte[mes].valores.push(v);
+        const ratioV=pat0>0?v/pat0:1;
+        const liqSim=Math.min(100,Math.max(0,d.liquidez*ratioV));
+        const endivSim=ratioV>0.001?Math.min(100,Math.max(0,100-(100-d.endividamento)/ratioV)):0;
+        porHorizonte[mes].resils.push(_pesosResilScore({liquidez:liqSim,diversificacao:d.diversificacao,resilAgro:d.resilAgro,endividamento:endivSim,rendaPassiva:d.rendaPassiva,iliquidez:d.iliquidez}));
+      }
+    }
+  }
+
+  const pct=(arr,p)=>{const sArr=[...arr].sort((a,b)=>a-b);return sArr[Math.min(sArr.length-1,Math.max(0,Math.floor(p*sArr.length)))];};
+  const horizontes={};
+  horizontesMeses.forEach(h=>{
+    const vals=porHorizonte[h].valores, resils=porHorizonte[h].resils;
+    horizontes[h]={
+      p10:pct(vals,0.10), p50:pct(vals,0.50), p90:pct(vals,0.90),
+      probResilAcima: resils.filter(r=>r>=limiarResil).length/resils.length*100,
+    };
+  });
+  return {pat0,investShare,driftCaixa,volCaixa,retMercadoAA,volMercadoAA,horizontes,nSim};
+}
+
 function rsinais(){
   const m=calcSinais();
   const d=m.dims;
 
   // ── Índice de Resiliência (média ponderada das dimensões) ──
-  const resil=Math.round((d.liquidez*0.2+d.diversificacao*0.18+d.resilAgro*0.15+d.endividamento*0.17+d.rendaPassiva*0.18+d.iliquidez*0.12));
+  const resil=Math.round(_pesosResilScore(d));
   const resilCor=resil>=70?C.grn:resil>=45?C.gld:C.red;
   document.getElementById('resil-score').textContent=resil+'/100';
   document.getElementById('resil-score').style.color=resilCor;
@@ -17863,32 +17942,33 @@ function rsinais(){
       </tr>`).join('')}
       </tbody></table></div><div class="pft">Riscos internos e externos identificados a partir da fotografia atual do patrimônio</div>`;
 
-  // ── Projeção de impactos no tempo ──
-  const horizontes=['Hoje','6 meses','1 ano','2 anos','3 anos','5 anos'];
-  // Cenário positivo: ganhos compostos + novas receitas (agtech, energia, renda passiva)
-  const base=m.pat;
-  const positivo=horizontes.map((_,i)=>+(base*Math.pow(1.11,i)+base*0.02*i).toFixed(0));
-  const negativo=horizontes.map((_,i)=>+(base*Math.pow(0.97,i)-base*0.01*i*(i>2?1.5:1)).toFixed(0));
-  const provavel=horizontes.map((_,i)=>+(base*Math.pow(1.06,i)).toFixed(0));
-  mkCh('ch-impactos',{type:'line',data:{labels:horizontes,datasets:[
-    {label:'Impactos Positivos',data:positivo,borderColor:C.grn,backgroundColor:'rgba(74,122,86,.06)',fill:'+1',tension:0.4,pointRadius:2.5,borderWidth:1.5},
-    {label:'Trajetória Provável',data:provavel,borderColor:C.blu,backgroundColor:'transparent',fill:false,tension:0.4,pointRadius:2.5,borderWidth:1.5,borderDash:[5,3]},
-    {label:'Impactos Negativos',data:negativo,borderColor:C.red,backgroundColor:'rgba(163,58,46,.06)',fill:'-1',tension:0.4,pointRadius:2.5,borderWidth:1.5},
+  // ── Predição — Monte Carlo do patrimônio (ver _simularPredicaoPatrimonio) ──
+  const limiarResilPred=70; // mesmo corte usado no veredito "Modelo robusto" acima
+  const horizontesM=[12,24,60];
+  const pred=_simularPredicaoPatrimonio(horizontesM,limiarResilPred,400);
+  const labelsPred=['Hoje','1 ano','2 anos','5 anos'];
+  const p10s=[pred.pat0,pred.horizontes[12].p10,pred.horizontes[24].p10,pred.horizontes[60].p10];
+  const p50s=[pred.pat0,pred.horizontes[12].p50,pred.horizontes[24].p50,pred.horizontes[60].p50];
+  const p90s=[pred.pat0,pred.horizontes[12].p90,pred.horizontes[24].p90,pred.horizontes[60].p90];
+  mkCh('ch-predicao',{type:'line',data:{labels:labelsPred,datasets:[
+    {label:'Cenário otimista (p90)',data:p90s,borderColor:C.grn,backgroundColor:'rgba(74,122,86,.06)',fill:'+1',tension:0.4,pointRadius:2.5,borderWidth:1.5},
+    {label:'Mediana (p50)',data:p50s,borderColor:C.blu,backgroundColor:'transparent',fill:false,tension:0.4,pointRadius:2.5,borderWidth:1.5,borderDash:[5,3]},
+    {label:'Cenário pessimista (p10)',data:p10s,borderColor:C.red,backgroundColor:'rgba(163,58,46,.06)',fill:'-1',tension:0.4,pointRadius:2.5,borderWidth:1.5},
   ]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'top',labels:{color:C.txt,font:{size:10.5},padding:12,usePointStyle:true,pointStyle:'line'}},tooltip:{callbacks:{label:ctx=>ctx.dataset.label+': '+brl(ctx.parsed.y)}}},scales:gridOpts(v=>'R$'+(v/1000000).toFixed(1)+'M')}});
 
-  document.getElementById('impactos-leg').innerHTML=`
-    <div style="padding:10px 12px;background:var(--grn-dim);border:0.5px solid var(--grn-lt);border-radius:var(--r)">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--grn);font-weight:600;margin-bottom:4px">Curto Prazo · 6m</div>
-      <div style="font-size:11px;color:var(--txt2);line-height:1.4">Reforço de liquidez e quitação de faturas estabilizam o caixa. Sinais agro de curto prazo dominam.</div>
-    </div>
-    <div style="padding:10px 12px;background:var(--blu-dim);border:0.5px solid var(--blu-lt);border-radius:var(--r)">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--blu);font-weight:600;margin-bottom:4px">Médio Prazo · 2a</div>
-      <div style="font-size:11px;color:var(--txt2);line-height:1.4">Renda passiva ganha peso. Vivenda Decor precisa decidir migração para modelo IA-aumentado.</div>
-    </div>
-    <div style="padding:10px 12px;background:var(--gld-dim);border:0.5px solid var(--gld-lt);border-radius:var(--r)">
-      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--gld);font-weight:600;margin-bottom:4px">Longo Prazo · 5a+</div>
-      <div style="font-size:11px;color:var(--txt2);line-height:1.4">Convergência ACL+BESS (2029) e agtech redefinem economia rural. Janela de reposicionamento.</div>
+  const corHorizonte={12:'grn',24:'blu',60:'gld'};
+  const nomeHorizonte={12:'1 Ano',24:'2 Anos',60:'5 Anos'};
+  document.getElementById('impactos-leg').innerHTML=horizontesM.map(h=>{
+    const hv=pred.horizontes[h], cor=corHorizonte[h];
+    const corResil=hv.probResilAcima>=70?'grn':hv.probResilAcima>=40?'gld':'red';
+    return `<div style="padding:10px 12px;background:var(--${cor}-dim);border:0.5px solid var(--${cor}-lt);border-radius:var(--r)">
+      <div style="font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--${cor});font-weight:600;margin-bottom:4px">${nomeHorizonte[h]}</div>
+      <div style="font-size:11px;color:var(--txt2);line-height:1.4">Patrimônio entre <strong>${brl(hv.p10)}</strong> e <strong>${brl(hv.p90)}</strong> (mediana ${brl(hv.p50)}).</div>
+      <div style="font-size:11px;color:var(--${corResil});line-height:1.4;margin-top:3px">${hv.probResilAcima.toFixed(0)}% de chance do Índice de Resiliência continuar ≥${limiarResilPred}.</div>
     </div>`;
+  }).join('');
+  const predMetodEl=document.getElementById('predicao-metod');
+  if(predMetodEl)predMetodEl.textContent=`Monte Carlo com ${pred.nSim} trajetórias · fluxo de caixa mensal simulado a partir dos lançamentos previstos, faturas e orçamento recorrente já cadastrados (média ${brl(pred.driftCaixa)}/mês, desvio-padrão ${brl(pred.volCaixa)}) · retorno de mercado ${pred.retMercadoAA}% a.a. (±${pred.volMercadoAA}% a.a.) aplicado sobre ${(pred.investShare*100).toFixed(0)}% do patrimônio hoje investido. Não é garantia nem recomendação de investimento.`;
 
   // ── Avaliação de disrupção + novo modelo ──
   const dis=avaliarDisrupcao(m);
