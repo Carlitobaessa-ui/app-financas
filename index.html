@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 156 -->
+<!-- APP_VERSION: 157 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -884,6 +884,10 @@ th.th-sort .sort-ic{font-size:8px;letter-spacing:0;margin-left:2px;color:var(--a
 /* ── BOTTOM NAV ── */
 .bottom-nav{
   display:none;
+  /* Sem isso, a regra genérica "nav{transform:translateX(-100%)}" do drawer
+     lateral (usada em telas ≤768px) também atinge esta barra — porque ela
+     também é uma tag <nav> — e a empurra 240px para fora da tela. */
+  transform:none;
   position:fixed;bottom:0;left:0;right:0;
   height:56px;
   /* A altura precisa SOMAR a área segura (home indicator), não descontar
