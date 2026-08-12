@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 155 -->
+<!-- APP_VERSION: 156 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -7089,54 +7089,59 @@ function _ordenarPizzaDesc(labels,data,colors){
   const idx=labels.map((_,i)=>i).sort((a,b)=>(Number(data[b])||0)-(Number(data[a])||0));
   return {labels:idx.map(i=>labels[i]),data:idx.map(i=>data[i]),colors:idx.map(i=>colors[i])};
 }
-function rdash(){
-
-  // Função que soma créditos/débitos de um dado mês (ym = 'YYYY-MM')
-  const calcMes=(ym,incFc)=>{
-    const okFc=l=>incFc?true:!l.forecast;
-    const lcCred=S.lancamentos.filter(l=>l.data.startsWith(ym)&&l.tipo==='credito'&&okFc(l)).reduce((s,l)=>s+l.valor,0);
-    // Dividendos vinculados a conta já entram como lançamento de crédito (lcCred); conta só os não-vinculados aqui p/ evitar dupla contagem
-    const divCred=S.dividendos.filter(d=>d.data.startsWith(ym)&&d.lancId==null).reduce((s,d)=>s+d.total,0);
-    const lcDeb=S.lancamentos.filter(l=>l.data.startsWith(ym)&&l.tipo==='debito'&&okFc(l)).reduce((s,l)=>s+l.valor,0);
-    const gastosDeb=S.gastos.filter(g=>g.data.startsWith(ym)&&(!g.forma||g.forma==='dinheiro')&&okFc(g)).reduce((s,g)=>s+g.valor,0);
-    const comprasDeb=S.compras.filter(c=>c.data.startsWith(ym)&&okFc(c)).reduce((s,c)=>s+c.valor/c.parcelas,0);
-    // Financiamento e seguro do patrimônio, respeitando o cronograma:
-    // • não debita antes do mês de aquisição (dtAq);
-    // • a parcela do financiamento para após as parcelas restantes (a partir de hoje).
-    const _hojeYm=(typeof _hojeISO==='function'?_hojeISO():new Date().toISOString()).slice(0,7);
-    const _difHoje=mesesEntre(_hojeYm,ym)-1; // <0 passado · 0 mês atual · >0 futuro
-    const finDeb=(S.bens||[]).reduce((s,b)=>{
-      if(!b.fin||!b.fin.parcela)return s;
-      const acqYm=(b.dtAq||'').slice(0,7);
-      if(acqYm&&ym<acqYm)return s;                          // antes da aquisição: não debita
-      const rest=b.fin.parcelasRest!=null?b.fin.parcelasRest:0;
-      if(_difHoje>=rest)return s;                           // já quitado no futuro (restam `rest` parcelas a partir de hoje)
-      return s+b.fin.parcela;
-    },0);
-    const segDeb=(S.bens||[]).reduce((s,b)=>{
-      if(!b.seguro||!b.seguro.premio)return s;
-      const acqYm=(b.dtAq||'').slice(0,7);
-      if(acqYm&&ym<acqYm)return s;                          // antes da aquisição: não debita
-      const vig=b.seguro.vigencia||'';
-      if(b.seguro.premioPeriodo==='mensal'){
-        const vigYm=vig.slice(0,7);                         // mensal: prêmio todo mês até o fim da vigência
-        if(vigYm&&ym>vigYm)return s;
-        return s+b.seguro.premio;
-      }
-      // ANUAL: 1 débito/ano com o prêmio CHEIO, no mês da vigência, a partir da renovação (recorrente).
-      const vigYm=vig.slice(0,7);
-      if(!vigYm)return s;                                  // sem vigência: sem projeção anual
-      if(vigYm<_hojeYm)return s;                           // apólice vencida → não debita (renovar atualiza a data)
-      if(ym.slice(5,7)===vigYm.slice(5,7)&&ym>=vigYm)return s+b.seguro.premio;
-      return s;
-    },0);
-    let _cred=lcCred+divCred, _deb=lcDeb+gastosDeb+comprasDeb+finDeb+segDeb;
-    if(incFc&&ym>_hojeYm){  // projeção futura: soma o orçamento recorrente (receita + despesas por categoria)
-      const _orcRec=+((S.receita)||0); if(_orcRec>0)_cred+=_orcRec;
-      Object.values(S.orc||{}).forEach(e=>{const v=+((e&&e.valor)||0); if(v>0)_deb+=v;});
+// Função que soma créditos/débitos de um dado mês (ym = 'YYYY-MM').
+// Extraída para o escopo global (antes só existia dentro de rdash()) porque
+// também é usada pela simulação de predição em Sinais & Riscos
+// (_simularPredicaoPatrimonio), que precisa do mesmo fluxo de caixa projetado
+// — lançamentos previstos, faturas, financiamentos, seguros e orçamento
+// recorrente — usado no gráfico de evolução patrimonial do Dashboard.
+function calcMes(ym,incFc){
+  const okFc=l=>incFc?true:!l.forecast;
+  const lcCred=S.lancamentos.filter(l=>l.data.startsWith(ym)&&l.tipo==='credito'&&okFc(l)).reduce((s,l)=>s+l.valor,0);
+  // Dividendos vinculados a conta já entram como lançamento de crédito (lcCred); conta só os não-vinculados aqui p/ evitar dupla contagem
+  const divCred=S.dividendos.filter(d=>d.data.startsWith(ym)&&d.lancId==null).reduce((s,d)=>s+d.total,0);
+  const lcDeb=S.lancamentos.filter(l=>l.data.startsWith(ym)&&l.tipo==='debito'&&okFc(l)).reduce((s,l)=>s+l.valor,0);
+  const gastosDeb=S.gastos.filter(g=>g.data.startsWith(ym)&&(!g.forma||g.forma==='dinheiro')&&okFc(g)).reduce((s,g)=>s+g.valor,0);
+  const comprasDeb=S.compras.filter(c=>c.data.startsWith(ym)&&okFc(c)).reduce((s,c)=>s+c.valor/c.parcelas,0);
+  // Financiamento e seguro do patrimônio, respeitando o cronograma:
+  // • não debita antes do mês de aquisição (dtAq);
+  // • a parcela do financiamento para após as parcelas restantes (a partir de hoje).
+  const _hojeYm=(typeof _hojeISO==='function'?_hojeISO():new Date().toISOString()).slice(0,7);
+  const _difHoje=mesesEntre(_hojeYm,ym)-1; // <0 passado · 0 mês atual · >0 futuro
+  const finDeb=(S.bens||[]).reduce((s,b)=>{
+    if(!b.fin||!b.fin.parcela)return s;
+    const acqYm=(b.dtAq||'').slice(0,7);
+    if(acqYm&&ym<acqYm)return s;                          // antes da aquisição: não debita
+    const rest=b.fin.parcelasRest!=null?b.fin.parcelasRest:0;
+    if(_difHoje>=rest)return s;                           // já quitado no futuro (restam `rest` parcelas a partir de hoje)
+    return s+b.fin.parcela;
+  },0);
+  const segDeb=(S.bens||[]).reduce((s,b)=>{
+    if(!b.seguro||!b.seguro.premio)return s;
+    const acqYm=(b.dtAq||'').slice(0,7);
+    if(acqYm&&ym<acqYm)return s;                          // antes da aquisição: não debita
+    const vig=b.seguro.vigencia||'';
+    if(b.seguro.premioPeriodo==='mensal'){
+      const vigYm=vig.slice(0,7);                         // mensal: prêmio todo mês até o fim da vigência
+      if(vigYm&&ym>vigYm)return s;
+      return s+b.seguro.premio;
     }
-    return {cred:_cred, deb:_deb};
-  };
+    // ANUAL: 1 débito/ano com o prêmio CHEIO, no mês da vigência, a partir da renovação (recorrente).
+    const vigYm=vig.slice(0,7);
+    if(!vigYm)return s;                                  // sem vigência: sem projeção anual
+    if(vigYm<_hojeYm)return s;                           // apólice vencida → não debita (renovar atualiza a data)
+    if(ym.slice(5,7)===vigYm.slice(5,7)&&ym>=vigYm)return s+b.seguro.premio;
+    return s;
+  },0);
+  let _cred=lcCred+divCred, _deb=lcDeb+gastosDeb+comprasDeb+finDeb+segDeb;
+  if(incFc&&ym>_hojeYm){  // projeção futura: soma o orçamento recorrente (receita + despesas por categoria)
+    const _orcRec=+((S.receita)||0); if(_orcRec>0)_cred+=_orcRec;
+    Object.values(S.orc||{}).forEach(e=>{const v=+((e&&e.valor)||0); if(v>0)_deb+=v;});
+  }
+  return {cred:_cred, deb:_deb};
+}
+
+function rdash(){
 
   const inv=totInv(),gas=gMes(),tdiv=S.dividendos.reduce((s,d)=>s+d.total,0);
   const banc=saldoBancarioTotal(),bens=valorBensTotal(),fat=faturasTotalAbertas();
