@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 157 -->
+<!-- APP_VERSION: 158 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -884,11 +884,16 @@ th.th-sort .sort-ic{font-size:8px;letter-spacing:0;margin-left:2px;color:var(--a
 /* ── BOTTOM NAV ── */
 .bottom-nav{
   display:none;
-  /* Sem isso, a regra genérica "nav{transform:translateX(-100%)}" do drawer
-     lateral (usada em telas ≤768px) também atinge esta barra — porque ela
-     também é uma tag <nav> — e a empurra 240px para fora da tela. */
+  /* Esta barra é uma tag <nav>, então sem os resets abaixo ela herda da
+     regra genérica ".shell nav{...}" (usada pela sidebar/drawer lateral):
+       · transform:translateX(-100%) em telas ≤768px → empurra a barra
+         240px para fora da tela;
+       · top:0 + width:224/240px → como top, bottom e height ficam todos
+         definidos ao mesmo tempo, a spec de CSS ignora o "bottom", fixando
+         a barra no TOPO da tela em vez do rodapé; e a largura fixa também
+         impede o left:0/right:0 abaixo de esticar a barra até a borda. */
   transform:none;
-  position:fixed;bottom:0;left:0;right:0;
+  position:fixed;top:auto;bottom:0;left:0;right:0;width:auto;
   height:56px;
   /* A altura precisa SOMAR a área segura (home indicator), não descontar
      dela — como box-sizing é border-box em todo o app, um padding-bottom
