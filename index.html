@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 168 -->
+<!-- APP_VERSION: 169 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -381,6 +381,15 @@ tr.provisorio td:first-child{box-shadow:inset 3px 0 0 rgba(122,96,32,.45)}
 .obj-foot{padding:10px 18px 14px;display:flex;align-items:center;justify-content:space-between}
 .obj-aporte-chip{background:var(--grn-dim);color:var(--grn);border:0.5px solid var(--grn-lt);border-radius:20px;padding:3px 10px;font-size:10.5px;font-family:var(--mono);font-weight:500}
 .obj-actions{display:flex;gap:6px}
+/* Reordenação de prioridade por arraste (drag-and-drop via Pointer Events — funciona com
+   mouse e toque). A alça (.obj-drag-handle) fica ao lado do texto "Prioridade N" em cada
+   card; touch-action:none nela evita que o gesto de arrastar role a página no celular. */
+.obj-reorder-hint{display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--txt3);background:var(--surf2);border:0.5px dashed var(--bdr-em);border-radius:var(--r);padding:9px 14px;margin-bottom:16px}
+.obj-drag-handle{display:inline-flex;align-items:center;justify-content:center;width:16px;margin-right:5px;cursor:grab;color:var(--txt3);touch-action:none;user-select:none}
+.obj-drag-handle:hover{color:var(--acc)}
+.obj-drag-handle:active{cursor:grabbing;color:var(--acc)}
+.obj-card.obj-dragging{opacity:.45}
+.obj-card.obj-drop-target{outline:2px dashed var(--acc);outline-offset:-2px}
 
 /* ─── CASCATA ORÇAMENTO ──── */
 .casc-row{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:0.5px solid var(--bdr)}
@@ -4482,6 +4491,9 @@ async function atualizarMercadoImoveis(){
 
   <!-- KPIs dos objetivos -->
   <div class="kpi-row" id="obj-kpis"></div>
+
+  <!-- Dica de reordenação por arraste — evita que o usuário precise editar o campo de prioridade manualmente -->
+  <div class="obj-reorder-hint"><span class="obj-drag-handle" style="pointer-events:none">⠿</span> Arraste o ícone <strong style="color:var(--txt2)">⠿</strong> de qualquer card para reordenar a prioridade dos objetivos — não é mais preciso digitar o número manualmente.</div>
 
   <!-- Cards de objetivos -->
   <div id="obj-cards" style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:20px"></div>
@@ -10083,6 +10095,58 @@ function _toggleEnvelope(cat,ativo){
 }
 
 // ─── RENDER OBJETIVOS
+// ─── Reordenar prioridade dos objetivos por arraste (drag-and-drop) ───
+// Usa Pointer Events (funciona com mouse e toque) em vez de HTML5 Drag and Drop nativo,
+// que não funciona bem em navegadores móveis. O usuário arrasta a alça "⠿" ao lado do
+// texto "Prioridade N" de um card até soltar sobre outro card; ao soltar, as prioridades
+// (1..N) de todos os objetivos são recalculadas na nova ordem, salvas e a lista é
+// redesenhada — sem precisar digitar nenhum número manualmente.
+let _objDragId=null, _objDragEl=null, _objDragAlvoId=null;
+function _objDragStart(ev,id){
+  ev.preventDefault();
+  const card=document.querySelector(`.obj-card[data-obj-id="${id}"]`);
+  if(!card)return;
+  _objDragId=id;
+  _objDragEl=card;
+  _objDragAlvoId=null;
+  card.classList.add('obj-dragging');
+  document.addEventListener('pointermove',_objDragMove);
+  document.addEventListener('pointerup',_objDragEnd,{once:true});
+}
+function _objDragMove(ev){
+  if(!_objDragEl)return;
+  const elAlvo=document.elementFromPoint(ev.clientX,ev.clientY);
+  const cardAlvo=elAlvo?elAlvo.closest('.obj-card'):null;
+  document.querySelectorAll('.obj-card.obj-drop-target').forEach(c=>c.classList.remove('obj-drop-target'));
+  if(cardAlvo && cardAlvo!==_objDragEl){
+    cardAlvo.classList.add('obj-drop-target');
+    _objDragAlvoId=parseInt(cardAlvo.dataset.objId);
+  }else{
+    _objDragAlvoId=null;
+  }
+}
+function _objDragEnd(){
+  document.removeEventListener('pointermove',_objDragMove);
+  document.querySelectorAll('.obj-card.obj-drop-target').forEach(c=>c.classList.remove('obj-drop-target'));
+  if(_objDragEl)_objDragEl.classList.remove('obj-dragging');
+  if(_objDragId!=null && _objDragAlvoId!=null && _objDragAlvoId!==_objDragId){
+    _reordenarPrioridadeObjetivo(_objDragId,_objDragAlvoId);
+  }
+  _objDragId=null;_objDragEl=null;_objDragAlvoId=null;
+}
+function _reordenarPrioridadeObjetivo(idArrastado,idAlvo){
+  const lista=(S.objetivos||[]).slice().sort((a,b)=>a.prioridade-b.prioridade);
+  const iOrig=lista.findIndex(o=>o.id===idArrastado);
+  const iDest=lista.findIndex(o=>o.id===idAlvo);
+  if(iOrig<0||iDest<0)return;
+  const[item]=lista.splice(iOrig,1);
+  lista.splice(iDest,0,item);
+  lista.forEach((o,i)=>{o.prioridade=i+1;});
+  S.objetivos=lista;
+  persistir();
+  robjetivos();
+  if(typeof toast==='function')toast('✓ Prioridade reordenada');
+}
 function robjetivos(){
   const totalAlvo=(S.objetivos||[]).reduce((s,o)=>s+o.valorAlvo,0);
   const totalAcum=(S.objetivos||[]).reduce((s,o)=>s+o.acumulado,0);
@@ -10110,12 +10174,12 @@ function robjetivos(){
     const r=18,circ=2*Math.PI*r,dash=circ*(pct/100),gap=circ-dash;
     const ringColor=o.cor||C.grn;
 
-    return`<div class="obj-card">
+    return`<div class="obj-card" data-obj-id="${o.id}">
       <div class="obj-card-accent" style="background:${ringColor}"></div>
       <div class="obj-card-top">
         <span class="obj-emoji">${o.emoji||'◎'}</span>
         <div class="obj-nome">${o.nome}</div>
-        <div class="obj-tipo">${tipoLabel} · Prioridade ${o.prioridade}</div>
+        <div class="obj-tipo"><span class="obj-drag-handle" title="Arraste para reordenar a prioridade" onpointerdown="_objDragStart(event,${o.id})">⠿</span>${tipoLabel} · Prioridade ${o.prioridade}</div>
         <div class="obj-pct-ring">
           <svg viewBox="0 0 46 46" fill="none" xmlns="http://www.w3.org/2000/svg">
             <circle cx="23" cy="23" r="${r}" stroke="var(--bg2)" stroke-width="4"/>
