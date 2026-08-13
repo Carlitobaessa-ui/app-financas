@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 165 -->
+<!-- APP_VERSION: 166 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -5986,6 +5986,12 @@ const TI={};
 
 // ─── CORES PALETA
 const C={grn:'#4A7A56',grnlt:'#CBE0CE',blu:'#4A6DA0',blult:'#C9D6EC',gld:'#C15F3C',gldlt:'#E9C7B4',red:'#A33A2E',redlt:'#EFCFC9',txt:'#1F1E1C',muted:'#6B655A'};
+// Declarada aqui (não perto de gridOpts, mais abaixo) porque _aplicarCoresGraficosTema()
+// já é chamada logo após ser definida (pra sincronizar com o modo escuro salvo de uma
+// sessão anterior) — como isso acontece antes de gridOpts ser declarado no arquivo,
+// _gridLineColor precisa existir (via `let`) antes desse ponto, senão dá
+// ReferenceError de temporal dead zone.
+let _gridLineColor='rgba(74,122,86,.08)';
 const CC={Alimentação:'#4A7A56',Transporte:'#4A6DA0',Saúde:'#A33A2E',Lazer:'#9C6B4F',Moradia:'#C15F3C',Educação:'#2A6E7A',Vestuário:'#7A3828',Serviços:'#3A6E2A',Outros:'#8A9E84',Viagem:'#3A5A8C'};
 // Cor da categoria: usa a cor fixa se existir, senão gera uma cor estável a
 // partir do nome (para categorias novas criadas pelo usuário).
@@ -6497,10 +6503,10 @@ function _agendarRetryChart(){
 // aqui também. _maskTick envolve qualquer callback de formatação de eixo e troca
 // o texto por marcadores quando o modo estiver ativo.
 const _maskTick=cb=>v=>_valoresOcultos?'••••':cb(v);
-// _gridLineColor é `let` (não fica dentro de gridOpts) pra poder ser trocada por
-// toggleTemaEscuro() sem precisar redefinir a função — todo gráfico novo criado
-// depois da troca já usa a cor certa automaticamente.
-let _gridLineColor='rgba(74,122,86,.08)';
+// _gridLineColor (cor da grade dos eixos) é declarada lá em cima, perto de C —
+// aqui só é lida, não redeclarada, pra poder ser trocada por toggleTemaEscuro()
+// sem precisar redefinir gridOpts: todo gráfico novo criado depois da troca já
+// usa a cor certa automaticamente.
 const gridOpts=(cb=v=>v)=>({x:{grid:{color:_gridLineColor},ticks:{color:C.muted,font:{size:10}}},y:{grid:{color:_gridLineColor},ticks:{color:C.muted,font:{size:10},callback:_maskTick(cb)}}});
 
 // ─── PAGE TITLES for mobile header
