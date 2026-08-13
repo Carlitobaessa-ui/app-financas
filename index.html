@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 161 -->
+<!-- APP_VERSION: 162 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -17733,6 +17733,14 @@ const CTX_ESTRAT = {
 };
 
 // Calcula todos os sinais e métricas do modelo
+// Garante que uma dimensão de resiliência fique sempre em 0-100, não importa o
+// sinal/magnitude dos valores usados para calculá-la. Sem isso, contas com saldo
+// bancário (banc) ou patrimônio líquido (pat) negativo — situação real, não só
+// teórica — faziam essas fórmulas (que dividem por banc/pat) estourarem a escala
+// em qualquer direção (ex.: -80903/100), já que os clamps antigos só travavam UM
+// dos lados (só o teto OU só o piso, nunca os dois).
+function _clamp0a100(x){ return Math.max(0,Math.min(100,x)); }
+
 function calcSinais(){
   const inv=totInv(), banc=saldoBancarioTotal(), bens=valorBensTotal();
   const fat=faturasTotalAbertas(), pat=patrimonioLiquido();
@@ -17745,20 +17753,20 @@ function calcSinais(){
 
   // ── DIMENSÕES DE EXPOSIÇÃO (0-100, quanto maior melhor a resiliência) ──
   // Liquidez: caixa cobre quantos meses de gasto
-  const liquidez=Math.min(100,(banc/(gas||1))*16);
+  const liquidez=_clamp0a100((banc/(gas||1))*16);
   // Diversificação geográfica: penaliza concentração BR extrema
   const geoConc=ativosBR/(inv||1);
-  const diversificacao=Math.max(0,100-Math.abs(geoConc-0.7)*180);
+  const diversificacao=_clamp0a100(100-Math.abs(geoConc-0.7)*180);
   // Concentração agro: % do patrimônio ligado a agro (bens rurais + ativos agro)
   const bensRurais=(S.bens||[]).filter(b=>b.cat==='rural').reduce((s,b)=>s+(b.vlAt||0),0);
   const expAgro=(bensRurais+ativosBR*0.3)/(pat||1);
-  const resilAgro=Math.max(0,100-expAgro*120);
+  const resilAgro=_clamp0a100(100-expAgro*120);
   // Endividamento: faturas vs caixa
-  const endividamento=Math.max(0,100-(fat/(banc||1))*180);
+  const endividamento=_clamp0a100(100-(fat/(banc||1))*180);
   // Renda passiva: cobertura dos gastos por dividendos
-  const rendaPassiva=Math.min(100,(divAnual/12)/(gas||1)*100);
+  const rendaPassiva=_clamp0a100((divAnual/12)/(gas||1)*100);
   // Iliquidez patrimonial: % em bens imóveis
-  const iliquidez=Math.max(0,100-(bens/(pat||1))*85);
+  const iliquidez=_clamp0a100(100-(bens/(pat||1))*85);
 
   return {
     inv,banc,bens,fat,pat,ativosBR,ativosUS,fii,rf,gas,divAnual,
