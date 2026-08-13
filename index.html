@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 162 -->
+<!-- APP_VERSION: 163 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -17786,8 +17786,20 @@ function _pesosResilScore(dims){
 function detectarSinaisFracos(m){
   const sinais=[];
   // ── NÍVEL PATRIMÔNIO ──
-  if(m.banc/(m.gas||1)<3) sinais.push({nivel:'Patrimônio',forca:'forte',tipo:'neg',txt:'Reserva de liquidez abaixo de 3 meses de gastos',det:'Caixa atual cobre apenas '+(m.banc/(m.gas||1)).toFixed(1)+' meses. Vulnerável a choques.'});
-  else if(m.banc/(m.gas||1)<6) sinais.push({nivel:'Patrimônio',forca:'fraco',tipo:'neg',txt:'Liquidez em zona de atenção',det:'Reserva entre 3 e 6 meses — recomendável reforçar.'});
+  // "Meses de reserva": saldo bancário negativo vira 0 meses (não um número
+  // negativo de "-25297 meses" — isso não é meses, é só o saldo em R$ sendo
+  // dividido pelo fallback de gas||1, que só existe pra evitar divisão por
+  // zero e nunca deveria aparecer como resultado de verdade). Com saldo
+  // negativo, mostra o valor da dívida em R$ em vez de uma conta sem sentido.
+  const gasSeg=Math.max(m.gas,1);
+  const mesesReserva=Math.max(0,m.banc)/gasSeg;
+  if(mesesReserva<3){
+    const detReserva=m.banc<0
+      ? 'Saldo bancário consolidado está negativo ('+brl(m.banc)+'), sem nenhuma reserva de caixa. Vulnerável a choques.'
+      : 'Caixa atual cobre apenas '+mesesReserva.toFixed(1)+' meses. Vulnerável a choques.';
+    sinais.push({nivel:'Patrimônio',forca:'forte',tipo:'neg',txt:'Reserva de liquidez abaixo de 3 meses de gastos',det:detReserva});
+  }
+  else if(mesesReserva<6) sinais.push({nivel:'Patrimônio',forca:'fraco',tipo:'neg',txt:'Liquidez em zona de atenção',det:'Reserva entre 3 e 6 meses — recomendável reforçar.'});
   if(m.geoConc>0.85) sinais.push({nivel:'Patrimônio',forca:'fraco',tipo:'neg',txt:'Concentração geográfica elevada em ativos BR',det:(m.geoConc*100).toFixed(0)+'% em Brasil. Risco-país concentrado.'});
   if(m.divAnual>0 && (m.divAnual/12)/(m.gas||1)>0.5) sinais.push({nivel:'Patrimônio',forca:'fraco',tipo:'pos',txt:'Renda passiva ganhando tração',det:'Dividendos já cobrem '+((m.divAnual/12)/(m.gas||1)*100).toFixed(0)+'% dos gastos mensais.'});
   if(m.fat/(m.banc||1)>0.5) sinais.push({nivel:'Patrimônio',forca:'forte',tipo:'neg',txt:'Faturas de cartão pressionam o caixa',det:'Passivo de curto prazo em '+(m.fat/(m.banc||1)*100).toFixed(0)+'% do saldo bancário.'});
