@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 163 -->
+<!-- APP_VERSION: 164 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -17801,7 +17801,10 @@ function detectarSinaisFracos(m){
   }
   else if(mesesReserva<6) sinais.push({nivel:'Patrimônio',forca:'fraco',tipo:'neg',txt:'Liquidez em zona de atenção',det:'Reserva entre 3 e 6 meses — recomendável reforçar.'});
   if(m.geoConc>0.85) sinais.push({nivel:'Patrimônio',forca:'fraco',tipo:'neg',txt:'Concentração geográfica elevada em ativos BR',det:(m.geoConc*100).toFixed(0)+'% em Brasil. Risco-país concentrado.'});
-  if(m.divAnual>0 && (m.divAnual/12)/(m.gas||1)>0.5) sinais.push({nivel:'Patrimônio',forca:'fraco',tipo:'pos',txt:'Renda passiva ganhando tração',det:'Dividendos já cobrem '+((m.divAnual/12)/(m.gas||1)*100).toFixed(0)+'% dos gastos mensais.'});
+  // Exige m.gas>0: sem gasto registrado no mês, "% dos gastos cobertos" não tem
+  // denominador de verdade — o fallback antigo (gas||1 = R$1) fazia dividendos de
+  // poucas dezenas de reais aparecerem como "3526% dos gastos mensais".
+  if(m.divAnual>0 && m.gas>0 && (m.divAnual/12)/m.gas>0.5) sinais.push({nivel:'Patrimônio',forca:'fraco',tipo:'pos',txt:'Renda passiva ganhando tração',det:'Dividendos já cobrem '+((m.divAnual/12)/m.gas*100).toFixed(0)+'% dos gastos mensais.'});
   if(m.fat/(m.banc||1)>0.5) sinais.push({nivel:'Patrimônio',forca:'forte',tipo:'neg',txt:'Faturas de cartão pressionam o caixa',det:'Passivo de curto prazo em '+(m.fat/(m.banc||1)*100).toFixed(0)+'% do saldo bancário.'});
   if(m.ativosUS/(m.inv||1)>0.12) sinais.push({nivel:'Patrimônio',forca:'fraco',tipo:'pos',txt:'Hedge cambial via ativos internacionais',det:(m.ativosUS/(m.inv||1)*100).toFixed(1)+'% em USD protege contra desvalorização do Real.'});
 
