@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<!-- APP_VERSION: 169 -->
+<!-- APP_VERSION: 170 -->
 <html lang="pt-BR">
 <head>
 <meta charset="UTF-8">
@@ -5442,6 +5442,7 @@ async function atualizarMercadoImoveis(){
   </div>
   <div class="fg"><label>Prioridade (1 = mais urgente)</label><input id="ob-pri" type="number" min="1" max="10" placeholder="1"></div>
 </div>
+<div class="fg" style="margin-bottom:6px"><label>Rentabilidade esperada (% a.a.)</label><input id="ob-rent" type="number" placeholder="8" step="0.1" min="0" value="8"></div>
 <div class="fgrid">
   <div class="fg"><label>Emoji / Ícone</label><input id="ob-em" type="text" placeholder="🏠 🚗 ✈️ 🛡 🌾" maxlength="4"></div>
   <div class="fg"><label>Cor do objetivo</label><input id="ob-cor" type="color" value="#4A7A56" style="height:40px;padding:4px 6px"></div>
@@ -10011,13 +10012,24 @@ function rmCategoria(cat){
 
 // ─── ORÇAMENTO
 // ─── ENGINE DE OBJETIVOS & ORÇAMENTO
-// Calcula aporte mensal necessário por objetivo
+// Calcula aporte mensal necessário por objetivo usando JUROS COMPOSTOS: o saldo já
+// acumulado também rende à taxa esperada (rentAA, % a.a.) até o prazo, então o aporte
+// mensal é o valor de PMT de uma anuidade que, somado ao montante futuro do saldo já
+// acumulado, atinge a meta — mesma lógica (e mesmo idioma Math.pow) usada em
+// _simularAposentadoria, só que resolvendo para o aporte (PMT) em vez do montante final (FV).
 function aporteNecessario(obj){
   const hoje=new Date();
   const prazo=new Date(obj.prazo);
   const meses=Math.max(1,Math.ceil((prazo-hoje)/(1000*60*60*24*30.44)));
-  const restante=Math.max(0,obj.valorAlvo-obj.acumulado);
-  return restante/meses;
+  const rentAA=(obj.rentAA!=null&&!isNaN(obj.rentAA))?obj.rentAA:8;
+  const r=Math.pow(1+(rentAA/100),1/12)-1;
+  if(r===0){
+    const restante=Math.max(0,obj.valorAlvo-obj.acumulado);
+    return restante/meses;
+  }
+  const montanteFuturoAcumulado=obj.acumulado*Math.pow(1+r,meses);
+  const fatorAnuidade=(Math.pow(1+r,meses)-1)/r;
+  return Math.max(0,(obj.valorAlvo-montanteFuturoAcumulado)/fatorAnuidade);
 }
 
 // Total de aportes mensais de todos os objetivos
@@ -10157,7 +10169,7 @@ function robjetivos(){
   document.getElementById('obj-kpis').innerHTML=`
     <div class="kpi"><div class="kpi-ic">◎</div><div class="kpi-eye">Total Meta</div><div class="kpi-val">${brl(totalAlvo)}</div><div class="kpi-d cm">${(S.objetivos||[]).length} objetivos</div></div>
     <div class="kpi"><div class="kpi-ic">⊛</div><div class="kpi-eye">Já Acumulado</div><div class="kpi-val cg">${brl(totalAcum)}</div><div class="kpi-d cm">${totalAlvo>0?(totalAcum/totalAlvo*100).toFixed(1):0}% do total</div></div>
-    <div class="kpi"><div class="kpi-ic">▲</div><div class="kpi-eye">Aporte Mensal Total<span class="info-ic" tabindex="0" data-tip="Soma do aporte mensal necessário de cada objetivo para atingir a meta no prazo definido."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val cr">${brl(totalAporte)}</div><div class="kpi-d cm">${(totalAporte/S.receita*100).toFixed(1)}% da receita</div></div>
+    <div class="kpi"><div class="kpi-ic">▲</div><div class="kpi-eye">Aporte Mensal Total<span class="info-ic" tabindex="0" data-tip="Soma do aporte mensal necessário de cada objetivo para atingir a meta no prazo definido, considerando juros compostos sobre o saldo já acumulado."><svg class="svi"><use href="#ic-info"/></svg></span></div><div class="kpi-val cr">${brl(totalAporte)}</div><div class="kpi-d cm">${(totalAporte/S.receita*100).toFixed(1)}% da receita</div></div>
     <div class="kpi"><div class="kpi-ic">◳</div><div class="kpi-eye">Mais Distante</div><div class="kpi-val cb">${horizonte} meses</div><div class="kpi-d cm">prazo mais longo</div></div>
   `;
 
@@ -10168,6 +10180,7 @@ function robjetivos(){
     const prazoDate=new Date(o.prazo);
     const meses=Math.max(0,Math.ceil((prazoDate-new Date())/(1000*60*60*24*30.44)));
     const restante=Math.max(0,o.valorAlvo-o.acumulado);
+    const rentAAView=(o.rentAA!=null&&!isNaN(o.rentAA))?o.rentAA:8;
     const tipoLabel={reserva:'Reserva',independencia_financeira:'Independência Financeira',bem_imovel:'Imóvel',bem_movel:'Veículo',viagem:'Viagem',negocio:'Negócio',educacao:'Educação',outro:'Outro'}[o.tipo]||o.tipo;
 
     // SVG ring progress
@@ -10202,7 +10215,7 @@ function robjetivos(){
         <div class="prog-track"><div class="prog-fill" style="width:${pct}%;background:${ringColor}"></div></div>
       </div>
       <div class="obj-foot">
-        <div class="obj-aporte-chip">▲ ${brl(aporte)}/mês</div>
+        <div class="obj-aporte-chip" title="Considera juros compostos: o saldo já acumulado rende ${rentAAView}% a.a. até o prazo">▲ ${brl(aporte)}/mês <span style="opacity:.65;font-size:9px;font-weight:500">(${rentAAView}% a.a.)</span></div>
         <div class="obj-actions">
           <button class="btn btn-ghost" style="font-size:11px;padding:4px 9px" onclick="aportarObjetivo(${i})">+ Aportar</button>
           <button class="btn btn-ed" onclick="editObjetivo(${o.id})">✎</button>
@@ -10601,13 +10614,15 @@ function addObjetivo(){
   const obs=document.getElementById('ob-obs').value.trim();
   if(!nm||!pr||va<=0){toast('⚠ Preencha nome, valor e prazo');return}
   if(!S.objetivos)S.objetivos=[];
+  let rent=parseFloat(document.getElementById('ob-rent').value);
+  if(isNaN(rent)||rent<0)rent=8;
   if(EDIT.objetivo!=null){
     const idx=S.objetivos.findIndex(o=>o.id===EDIT.objetivo);
-    if(idx>=0){const ant=S.objetivos[idx];S.objetivos[idx]={...ant,nome:nm,tipo:tp,valorAlvo:va,acumulado:ac,prazo:pr,prioridade:pri,emoji:em,cor,obs};}
+    if(idx>=0){const ant=S.objetivos[idx];S.objetivos[idx]={...ant,nome:nm,tipo:tp,valorAlvo:va,acumulado:ac,prazo:pr,prioridade:pri,emoji:em,cor,obs,rentAA:rent};}
     toast('✓ Objetivo atualizado: '+nm);
   } else {
     const nid=Math.max(0,...(S.objetivos||[]).map(o=>o.id),0)+1;
-    S.objetivos.push({id:nid,nome:nm,tipo:tp,valorAlvo:va,acumulado:ac,prazo:pr,prioridade:pri,emoji:em,cor,obs,ativa:true});
+    S.objetivos.push({id:nid,nome:nm,tipo:tp,valorAlvo:va,acumulado:ac,prazo:pr,prioridade:pri,emoji:em,cor,obs,rentAA:rent,ativa:true});
     toast('✓ Objetivo cadastrado: '+nm);
   }
   persistir();closeM('m-objetivo');robjetivos();rorc();
@@ -10624,6 +10639,7 @@ function editObjetivo(id){
   document.getElementById('ob-ac').value=o.acumulado;
   _dpSetFromIso('ob-pr',o.prazo);
   document.getElementById('ob-pri').value=o.prioridade;
+  document.getElementById('ob-rent').value=(o.rentAA!=null&&!isNaN(o.rentAA))?o.rentAA:8;
   document.getElementById('ob-em').value=o.emoji||'◎';
   document.getElementById('ob-cor').value=o.cor||C.grn;
   document.getElementById('ob-obs').value=o.obs||'';
@@ -12473,19 +12489,30 @@ function openM(id){
     _dpSetFromIso('ob-pr','');
     document.getElementById('ob-ac').value='0';
     document.getElementById('ob-pri').value=((S.objetivos||[]).length+1);
+    document.getElementById('ob-rent').value='8';
     document.getElementById('ob-aporte-preview').textContent='—';
-    // Auto-preview do aporte
+    // Auto-preview do aporte (juros compostos — mesma fórmula de aporteNecessario())
     const calcPreview=()=>{
       const va=parseFloat(document.getElementById('ob-va').value)||0;
       const ac=parseFloat(document.getElementById('ob-ac').value)||0;
       const pr=document.getElementById('ob-pr').value;
+      const rentInput=parseFloat(document.getElementById('ob-rent').value);
+      const rentUse=(!isNaN(rentInput)&&rentInput>=0)?rentInput:8;
       if(va&&pr){
         const meses=Math.max(1,Math.ceil((new Date(pr)-new Date())/(1000*60*60*24*30.44)));
-        const aporte=Math.max(0,(va-ac)/meses);
-        document.getElementById('ob-aporte-preview').textContent=brl(aporte)+'/mês ('+meses+' meses)';
+        const r=Math.pow(1+(rentUse/100),1/12)-1;
+        let aporte;
+        if(r===0){
+          aporte=Math.max(0,(va-ac)/meses);
+        } else {
+          const montanteFuturoAcumulado=ac*Math.pow(1+r,meses);
+          const fatorAnuidade=(Math.pow(1+r,meses)-1)/r;
+          aporte=Math.max(0,(va-montanteFuturoAcumulado)/fatorAnuidade);
+        }
+        document.getElementById('ob-aporte-preview').textContent=brl(aporte)+'/mês ('+meses+' meses, '+rentUse+'% a.a.)';
       }
     };
-    ['ob-va','ob-ac','ob-pr'].forEach(id2=>document.getElementById(id2).addEventListener('input',calcPreview));
+    ['ob-va','ob-ac','ob-pr','ob-rent'].forEach(id2=>document.getElementById(id2).addEventListener('input',calcPreview));
   }
   if(id==='m-orcamento'){
     document.getElementById('oc-nm').value='';
